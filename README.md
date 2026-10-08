@@ -2,6 +2,8 @@
 
 Mini ERP de inventario, ventas, compras y rentabilidad, preparado para sustituir el Excel `INVENTARIO.xlsx`.
 
+> 📱 **¿Lo instalas desde un iPad, sin ordenador?** Sigue [docs/INSTALAR-DESDE-IPAD.md](docs/INSTALAR-DESDE-IPAD.md): todo se hace en Safari y la base de datos se crea pegando un solo archivo (`supabase/instalar-todo.sql`). Este README es la guía completa con ordenador.
+
 Esta guía te lleva desde el código en tu ordenador hasta la aplicación funcionando en internet:
 
 ```
