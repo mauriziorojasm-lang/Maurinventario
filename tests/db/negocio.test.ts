@@ -251,6 +251,44 @@ run("Lógica de negocio de MaurInventario", () => {
     expect(role.rows[0].role).toBe("vendedor");
   });
 
+  it("marcar varias ventas como enviadas o pendientes: todo o nada y con permisos", async () => {
+    const p = await rpc<string>(db, admin, "create_product", { name: "Prueba envío masivo" });
+    const v = await variantOf(p);
+    await createAndReceivePO(41, [{ variant_id: v, quantity: 10, unit_cost: 5 }]);
+    const lot = await lotOf(v, 41);
+    const sale = (by: string, platform: string, resp?: string) =>
+      rpc<string>(db, by, "create_sale", {
+        ...(resp ? { responsible_id: resp } : {}),
+        platform_id: platform,
+        carrier_id: platform === enPersona ? null : inpost,
+        items: [{ variant_id: v, lot_id: lot, quantity: 1, unit_price: 20 }],
+      });
+    const a1 = await sale(admin, vinted, respAdmin);
+    const a2 = await sale(admin, vinted, respAdmin);
+    const s1 = await sale(seller, vinted);
+    const hand = await sale(admin, enPersona, respAdmin);
+    const status = async (ids: string[]) =>
+      (await selectAs<{ shipping_status: string }>(db, admin, "select shipping_status from sales where id = any($1::uuid[]) order by id", [ids])).map((r) => r.shipping_status);
+
+    expect(await rpc<number>(db, admin, "set_sales_shipping_status", [a1, a2], "enviado")).toBe(2);
+    expect(await status([a1, a2])).toEqual(["enviado", "enviado"]);
+    await rpc(db, admin, "set_sales_shipping_status", [a1, a2], "pendiente");
+    expect(await status([a1, a2])).toEqual(["pendiente", "pendiente"]);
+
+    // Una venta sin envío en la selección: no se cambia ninguna
+    await expect(rpc(db, admin, "set_sales_shipping_status", [a1, hand], "enviado")).rejects.toThrow(/no lleva envío/);
+    expect(await status([a1])).toEqual(["pendiente"]);
+
+    // El vendedor puede con las suyas, pero no con las de otro (y no cambia nada)
+    await rpc(db, seller, "set_sales_shipping_status", [s1], "enviado");
+    expect(await status([s1])).toEqual(["enviado"]);
+    await expect(rpc(db, seller, "set_sales_shipping_status", [s1, a1], "pendiente")).rejects.toThrow(/tus propias ventas/);
+    expect(await status([s1, a1].sort())).toEqual(s1 < a1 ? ["enviado", "pendiente"] : ["pendiente", "enviado"]);
+
+    await expect(rpc(db, admin, "set_sales_shipping_status", [a1], "perdido")).rejects.toThrow(/no válido/);
+    await expect(rpc(db, null, "set_sales_shipping_status", [a1], "enviado")).rejects.toThrow();
+  });
+
   it("sin sesión no se puede leer nada", async () => {
     await expect(selectAs(db, null, "select * from products")).rejects.toThrow(/permission denied/);
     await expect(rpc(db, null, "search_sellable_variants", "x")).rejects.toThrow();

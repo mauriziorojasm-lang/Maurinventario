@@ -2,8 +2,8 @@
 -- MaurInventario · INSTALACIÓN COMPLETA DE LA BASE DE DATOS
 -- Pégalo ENTERO en Supabase → SQL Editor → New query → Run.
 -- Solo una vez por proyecto, en un proyecto NUEVO y vacío.
--- Contiene, en orden, las 7 migraciones de supabase/migrations/ (este
--- archivo se genera a partir de ellas; si cambian, se regenera).
+-- Contiene, en orden, las 8 migraciones de supabase/migrations/ (este
+-- archivo se genera a partir de ellas con «npm run db:instalador»).
 -- Si algo falla, no se guarda nada: todo va en una sola transacción.
 -- =====================================================================
 
@@ -3867,6 +3867,54 @@ grant select on public.v_lots, public.v_sale_lines, public.v_variant_inventory, 
   public.v_purchase_lines, public.v_purchase_orders, public.v_stock_exits, public.v_returns, public.v_movements
   to authenticated;
 
+-- >>> 20261009090000_envio_masivo.sql
+-- =====================================================================
+-- MaurInventario · Migración 8 · Marcar varias ventas como enviadas o
+-- pendientes de una vez.
+-- Todo o nada: si una venta falla (anulada, de otro vendedor…), no se
+-- cambia ninguna. Cada venta pasa por update_sale, así que se aplican
+-- exactamente los mismos permisos que al editarla una a una.
+-- =====================================================================
+
+create or replace function public.set_sales_shipping_status(p_sale_ids uuid[], p_status text)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+  v_n integer := 0;
+begin
+  perform public.require_active_user();
+  if p_status is null or p_status not in ('pendiente', 'enviado') then
+    raise exception 'Estado de envío no válido.';
+  end if;
+  if p_sale_ids is null or cardinality(p_sale_ids) = 0 then
+    raise exception 'No has seleccionado ninguna venta.';
+  end if;
+  if cardinality(p_sale_ids) > 500 then
+    raise exception 'Como máximo 500 ventas a la vez.';
+  end if;
+
+  for v_id in select distinct unnest(p_sale_ids)
+  loop
+    if not exists (
+      select 1 from public.sales s join public.platforms pl on pl.id = s.platform_id
+      where s.id = v_id and pl.requires_shipping
+    ) then
+      raise exception 'Una de las ventas seleccionadas no lleva envío.';
+    end if;
+    perform public.update_sale(jsonb_build_object('id', v_id, 'shipping_status', p_status));
+    v_n := v_n + 1;
+  end loop;
+  return v_n;
+end;
+$$;
+
+revoke execute on function public.set_sales_shipping_status(uuid[], text) from public, anon;
+grant execute on function public.set_sales_shipping_status(uuid[], text) to authenticated, service_role;
+
 -- Registro de migraciones aplicadas (para que la CLI de Supabase sepa que ya están)
 create schema if not exists supabase_migrations;
 create table if not exists supabase_migrations.schema_migrations (version text primary key, statements text[], name text);
@@ -3877,7 +3925,8 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20261008100300', 'informes'),
   ('20261008100400', 'storage'),
   ('20261008100500', 'importacion'),
-  ('20261008100600', 'permisos_funciones')
+  ('20261008100600', 'permisos_funciones'),
+  ('20261009090000', 'envio_masivo')
 on conflict (version) do nothing;
 
 commit;

@@ -90,7 +90,7 @@ export async function asUser<T>(db: TestDb, userId: string | null, fn: (q: Clien
 export async function rpc<T = unknown>(db: TestDb, userId: string | null, fn: string, ...args: unknown[]): Promise<T> {
   return asUser(db, userId, async (q) => {
     const params = args.map((_, i) => `$${i + 1}`).join(", ");
-    const res = await q(`select public.${fn}(${params}) as r`, args.map((a) => (typeof a === "object" && a !== null ? JSON.stringify(a) : a)));
+    const res = await q(`select public.${fn}(${params}) as r`, args.map((a) => (typeof a === "object" && a !== null && !Array.isArray(a) ? JSON.stringify(a) : a)));
     return res.rows[0]?.r as T;
   });
 }

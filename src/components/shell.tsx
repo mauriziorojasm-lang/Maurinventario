@@ -1,14 +1,45 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { Suspense, useState, type ReactNode } from "react";
+import { RememberList, forgetAllLists, useRememberedHref } from "./list-memory";
 import { NAV } from "./nav";
 import { clsx } from "./ui";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
-  if (href === "/ventas") return pathname === "/ventas" || (pathname.startsWith("/ventas/") && !pathname.startsWith("/ventas/nueva"));
+  if (href === "/ventas")
+    return (
+      pathname === "/ventas" ||
+      (pathname.startsWith("/ventas/") && !pathname.startsWith("/ventas/nueva"))
+    );
   return pathname === href || pathname.startsWith(href + "/");
+}
+
+/**
+ * Enlace del menú. El de la sección en la que estás vuelve a la lista con
+ * tus filtros; el de cualquier otra sección los olvida todos.
+ */
+function NavLink({
+  href,
+  active,
+  onClick,
+  ...props
+}: Omit<React.ComponentProps<typeof Link>, "href"> & {
+  href: string;
+  active: boolean;
+}) {
+  const remembered = useRememberedHref(href);
+  return (
+    <Link
+      {...props}
+      href={active ? remembered : href}
+      onClick={(e) => {
+        if (!active) forgetAllLists();
+        onClick?.(e);
+      }}
+    />
+  );
 }
 
 export function Shell({
@@ -32,20 +63,27 @@ export function Shell({
         if (!items.length) return null;
         return (
           <div key={gi}>
-            {g.label && <p className="mb-1.5 px-2.5 text-xs font-semibold text-white/45">{g.label}</p>}
+            {g.label && (
+              <p className="mb-1.5 px-2.5 text-xs font-semibold text-white/45">
+                {g.label}
+              </p>
+            )}
             <ul className="flex flex-col gap-0.5">
               {items.map((it) => {
                 const active = isActive(pathname, it.href);
                 const badge = it.badgeKey ? badges[it.badgeKey] : 0;
                 return (
                   <li key={it.href}>
-                    <Link
+                    <NavLink
                       href={it.href}
+                      active={active}
                       onClick={() => setOpen(false)}
                       aria-current={active ? "page" : undefined}
                       className={clsx(
                         "flex items-center justify-between gap-2 rounded-[var(--radius-sm)] px-2.5 py-1.5 text-[14px]",
-                        active ? "bg-white/12 font-semibold text-white" : "text-white/75 hover:bg-white/6 hover:text-white",
+                        active
+                          ? "bg-white/12 font-semibold text-white"
+                          : "text-white/75 hover:bg-white/6 hover:text-white",
                         it.href === "/ventas/nueva" && !active && "text-tag",
                       )}
                     >
@@ -54,14 +92,20 @@ export function Shell({
                         <span
                           className={clsx(
                             "num rounded-full px-1.5 text-[11.5px] font-bold",
-                            it.badgeKey === "reviews" ? "bg-tag text-tag-ink" : "bg-white/15 text-white",
+                            it.badgeKey === "reviews"
+                              ? "bg-tag text-tag-ink"
+                              : "bg-white/15 text-white",
                           )}
-                          title={it.badgeKey === "reviews" ? "Pendientes de revisar" : "Envíos pendientes"}
+                          title={
+                            it.badgeKey === "reviews"
+                              ? "Pendientes de revisar"
+                              : "Envíos pendientes"
+                          }
                         >
                           {badge}
                         </span>
                       )}
-                    </Link>
+                    </NavLink>
                   </li>
                 );
               })}
@@ -74,7 +118,9 @@ export function Shell({
 
   const brand = (
     <Link href="/" className="flex items-baseline gap-1.5 px-5 py-5 text-white">
-      <span className="text-[19px] font-extrabold tracking-[-0.02em]">MaurInventario</span>
+      <span className="text-[19px] font-extrabold tracking-[-0.02em]">
+        MaurInventario
+      </span>
     </Link>
   );
 
@@ -83,11 +129,16 @@ export function Shell({
       <p className="truncate font-semibold text-white">{userLabel}</p>
       <p>{role === "admin" ? "Administrador" : "Vendedor"}</p>
       <div className="mt-2 flex gap-3">
-        <Link href="/cuenta" className="underline-offset-2 hover:text-white hover:underline">
+        <Link
+          href="/cuenta"
+          className="underline-offset-2 hover:text-white hover:underline"
+        >
           Mi cuenta
         </Link>
         <form action="/auth/salir" method="post">
-          <button className="underline-offset-2 hover:text-white hover:underline">Cerrar sesión</button>
+          <button className="underline-offset-2 hover:text-white hover:underline">
+            Cerrar sesión
+          </button>
         </form>
       </div>
     </div>
@@ -104,7 +155,10 @@ export function Shell({
 
       {/* Barra superior (móvil) */}
       <div className="sticky top-0 z-30 flex items-center justify-between bg-ink px-4 py-2.5 lg:hidden">
-        <Link href="/" className="text-[17px] font-extrabold tracking-[-0.02em] text-white">
+        <Link
+          href="/"
+          className="text-[17px] font-extrabold tracking-[-0.02em] text-white"
+        >
           MaurInventario
         </Link>
         <button
@@ -115,12 +169,23 @@ export function Shell({
           aria-controls="menu-movil"
         >
           Menú
-          {badges.reviews > 0 && role === "admin" && <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-tag align-middle" />}
+          {badges.reviews > 0 && role === "admin" && (
+            <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-tag align-middle" />
+          )}
         </button>
       </div>
       {open && (
-        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" id="menu-movil">
-          <button className="absolute inset-0 bg-ink/50" aria-label="Cerrar menú" onClick={() => setOpen(false)} />
+        <div
+          className="fixed inset-0 z-40 lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          id="menu-movil"
+        >
+          <button
+            className="absolute inset-0 bg-ink/50"
+            aria-label="Cerrar menú"
+            onClick={() => setOpen(false)}
+          />
           <div
             className="absolute inset-y-0 left-0 flex w-[82%] max-w-[300px] flex-col overflow-y-auto bg-ink"
             onClick={(e) => {
@@ -133,6 +198,10 @@ export function Shell({
           </div>
         </div>
       )}
+
+      <Suspense fallback={null}>
+        <RememberList />
+      </Suspense>
 
       <main className="min-w-0 px-4 py-6 pb-24 sm:px-6 lg:px-10 lg:py-8">
         <div className="mx-auto max-w-[1280px]">{children}</div>
