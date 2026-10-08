@@ -49,7 +49,7 @@ export function VariantEditor({
   return (
     <>
       {variant ? (
-        <button className="text-xs font-semibold text-ledger hover:underline" onClick={() => setOpen(true)}>
+        <button className="text-xs font-semibold text-brand-ink hover:underline" onClick={() => setOpen(true)}>
           Editar
         </button>
       ) : (

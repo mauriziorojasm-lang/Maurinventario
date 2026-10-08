@@ -39,20 +39,26 @@ export function Modal({
         onClose();
       }}
       className={clsx(
-        "m-auto w-[calc(100%-1.5rem)] rounded-[var(--radius-md)] border border-line bg-surface p-0 text-ink shadow-[0_20px_60px_-20px_rgba(24,32,43,0.45)] backdrop:bg-ink/45",
+        "mi-dialog m-auto w-[calc(100%-1.5rem)] rounded-[var(--radius-lg)] border border-line bg-surface p-0 text-ink shadow-[var(--shadow-pop)]",
         wide ? "max-w-3xl" : "max-w-lg",
       )}
     >
       {open && (
-        <div className="flex max-h-[85vh] flex-col">
+        <div className="flex max-h-[88dvh] flex-col">
+          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-line-strong sm:hidden" aria-hidden />
           <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-3.5">
-            <h2 className="text-base font-bold">{title}</h2>
-            <button type="button" onClick={onClose} className="-mr-1 rounded px-2 text-xl leading-none text-muted hover:text-ink" aria-label="Cerrar">
+            <h2 className="display text-[22px] uppercase">{title}</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="press -mr-2 flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none text-muted hover:bg-ink/6 hover:text-ink"
+              aria-label="Cerrar"
+            >
               ×
             </button>
           </div>
           <div className="overflow-y-auto px-5 py-4">{children}</div>
-          {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-line px-5 py-3">{footer}</div>}
+          {footer && <div className="safe-bottom flex flex-wrap justify-end gap-2 border-t border-line px-5 pt-3 sm:pb-3 [&>*]:max-sm:flex-1">{footer}</div>}
         </div>
       )}
     </dialog>

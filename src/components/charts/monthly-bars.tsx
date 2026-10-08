@@ -5,9 +5,9 @@ import { money, monthLabel, units } from "@/lib/format";
 type Point = { month: string; revenue: number; profit: number; orders: number; units: number };
 
 /**
- * Ventas por mes (una sola serie: importe vendido).
- * Columnas finas que salen de la misma base, cifra solo en el último mes y
- * en el máximo, y el detalle de cada mes al pasar el ratón o tocar.
+ * Ventas por mes: barra naranja gruesa = facturación; dentro, barra negra
+ * más estrecha = beneficio. Cifra solo en el último mes y en el máximo, y el
+ * detalle de cada mes al pasar el ratón o tocar.
  */
 export function MonthlyBars({ data }: { data: Point[] }) {
   const [hover, setHover] = useState<number | null>(null);
@@ -22,7 +22,7 @@ export function MonthlyBars({ data }: { data: Point[] }) {
   const top = Math.ceil(max / step) * step;
   const ticks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => i * step);
   const band = innerW / Math.max(1, data.length);
-  const barW = Math.min(24, band * 0.55);
+  const barW = Math.min(40, band * 0.7);
   const y = (v: number) => pad.t + innerH - (v / top) * innerH;
   const maxIdx = data.reduce((best, d, i) => (d.revenue > data[best].revenue ? i : best), 0);
   const last = data.length - 1;
@@ -31,7 +31,7 @@ export function MonthlyBars({ data }: { data: Point[] }) {
     return (
       <div>
         <div className="mb-2 flex justify-end">
-          <button className="text-[13px] font-semibold text-ledger underline-offset-2 hover:underline" onClick={() => setAsTable(false)}>
+          <button className="text-[13px] font-semibold text-brand-ink underline-offset-2 hover:underline" onClick={() => setAsTable(false)}>
             Ver gráfico
           </button>
         </div>
@@ -60,18 +60,38 @@ export function MonthlyBars({ data }: { data: Point[] }) {
   }
 
   const h = hover !== null ? data[hover] : null;
+  const base = pad.t + innerH;
+  const bar = (x: number, yTop: number, w: number) => {
+    const hgt = Math.max(0, base - yTop);
+    const r = Math.min(6, hgt, w / 2);
+    return `M${x - w / 2},${base} V${yTop + r} Q${x - w / 2},${yTop} ${x - w / 2 + r},${yTop} H${x + w / 2 - r} Q${x + w / 2},${yTop} ${x + w / 2},${yTop + r} V${base} Z`;
+  };
   return (
     <div className="relative">
-      <div className="mb-1 flex justify-end">
-        <button className="text-[13px] font-semibold text-ledger underline-offset-2 hover:underline" onClick={() => setAsTable(true)}>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[12.5px]">
+        <span className="flex items-center gap-4 text-muted">
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded-[3px] bg-brand" aria-hidden /> Facturación
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded-[3px] bg-ink" aria-hidden /> Beneficio
+          </span>
+        </span>
+        <button className="font-semibold text-brand-ink underline-offset-2 hover:underline" onClick={() => setAsTable(true)}>
           Ver como tabla
         </button>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Importe vendido por mes en los últimos 12 meses" onMouseLeave={() => setHover(null)}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="h-auto w-full"
+        role="img"
+        aria-label="Facturación y beneficio por mes en los últimos 12 meses"
+        onMouseLeave={() => setHover(null)}
+      >
         {ticks.map((t) => (
           <g key={t}>
-            <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="#e2e5e0" strokeWidth={1} />
-            <text x={pad.l - 8} y={y(t) + 4} textAnchor="end" fontSize={11} fill="#5b6573" className="num">
+            <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} className="stroke-line" strokeWidth={1} />
+            <text x={pad.l - 8} y={y(t) + 4} textAnchor="end" fontSize={11} className="num fill-muted">
               {compactEur(t)}
             </text>
           </g>
@@ -79,38 +99,49 @@ export function MonthlyBars({ data }: { data: Point[] }) {
         {data.map((d, i) => {
           const x = pad.l + band * i + band / 2;
           const yTop = y(d.revenue);
-          const hgt = Math.max(0, pad.t + innerH - yTop);
-          const r = Math.min(4, hgt);
+          const yProfit = y(Math.max(0, Math.min(d.profit, d.revenue)));
           const showLabel = d.revenue > 0 && (i === last || i === maxIdx);
+          const dim = hover !== null && hover !== i;
           return (
-            <g key={d.month} onMouseEnter={() => setHover(i)} onClick={() => setHover(i)}>
+            <g key={d.month} onMouseEnter={() => setHover(i)} onClick={() => setHover(i)} className="cursor-pointer">
               <rect x={pad.l + band * i} y={pad.t} width={band} height={innerH} fill="transparent" />
-              {hgt > 0 && (
-                <path
-                  d={`M${x - barW / 2},${pad.t + innerH} V${yTop + r} Q${x - barW / 2},${yTop} ${x - barW / 2 + r},${yTop} H${x + barW / 2 - r} Q${x + barW / 2},${yTop} ${x + barW / 2},${yTop + r} V${pad.t + innerH} Z`}
-                  fill={hover === null || hover === i ? "#1e6b52" : "#9cc3b4"}
-                />
+              {d.revenue > 0 && (
+                <g style={{ opacity: dim ? 0.35 : 1, transition: "opacity .15s" }}>
+                  <path
+                    d={bar(x, yTop, barW)}
+                    className="fill-brand"
+                    style={{ transformOrigin: `${x}px ${base}px`, animation: `grow .6s ${i * 40}ms cubic-bezier(.2,.8,.2,1) both` }}
+                  />
+                  {d.profit > 0 && (
+                    <path
+                      d={bar(x, yProfit, barW * 0.5)}
+                      className="fill-ink"
+                      style={{ transformOrigin: `${x}px ${base}px`, animation: `grow .6s ${i * 40 + 120}ms cubic-bezier(.2,.8,.2,1) both` }}
+                    />
+                  )}
+                </g>
               )}
               {showLabel && (
-                <text x={x} y={yTop - 6} textAnchor="middle" fontSize={11} fontWeight={600} fill="#18202b" className="num">
+                <text x={x} y={yTop - 7} textAnchor="middle" fontSize={12} fontWeight={700} className="num fill-ink">
                   {compactEur(d.revenue)}
                 </text>
               )}
-              <text x={x} y={H - 9} textAnchor="middle" fontSize={11} fill="#5b6573">
+              <text x={x} y={H - 9} textAnchor="middle" fontSize={11} className={hover === i ? "fill-ink" : "fill-muted"}>
                 {monthLabel(d.month)}
               </text>
             </g>
           );
         })}
-        <line x1={pad.l} x2={W - pad.r} y1={pad.t + innerH} y2={pad.t + innerH} stroke="#cdd2cb" strokeWidth={1} />
+        <line x1={pad.l} x2={W - pad.r} y1={base} y2={base} className="stroke-line-strong" strokeWidth={1} />
       </svg>
+      <style>{`@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}`}</style>
       {h && (
         <div
-          className="pointer-events-none absolute top-8 rounded-[var(--radius-sm)] border border-line bg-surface px-3 py-2 text-[13px] shadow-[0_8px_24px_-12px_rgba(24,32,43,0.35)]"
+          className="pointer-events-none absolute top-10 animate-fade rounded-[var(--radius-sm)] border border-line bg-surface px-3 py-2 text-[13px] shadow-[var(--shadow-pop)]"
           style={{ left: `clamp(0px, calc(${((pad.l + band * hover! + band / 2) / W) * 100}% - 80px), calc(100% - 170px))` }}
         >
           <p className="font-semibold">{monthLabel(h.month)}</p>
-          <p className="num">Vendido: {money(h.revenue)}</p>
+          <p className="num">Facturación: {money(h.revenue)}</p>
           <p className="num">Beneficio: {money(h.profit)}</p>
           <p className="num text-muted">
             {units(h.orders)} pedidos, {units(h.units)} uds.

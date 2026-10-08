@@ -1,48 +1,207 @@
 @import "tailwindcss";
 
 /*
- * MaurInventario · sistema visual
- * Papel frío, tinta, verde de libro de cuentas y la pegatina amarilla de los lotes.
+ * MaurInventario · sistema visual «tienda de calle»
+ * Negro + naranja intenso. Claro u oscuro según el dispositivo.
+ * Títulos y cifras en letra estrecha (Barlow Condensed), texto en Public Sans.
+ * La pegatina amarilla de los lotes se mantiene como sello de la casa.
  */
-@theme {
+
+:root {
+  color-scheme: light;
+  --paper: #f4f2ee;
+  --surface: #ffffff;
+  --surface-2: #faf8f5;
+  --ink: #141210;
+  --ink-soft: #2e2a26;
+  --muted: #6b645d;
+  --faint: #9a928a;
+  --line: #e8e3dc;
+  --line-strong: #d4cdc4;
+
+  --brand: #ff5a1f;
+  --brand-strong: #ec4a10;
+  --brand-ink: #c2410c;
+  --brand-soft: #ffeadf;
+  --on-brand: #160b06;
+
+  --chrome: #121110;
+  --chrome-2: #1f1c1a;
+  --chrome-ink: #f4f1ec;
+
+  --good: #15803d;
+  --good-soft: #e3f4ea;
+  --good-ink: #0f5c2e;
+  --on-good: #ffffff;
+  --danger: #c62a1c;
+  --danger-soft: #fce8e6;
+  --warn: #b45309;
+  --warn-soft: #fef0dd;
+  --info: #2f5d8a;
+  --info-soft: #e6eef6;
+
+  --tag: #f5d547;
+  --tag-ink: #4a3d00;
+  --tag-adjust: #ece6c8;
+
+  --shadow-card: 0 1px 0 rgba(20, 18, 16, 0.04), 0 8px 24px -18px rgba(20, 18, 16, 0.35);
+  --shadow-pop: 0 24px 60px -24px rgba(20, 18, 16, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --paper: #121110;
+    --surface: #1b1917;
+    --surface-2: #221f1d;
+    --ink: #f3efea;
+    --ink-soft: #ddd6ce;
+    --muted: #a69e95;
+    --faint: #7c746c;
+    --line: #2d2926;
+    --line-strong: #403a36;
+
+    --brand: #ff6a33;
+    --brand-strong: #ff7f50;
+    --brand-ink: #ff8f61;
+    --brand-soft: #3a1d10;
+    --on-brand: #160b06;
+
+    --chrome: #0b0a09;
+    --chrome-2: #1a1816;
+    --chrome-ink: #f4f1ec;
+
+    --good: #3cc47f;
+    --good-soft: #13301f;
+    --good-ink: #74e0a6;
+    --on-good: #07140c;
+    --danger: #ff6b5e;
+    --danger-soft: #3a1714;
+    --warn: #f5a524;
+    --warn-soft: #33240c;
+    --info: #85b4e3;
+    --info-soft: #142536;
+
+    --tag: #f5d547;
+    --tag-ink: #3d3200;
+    --tag-adjust: #d9d0a5;
+
+    --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.3);
+    --shadow-pop: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+  }
+}
+
+@theme inline {
   --font-sans: "Public Sans Variable", "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Barlow Condensed", "Arial Narrow", ui-sans-serif, system-ui, sans-serif;
 
-  --color-paper: #f6f7f4;
-  --color-surface: #ffffff;
-  --color-ink: #18202b;
-  --color-ink-soft: #2a3442;
-  --color-muted: #5b6573;
-  --color-faint: #8a93a0;
-  --color-line: #e2e5e0;
-  --color-line-strong: #cdd2cb;
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
 
-  --color-ledger: #1e6b52;
-  --color-ledger-dark: #165540;
-  --color-ledger-soft: #e3efe9;
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
 
-  --color-tag: #f5d547;
-  --color-tag-ink: #4a3d00;
+  --color-chrome: var(--chrome);
+  --color-chrome-2: var(--chrome-2);
+  --color-chrome-ink: var(--chrome-ink);
 
-  --color-danger: #b42318;
-  --color-danger-soft: #fbe9e7;
-  --color-warn: #a15c07;
-  --color-warn-soft: #fbf0dc;
-  --color-info: #2f5d8a;
-  --color-info-soft: #e6eef6;
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-good-ink: var(--good-ink);
+  --color-on-good: var(--on-good);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  --color-tag: var(--tag);
+  --color-tag-ink: var(--tag-ink);
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+
+  --animate-rise: rise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-sheet: sheet 0.34s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  --animate-fade: fade 0.2s ease-out both;
+  --animate-pop: pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 html {
   -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans);
-  font-feature-settings: "tnum" 0;
+}
+
+/* Títulos y cifras: letra estrecha y alta */
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.02;
+}
+
+/* Las columnas de una rejilla nunca se ensanchan por una tabla: la tabla
+   se desplaza dentro de su caja y la página no se sale de la pantalla */
+main .grid > * {
+  min-width: 0;
 }
 
 /* Cifras siempre alineadas */
@@ -52,8 +211,46 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-ledger);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
+}
+
+::selection {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+/* Botones y elementos tocables: se hunden un poco al pulsar */
+.press {
+  transition:
+    transform 0.12s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Aparición escalonada de listas y tarjetas */
+.stagger > * {
+  animation: rise 0.36s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 30ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 60ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 90ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 120ms;
+}
+.stagger > *:nth-child(n + 6) {
+  animation-delay: 150ms;
 }
 
 /* La pegatina del lote: el elemento característico de la aplicación */
@@ -63,8 +260,8 @@ body {
   align-items: center;
   gap: 0.35rem;
   padding: 0.12rem 0.55rem 0.12rem calc(0.55rem + var(--notch));
-  background: var(--color-tag);
-  color: var(--color-tag-ink);
+  background: var(--tag);
+  color: var(--tag-ink);
   font-size: 0.75rem;
   font-weight: 650;
   line-height: 1.35;
@@ -77,11 +274,37 @@ body {
   width: 4px;
   height: 4px;
   border-radius: 999px;
-  background: var(--color-tag-ink);
+  background: var(--tag-ink);
   opacity: 0.55;
 }
 .lot-tag[data-origin="ajuste"] {
-  background: #ece6c8;
+  background: var(--tag-adjust);
+}
+
+/* Diálogo: ventana centrada en pantallas grandes, hoja desde abajo en el móvil */
+dialog.mi-dialog[open] {
+  animation: rise 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+dialog.mi-dialog::backdrop {
+  background: rgb(0 0 0 / 0.55);
+  animation: fade 0.2s ease-out both;
+}
+@media (max-width: 639px) {
+  dialog.mi-dialog {
+    margin: auto 0 0 0;
+    width: 100%;
+    max-width: 100%;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  dialog.mi-dialog[open] {
+    animation: sheet 0.34s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  }
+}
+
+/* Espacio para la barra inferior del móvil */
+.safe-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -89,6 +312,7 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }

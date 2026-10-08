@@ -21,10 +21,17 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     return { error: msg, email };
   }
   const { data } = await supabase.auth.getClaims();
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("active").eq("id", data?.claims?.sub ?? "").maybeSingle();
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("active")
+    .eq("id", data?.claims?.sub ?? "")
+    .maybeSingle();
   if (profileError) {
     await supabase.auth.signOut();
-    return { error: "Has entrado, pero no se puede leer tu perfil en la base de datos. Revisa la conexión con Supabase y que las migraciones estén aplicadas.", email };
+    return {
+      error: "Has entrado, pero no se puede leer tu perfil en la base de datos. Revisa la conexión con Supabase y que las migraciones estén aplicadas.",
+      email,
+    };
   }
   if (!profile?.active) {
     await supabase.auth.signOut();

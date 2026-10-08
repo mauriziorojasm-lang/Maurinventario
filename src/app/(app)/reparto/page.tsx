@@ -77,11 +77,11 @@ export default async function SettlementPage({ searchParams }: { searchParams: P
             ]}
           />
           {debtor && creditor ? (
-            <div className="mb-5 rounded-[var(--radius-md)] border border-ledger/30 bg-ledger-soft px-5 py-4">
-              <p className="text-[19px] font-bold text-ledger-dark">
+            <div className="mb-5 rounded-[var(--radius-md)] border border-good/30 bg-good-soft px-5 py-4">
+              <p className="text-[19px] font-bold text-good-ink">
                 {debtor.name} debe pagar <span className="num">{money(Math.min(debtor.balance, -creditor.balance))}</span> a {creditor.name}
               </p>
-              <p className="mt-1 text-sm text-ledger-dark/80">Para que cada socio se quede con {money(s.share)}.</p>
+              <p className="mt-1 text-sm text-good-ink/80">Para que cada socio se quede con {money(s.share)}.</p>
             </div>
           ) : (
             <Notice tone="good" className="mb-5">
@@ -113,7 +113,7 @@ export default async function SettlementPage({ searchParams }: { searchParams: P
                     <Td num>{money(p.paid)}</Td>
                     <Td num>{money(p.received)}</Td>
                     <Td num>{money(p.share)}</Td>
-                    <Td num className={p.balance > 0.004 ? "text-danger" : p.balance < -0.004 ? "text-ledger" : undefined}>
+                    <Td num className={p.balance > 0.004 ? "text-danger" : p.balance < -0.004 ? "text-good" : undefined}>
                       {p.balance > 0.004 ? `debe ${money(p.balance)}` : p.balance < -0.004 ? `le deben ${money(-p.balance)}` : "cuadrado"}
                     </Td>
                   </Tr>

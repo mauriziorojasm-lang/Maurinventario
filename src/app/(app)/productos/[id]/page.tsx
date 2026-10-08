@@ -303,18 +303,18 @@ export default async function ProductDetail({ params }: PageProps<"/productos/[i
                       <Td>
                         <LotTag label={m.lot_label} />
                       </Td>
-                      <Td num className={m.quantity > 0 ? "text-ledger" : "text-danger"}>
+                      <Td num className={m.quantity > 0 ? "text-good" : "text-danger"}>
                         {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
                       </Td>
                       <Td>
                         {m.sale_id && (
-                          <Link href={`/ventas/${m.sale_id}`} className="font-semibold text-ledger hover:underline">
+                          <Link href={`/ventas/${m.sale_id}`} className="font-semibold text-brand-ink hover:underline">
                             {m.sale_number}
                           </Link>
                         )}
                         {m.sale_id && m.responsible_name && <span className="text-muted">, {m.responsible_name}</span>}
                         {m.purchase_order_id && (
-                          <Link href={`/compras/${m.purchase_order_id}`} className="font-semibold text-ledger hover:underline">
+                          <Link href={`/compras/${m.purchase_order_id}`} className="font-semibold text-brand-ink hover:underline">
                             Pedido #{m.purchase_order_number}
                           </Link>
                         )}

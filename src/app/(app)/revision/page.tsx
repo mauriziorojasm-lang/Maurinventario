@@ -85,7 +85,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
                     {l && (
-                      <Link href={l.href} className="text-[13px] font-semibold text-ledger hover:underline">
+                      <Link href={l.href} className="text-[13px] font-semibold text-brand-ink hover:underline">
                         {l.label}
                       </Link>
                     )}

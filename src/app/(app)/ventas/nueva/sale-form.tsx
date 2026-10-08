@@ -50,13 +50,22 @@ export function SaleForm({
   const [lines, setLines] = useState<Line[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // Paso actual (solo en el móvil: 1 producto, 2 datos, 3 confirmar)
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const goTo = (n: 1 | 2 | 3) => {
+    setStep(n);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const platform = platforms.find((p) => p.id === platformId);
   const needsShipping = !!platform?.requires_shipping;
 
   async function addVariant(v: SellableVariant) {
     const key = `${v.variant_id}-${Date.now()}`;
-    setLines((ls) => [...ls, { key, variant: v, lots: null, lotId: "", quantity: "1", price: v.normal_sale_price ? String(v.normal_sale_price) : "", notes: "" }]);
+    setLines((ls) => [
+      ...ls,
+      { key, variant: v, lots: null, lotId: "", quantity: "1", price: v.normal_sale_price ? String(v.normal_sale_price) : "", notes: "" },
+    ]);
     const res = await getLots(v.variant_id);
     setLines((ls) =>
       ls.map((l) => {
@@ -100,7 +109,11 @@ export function SaleForm({
   }, [lines]);
 
   const total = lines.reduce((a, l) => a + (Number(l.quantity) || 0) * (Number(l.price.replace(",", ".")) || 0), 0);
-  const canSave = lines.length > 0 && problems.size === 0 && !!platformId && (!isAdmin || !!responsible) && !pending;
+  const productsOk = lines.length > 0 && problems.size === 0 && lines.every((l) => l.lots !== null);
+  const dataOk = !!platformId && (!isAdmin || !!responsible);
+  const canSave = productsOk && dataOk && !pending;
+  const totalUnits = lines.reduce((a, l) => a + (Number(l.quantity) || 0), 0);
+  const stepHidden = (n: number) => (step === n ? "" : "max-md:hidden");
 
   async function save() {
     setError(null);
@@ -142,11 +155,40 @@ export function SaleForm({
     router.push(`/ventas/${saleId}?aviso=creada`);
   }
 
+  const steps = ["Producto", "Datos", "Confirmar"];
+
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-      <div className="flex flex-col gap-5">
-        <section className="rounded-[var(--radius-md)] border border-line bg-surface p-4">
-          <h2 className="mb-3 text-[15px] font-bold">Productos</h2>
+    <div className="grid gap-5 max-md:pb-24 lg:grid-cols-[1fr_340px]">
+      {/* Pasos (solo móvil) */}
+      <ol className="grid grid-cols-3 gap-2 md:hidden" aria-label="Pasos">
+        {steps.map((label, i) => {
+          const n = (i + 1) as 1 | 2 | 3;
+          const reachable = n === 1 || (n === 2 && productsOk) || (n === 3 && productsOk && dataOk);
+          return (
+            <li key={label}>
+              <button
+                type="button"
+                disabled={!reachable}
+                onClick={() => goTo(n)}
+                aria-current={step === n ? "step" : undefined}
+                className="press flex w-full flex-col gap-1.5 text-left disabled:opacity-60"
+              >
+                <span className={clsx("h-1.5 rounded-full transition-colors duration-300", step >= n ? "bg-brand" : "bg-line-strong")} />
+                <span className={clsx("text-[12px] font-semibold uppercase tracking-[0.06em]", step === n ? "text-ink" : "text-muted")}>
+                  {n}. {label}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+
+      <div className="flex min-w-0 flex-col gap-5">
+        <section className={clsx("rounded-[var(--radius-md)] border border-line bg-surface p-4 shadow-[var(--shadow-card)]", stepHidden(1))}>
+          <h2 className="display mb-3 text-[22px] uppercase">
+            <span className="md:hidden">¿Qué vendes?</span>
+            <span className="max-md:hidden">Productos</span>
+          </h2>
           <ProductPicker onSelect={addVariant} allowCreate={isAdmin} autoFocus />
           {lines.length === 0 && <p className="mt-3 text-sm text-muted">Busca un producto para añadirlo. Una venta puede tener varios productos.</p>}
           <ul className="mt-3 flex flex-col gap-3">
@@ -154,7 +196,7 @@ export function SaleForm({
               const lot = l.lots?.find((x) => x.lot_id === l.lotId);
               const problem = problems.get(l.key) ?? l.error;
               return (
-                <li key={l.key} className={clsx("rounded-[var(--radius-sm)] border p-3", problem ? "border-danger/40" : "border-line")}>
+                <li key={l.key} className={clsx("animate-rise rounded-[var(--radius-md)] border p-3", problem ? "border-danger/40" : "border-line")}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold">{variantDisplay(l.variant.product_name, l.variant.variant_name, l.variant.variant_count)}</p>
@@ -182,17 +224,29 @@ export function SaleForm({
                       )}
                     </Field>
                     <Field label="Unidades" required>
-                      <Input type="number" min={1} step={1} inputMode="numeric" value={l.quantity} onChange={(e) => update(l.key, { quantity: e.target.value })} />
+                      <Input
+                        type="number"
+                        min={1}
+                        step={1}
+                        inputMode="numeric"
+                        value={l.quantity}
+                        onChange={(e) => update(l.key, { quantity: e.target.value })}
+                      />
                     </Field>
                     <Field label="Precio por unidad (€)" required>
                       <Input inputMode="decimal" value={l.price} onChange={(e) => update(l.key, { price: e.target.value })} placeholder="0,00" />
                     </Field>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <Input className="h-9 max-w-md text-[13px]" placeholder="Detalle (color, estado…), opcional" value={l.notes} onChange={(e) => update(l.key, { notes: e.target.value })} />
+                    <Input
+                      className="h-10 max-w-md sm:h-9 sm:text-[13px]"
+                      placeholder="Detalle (color, estado…), opcional"
+                      value={l.notes}
+                      onChange={(e) => update(l.key, { notes: e.target.value })}
+                    />
                     <span className="flex items-center gap-2 text-sm">
                       {lot && <LotTag label={lot.label} />}
-                      <span className="num font-semibold">{money((Number(l.quantity) || 0) * (Number(l.price.replace(",", ".")) || 0))}</span>
+                      <span className="display num text-[20px]">{money((Number(l.quantity) || 0) * (Number(l.price.replace(",", ".")) || 0))}</span>
                     </span>
                   </div>
                   {problem && <p className="mt-2 text-[13px] font-medium text-danger">{problem}</p>}
@@ -202,9 +256,31 @@ export function SaleForm({
           </ul>
         </section>
 
-        <section className="rounded-[var(--radius-md)] border border-line bg-surface p-4">
-          <h2 className="mb-3 text-[15px] font-bold">Datos de la venta</h2>
+        <section className={clsx("rounded-[var(--radius-md)] border border-line bg-surface p-4 shadow-[var(--shadow-card)]", stepHidden(2))}>
+          <h2 className="display mb-3 text-[22px] uppercase">Datos de la venta</h2>
           <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <span className="text-[13px] font-semibold text-ink-soft">
+                Plataforma<span className="text-danger"> *</span>
+              </span>
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Plataforma">
+                {platforms.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={platformId === p.id}
+                    onClick={() => setPlatformId(p.id)}
+                    className={clsx(
+                      "press h-11 rounded-full border px-5 text-sm font-semibold",
+                      platformId === p.id ? "border-brand bg-brand text-on-brand" : "border-line-strong bg-surface text-ink hover:border-ink/40",
+                    )}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
             <Field label="Fecha" required>
               <Input type="date" value={date} max={today} onChange={(e) => setDate(e.target.value)} />
             </Field>
@@ -224,16 +300,6 @@ export function SaleForm({
                 <Input value={ownResponsible?.name ?? "Sin vincular"} disabled />
               </Field>
             )}
-            <Field label="Plataforma" required>
-              <Select value={platformId} onChange={(e) => setPlatformId(e.target.value)}>
-                <option value="">Elige…</option>
-                {platforms.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
             <Field label="Móvil utilizado">
               <Select value={mobileId} onChange={(e) => setMobileId(e.target.value)}>
                 <option value="">Sin indicar</option>
@@ -247,16 +313,28 @@ export function SaleForm({
             </Field>
             {needsShipping && (
               <>
-                <Field label="Empresa de transporte">
-                  <Select value={carrierId} onChange={(e) => setCarrierId(e.target.value)}>
-                    <option value="">Sin indicar</option>
+                <div className="flex animate-rise flex-col gap-1.5 sm:col-span-2">
+                  <span className="text-[13px] font-semibold text-ink-soft">Paquetería</span>
+                  <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Paquetería">
                     {carriers.map((c) => (
-                      <option key={c.id} value={c.id}>
+                      <button
+                        key={c.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={carrierId === c.id}
+                        onClick={() => setCarrierId(carrierId === c.id ? "" : c.id)}
+                        className={clsx(
+                          "press h-10 rounded-full border px-4 text-[13.5px] font-semibold",
+                          carrierId === c.id
+                            ? "border-brand bg-brand-soft text-ink ring-1 ring-brand"
+                            : "border-line-strong bg-surface text-ink hover:border-ink/40",
+                        )}
+                      >
                         {c.name}
-                      </option>
+                      </button>
                     ))}
-                  </Select>
-                </Field>
+                  </div>
+                </div>
                 <Field label="Estado del envío">
                   <Select value={shipping} onChange={(e) => setShipping(e.target.value as "pendiente" | "enviado")}>
                     <option value="pendiente">Pendiente</option>
@@ -278,9 +356,40 @@ export function SaleForm({
         </section>
       </div>
 
-      <aside className="lg:sticky lg:top-6 lg:self-start">
-        <section className="rounded-[var(--radius-md)] border border-line bg-surface p-4">
-          <h2 className="text-[15px] font-bold">Resumen</h2>
+      <aside className={clsx("lg:sticky lg:top-6 lg:self-start", stepHidden(3))}>
+        <section className="rounded-[var(--radius-md)] border border-line bg-surface p-4 shadow-[var(--shadow-card)]">
+          <h2 className="display text-[22px] uppercase">Resumen</h2>
+          {/* Repaso de todo (solo móvil, en el paso 3) */}
+          <div className="mt-3 flex flex-col gap-3 md:hidden">
+            <ul className="flex flex-col gap-2">
+              {lines.map((l) => {
+                const lot = l.lots?.find((x) => x.lot_id === l.lotId);
+                return (
+                  <li key={l.key} className="flex items-start justify-between gap-3 text-sm">
+                    <span className="min-w-0">
+                      <span className="block font-semibold">
+                        {l.quantity} × {variantDisplay(l.variant.product_name, l.variant.variant_name, l.variant.variant_count)}
+                      </span>
+                      {lot && <LotTag label={lot.label} />}
+                    </span>
+                    <span className="num font-semibold">{money((Number(l.quantity) || 0) * (Number(l.price.replace(",", ".")) || 0))}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="rounded-[var(--radius-sm)] bg-surface-2 px-3 py-2 text-[13px] text-ink-soft">
+              {[
+                platform?.name,
+                needsShipping ? (carriers.find((c) => c.id === carrierId)?.name ?? "Paquetería sin indicar") : "En mano",
+                needsShipping ? (shipping === "enviado" ? "Enviado" : "Pendiente de envío") : null,
+                isAdmin ? responsibles.find((r) => r.id === responsible)?.name : ownResponsible?.name,
+                date !== today ? date.split("-").reverse().join("/") : "Hoy",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              {label && <span className="block">Etiqueta: {label.name}</span>}
+            </p>
+          </div>
           <dl className="mt-3 flex flex-col gap-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted">Productos</dt>
@@ -288,11 +397,11 @@ export function SaleForm({
             </div>
             <div className="flex justify-between">
               <dt className="text-muted">Unidades</dt>
-              <dd className="num">{lines.reduce((a, l) => a + (Number(l.quantity) || 0), 0)}</dd>
+              <dd className="num">{totalUnits}</dd>
             </div>
-            <div className="flex justify-between border-t border-line pt-2 text-base font-bold">
-              <dt>Total</dt>
-              <dd className="num">{money(total)}</dd>
+            <div className="flex items-baseline justify-between border-t border-line pt-2">
+              <dt className="text-base font-bold">Total</dt>
+              <dd className="display num text-[34px]">{money(total)}</dd>
             </div>
           </dl>
           {error && (
@@ -300,13 +409,45 @@ export function SaleForm({
               {error}
             </Notice>
           )}
-          <Button variant="primary" className="mt-4 w-full" disabled={!canSave} onClick={save}>
+          <Button variant="primary" className="mt-4 w-full max-md:hidden" disabled={!canSave} onClick={save}>
             {pending ? "Guardando…" : "Registrar venta"}
           </Button>
           {!platformId && lines.length > 0 && <p className="mt-2 text-xs text-muted">Falta elegir la plataforma.</p>}
           {isAdmin && !responsible && lines.length > 0 && <p className="mt-1 text-xs text-muted">Falta elegir el responsable.</p>}
         </section>
       </aside>
+
+      {/* Botón fijo abajo (móvil), encima de la barra de navegación */}
+      <div className="fixed inset-x-0 bottom-[calc(4.6rem+env(safe-area-inset-bottom))] z-20 px-4 md:hidden no-print">
+        <div className="mx-auto flex max-w-xl items-center gap-3 rounded-[var(--radius-lg)] border border-line bg-surface/95 p-2 pl-4 shadow-[var(--shadow-pop)] backdrop-blur-md">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+              {lines.length ? `${totalUnits} ${totalUnits === 1 ? "ud." : "uds."}` : "Sin productos"}
+            </p>
+            <p className="display num text-[24px] leading-none">{money(total)}</p>
+          </div>
+          {step > 1 && (
+            <Button variant="ghost" onClick={() => goTo((step - 1) as 1 | 2)} aria-label="Paso anterior">
+              Atrás
+            </Button>
+          )}
+          {step === 1 && (
+            <Button variant="primary" disabled={!productsOk} onClick={() => goTo(2)}>
+              Siguiente →
+            </Button>
+          )}
+          {step === 2 && (
+            <Button variant="primary" disabled={!dataOk} onClick={() => goTo(3)}>
+              Siguiente →
+            </Button>
+          )}
+          {step === 3 && (
+            <Button variant="primary" disabled={!canSave} onClick={save}>
+              {pending ? "Guardando…" : "Registrar venta"}
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

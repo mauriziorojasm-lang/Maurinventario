@@ -35,9 +35,9 @@ export function ReturnForm({ saleId, saleNumber, lines, today }: { saleId: strin
               ["reembolso_sin_producto", "Reembolso sin devolver el producto", "Vinted o Wallapop devuelve el dinero y el cliente se queda el producto. No vuelve al stock y su coste se registra como pérdida."],
             ] as const
           ).map(([value, title, text]) => (
-            <label key={value} className={clsx("cursor-pointer rounded-[var(--radius-sm)] border p-3", type === value ? "border-ledger bg-ledger-soft" : "border-line hover:border-line-strong")}>
+            <label key={value} className={clsx("cursor-pointer rounded-[var(--radius-sm)] border p-3", type === value ? "border-brand bg-brand-soft" : "border-line hover:border-line-strong")}>
               <span className="flex items-center gap-2 font-semibold">
-                <input type="radio" name="tipo" checked={type === value} onChange={() => setType(value)} className="accent-[var(--color-ledger)]" />
+                <input type="radio" name="tipo" checked={type === value} onChange={() => setType(value)} className="accent-[var(--color-brand)]" />
                 {title}
               </span>
               <span className="mt-1 block text-[13px] text-ink-soft">{text}</span>

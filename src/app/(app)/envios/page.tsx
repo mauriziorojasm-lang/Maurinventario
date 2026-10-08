@@ -26,11 +26,11 @@ export default async function ShipmentsPage() {
       {error && <Notice tone="bad">{error}</Notice>}
 
       {!error && total === 0 && (
-        <section className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-ledger/30 bg-ledger-soft px-6 py-14 text-center">
-          <span aria-hidden className="flex h-14 w-14 items-center justify-center rounded-full bg-ledger text-[28px] font-bold text-white">
+        <section className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-good/30 bg-good-soft px-6 py-14 text-center">
+          <span aria-hidden className="flex h-14 w-14 items-center justify-center rounded-full bg-good text-[28px] font-bold text-on-good">
             ✓
           </span>
-          <h2 className="text-[22px] font-bold text-ledger-dark">Todo enviado</h2>
+          <h2 className="text-[22px] font-bold text-good-ink">Todo enviado</h2>
           <p className="max-w-[46ch] text-sm text-ink-soft">
             No queda ningún paquete pendiente. Cuando registres una venta de Vinted o Wallapop, aparecerá aquí hasta que la marques como enviada.
           </p>
@@ -43,11 +43,13 @@ export default async function ShipmentsPage() {
             <li key={g.key}>
               <Link
                 href={`/envios/${g.key}`}
-                className="group flex h-full flex-col gap-3 rounded-[var(--radius-md)] border border-line bg-surface p-4 transition-colors hover:border-ledger focus-visible:border-ledger"
+                className="group flex h-full flex-col gap-3 rounded-[var(--radius-md)] border border-line bg-surface p-4 transition-colors hover:border-brand focus-visible:border-brand"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <h2 className="text-[18px] font-bold text-ink">{g.name}</h2>
-                  <span className="num rounded-full bg-tag px-2.5 py-0.5 text-[15px] font-bold text-tag-ink">{g.count}</span>
+                  <h2 className="display text-[26px] uppercase text-ink">{g.name}</h2>
+                  <span className="display num flex h-10 min-w-10 items-center justify-center rounded-full bg-brand px-2 text-[22px] text-on-brand">
+                    {g.count}
+                  </span>
                 </div>
                 <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[13px]">
                   <dt className="text-muted">{g.count === 1 ? "Paquete" : "Paquetes"}</dt>
@@ -57,7 +59,7 @@ export default async function ShipmentsPage() {
                   <dt className="text-muted">Etiquetas</dt>
                   <dd className={g.withoutLabel ? "font-semibold text-warn" : ""}>{g.withoutLabel ? `${g.withoutLabel} sin etiqueta` : "Todas subidas"}</dd>
                 </dl>
-                <span className="mt-auto text-[13px] font-semibold text-ledger group-hover:underline">Ver detalle ›</span>
+                <span className="mt-auto text-[13px] font-semibold text-brand-ink group-hover:underline">Ver detalle ›</span>
               </Link>
             </li>
           ))}

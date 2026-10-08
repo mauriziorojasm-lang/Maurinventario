@@ -76,7 +76,7 @@ export function EditUserButton({ user, isMe }: { user: { id: string; email: stri
   const pwd = useServerAction(resetPasswordAction);
   return (
     <>
-      <button className="text-xs font-semibold text-ledger hover:underline" onClick={() => setOpen(true)}>
+      <button className="text-xs font-semibold text-brand-ink hover:underline" onClick={() => setOpen(true)}>
         Gestionar
       </button>
       <Modal
@@ -110,7 +110,7 @@ export function EditUserButton({ user, isMe }: { user: { id: string; email: stri
             </Select>
           </Field>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" disabled={isMe} checked={v.active} onChange={(e) => setV({ ...v, active: e.target.checked })} className="h-4 w-4 accent-[var(--color-ledger)]" />
+            <input type="checkbox" disabled={isMe} checked={v.active} onChange={(e) => setV({ ...v, active: e.target.checked })} className="h-4 w-4 accent-[var(--color-brand)]" />
             Activo (puede iniciar sesión)
           </label>
           <div className="border-t border-line pt-3">

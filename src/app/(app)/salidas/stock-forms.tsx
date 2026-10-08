@@ -192,7 +192,7 @@ export function NewAdjustmentButton({ today }: { today: string }) {
               key={d}
               type="button"
               onClick={() => setDir(d)}
-              className={clsx("rounded-[var(--radius-sm)] border px-3 py-2 text-sm font-semibold", dir === d ? "border-ledger bg-ledger-soft text-ledger-dark" : "border-line text-ink-soft")}
+              className={clsx("rounded-[var(--radius-sm)] border px-3 py-2 text-sm font-semibold", dir === d ? "border-brand bg-brand-soft text-ink" : "border-line text-ink-soft")}
             >
               {d === "salida" ? "Quitar unidades" : "Añadir unidades"}
             </button>

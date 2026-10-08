@@ -214,7 +214,7 @@ export function LinePriceEditor({ itemId, price, notes }: { itemId: string; pric
   const { run, pending, error } = useServerAction(updateSaleItem);
   return (
     <>
-      <button className="text-xs font-semibold text-ledger hover:underline" onClick={() => setOpen(true)}>
+      <button className="text-xs font-semibold text-brand-ink hover:underline" onClick={() => setOpen(true)}>
         Editar
       </button>
       <Modal

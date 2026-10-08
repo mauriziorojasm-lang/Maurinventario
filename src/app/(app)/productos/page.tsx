@@ -9,6 +9,7 @@ import { loadCatalogOptions } from "@/lib/options";
 import { signedPhotoUrls } from "@/lib/photos";
 import { createClient } from "@/lib/supabase/server";
 import { type SellableVariant, variantDisplay } from "@/lib/types";
+import { ProductCards, ProductThumb } from "./product-cards";
 
 export const metadata: Metadata = { title: "Productos" };
 
@@ -29,15 +30,6 @@ type ProductRow = {
   has_missing_data: boolean;
 };
 
-function Thumb({ url }: { url?: string }) {
-  return url ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={url} alt="" className="h-9 w-9 shrink-0 rounded-[4px] border border-line object-cover" />
-  ) : (
-    <span className="h-9 w-9 shrink-0 rounded-[4px] border border-dashed border-line-strong" aria-hidden />
-  );
-}
-
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const user = await requireUser();
   const sp = await searchParams;
@@ -48,6 +40,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     const q = first(sp.search) ?? "";
     const { data } = await supabase.rpc("search_sellable_variants", { p_query: q || null, p_only_in_stock: first(sp.only_in_stock) === "true", p_limit: 200 });
     const rows = (data ?? []) as SellableVariant[];
+    const sellerPhotos = await signedPhotoUrls(rows.map((r) => r.photo_path));
     return (
       <>
         <PageHeader title="Productos" description="Stock disponible y precio normal de cada producto." />
@@ -59,7 +52,18 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             { type: "checkbox", name: "only_in_stock", label: "Solo con stock" },
           ]}
         />
-        <Panel padded={false}>
+        <ProductCards
+          items={rows.map((v) => ({
+            key: v.variant_id,
+            href: `/productos/${v.product_id}`,
+            name: variantDisplay(v.product_name, v.variant_name, v.variant_count),
+            subtitle: [v.brand_name, v.sku].filter(Boolean).join(" · ") || "—",
+            photo: v.photo_path ? sellerPhotos.get(v.photo_path) : undefined,
+            stock: v.stock,
+            price: v.normal_sale_price,
+          }))}
+        />
+        <Panel padded={false} className={rows.length ? "max-md:hidden" : undefined}>
           {rows.length === 0 ? (
             <Empty title="No hay productos con esa búsqueda" />
           ) : (
@@ -77,9 +81,12 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                 {rows.map((v) => (
                   <Tr key={v.variant_id}>
                     <Td>
-                      <Link href={`/productos/${v.product_id}`} className="font-semibold hover:underline">
-                        {variantDisplay(v.product_name, v.variant_name, v.variant_count)}
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <ProductThumb url={v.photo_path ? sellerPhotos.get(v.photo_path) : undefined} size={40} />
+                        <Link href={`/productos/${v.product_id}`} className="font-semibold hover:underline">
+                          {variantDisplay(v.product_name, v.variant_name, v.variant_count)}
+                        </Link>
+                      </div>
                     </Td>
                     <Td>{v.brand_name ?? "—"}</Td>
                     <Td>{v.sku ?? "—"}</Td>
@@ -117,7 +124,11 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       <PageHeader
         title="Productos"
         description="Catálogo con stock, costes y ventas. Los productos sin unidades aparecen como «Sin stock»."
-        actions={<LinkButton href="/productos/nuevo" variant="primary">Nuevo producto</LinkButton>}
+        actions={
+          <LinkButton href="/productos/nuevo" variant="primary">
+            Nuevo producto
+          </LinkButton>
+        }
       />
       <FilterBar
         basePath="/productos"
@@ -132,11 +143,29 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         extra={<ExportLinks type="inventario" filters={filters} />}
       />
       {error && <Notice tone="bad">{error.message}</Notice>}
-      <Panel padded={false}>
+      <ProductCards
+        items={rows.map((r) => ({
+          key: r.product_id,
+          href: `/productos/${r.product_id}`,
+          name: r.product_name,
+          subtitle: [r.brand_name ?? "Marca pendiente", r.category_name, r.variant_count > 1 ? `${r.variant_count} variantes` : null]
+            .filter(Boolean)
+            .join(" · "),
+          photo: r.photo_path ? photos.get(r.photo_path) : undefined,
+          stock: r.stock,
+          price: r.normal_sale_price,
+          extra: [
+            { label: "Coste", value: money(r.weighted_avg_cost) },
+            { label: "Vendidas", value: units(r.units_sold) },
+          ],
+          warn: r.has_missing_data ? "Datos pendientes" : null,
+        }))}
+      />
+      <Panel padded={false} className={rows.length ? "max-md:mt-3 max-md:border-0 max-md:bg-transparent max-md:shadow-none" : undefined}>
         {rows.length === 0 ? (
           <Empty title="No hay productos con estos filtros" action={<LinkButton href="/productos/nuevo">Crear producto</LinkButton>} />
         ) : (
-          <Table>
+          <Table className="max-md:hidden">
             <thead>
               <tr>
                 <Th>Producto</Th>
@@ -154,13 +183,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                 <Tr key={r.product_id} muted={r.stock <= 0}>
                   <Td>
                     <div className="flex items-center gap-3">
-                      <Thumb url={r.photo_path ? photos.get(r.photo_path) : undefined} />
+                      <ProductThumb url={r.photo_path ? photos.get(r.photo_path) : undefined} size={40} />
                       <div className="min-w-0">
                         <Link href={`/productos/${r.product_id}`} className="font-semibold text-ink hover:underline">
                           {r.product_name}
                         </Link>
                         <span className="block text-xs text-muted">
-                          {[r.brand_name ?? "Marca pendiente", r.sku ?? "Sin SKU", r.variant_count > 1 ? `${r.variant_count} variantes` : null].filter(Boolean).join(", ")}
+                          {[r.brand_name ?? "Marca pendiente", r.sku ?? "Sin SKU", r.variant_count > 1 ? `${r.variant_count} variantes` : null]
+                            .filter(Boolean)
+                            .join(", ")}
                         </span>
                       </div>
                     </div>

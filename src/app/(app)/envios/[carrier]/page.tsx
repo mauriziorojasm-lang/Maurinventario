@@ -45,11 +45,11 @@ export default async function CarrierShipments({ params }: PageProps<"/envios/[c
       {error && <Notice tone="bad">{error}</Notice>}
 
       {!error && rows.length === 0 && (
-        <section className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-ledger/30 bg-ledger-soft px-6 py-12 text-center">
-          <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full bg-ledger text-[24px] font-bold text-white">
+        <section className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-good/30 bg-good-soft px-6 py-12 text-center">
+          <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full bg-good text-[24px] font-bold text-on-good">
             ✓
           </span>
-          <h2 className="text-[20px] font-bold text-ledger-dark">Todo enviado con {carrierName}</h2>
+          <h2 className="text-[20px] font-bold text-good-ink">Todo enviado con {carrierName}</h2>
           <LinkButton href="/envios">Ver otras paqueterías</LinkButton>
         </section>
       )}
@@ -70,7 +70,7 @@ export default async function CarrierShipments({ params }: PageProps<"/envios/[c
                 <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <p className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                      <Link href={`/ventas/${r.id}?desde=${carrier}`} className="font-bold text-ledger hover:underline">
+                      <Link href={`/ventas/${r.id}?desde=${carrier}`} className="font-bold text-brand-ink hover:underline">
                         {r.sale_number}
                       </Link>
                       <span className="num text-[13px] text-muted">{date(r.sale_date)}</span>

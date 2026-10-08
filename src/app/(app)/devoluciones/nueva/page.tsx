@@ -26,7 +26,7 @@ export default async function NewReturn({ searchParams }: { searchParams: Promis
         <Panel className="max-w-lg" title="¿De qué venta?">
           <form method="get" className="flex gap-2">
             <input name="numero" placeholder="Nº de venta, por ejemplo V-000072" defaultValue={number} className="h-10 flex-1 rounded-[var(--radius-sm)] border border-line-strong px-3 text-sm" />
-            <button className="h-10 rounded-[var(--radius-sm)] bg-ledger px-4 text-sm font-semibold text-white">Buscar</button>
+            <button className="h-10 rounded-[var(--radius-sm)] bg-brand px-4 text-sm font-semibold text-on-brand">Buscar</button>
           </form>
           {number && <Notice tone="warn" className="mt-3">No hay ninguna venta activa con el número {number}.</Notice>}
           <p className="mt-3 text-[13px] text-muted">También puedes abrir la venta y pulsar «Registrar devolución».</p>

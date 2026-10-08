@@ -11,6 +11,8 @@ export type SellableVariant = {
   stock: number;
   normal_sale_price: number | null;
   photo_path: string | null;
+  /** Enlace temporal a la miniatura (solo en el buscador). */
+  photo_url?: string | null;
 };
 
 export type AvailableLot = {

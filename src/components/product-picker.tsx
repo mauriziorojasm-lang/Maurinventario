@@ -11,6 +11,7 @@ import { variantDisplay } from "@/lib/types";
 import { money } from "@/lib/format";
 import { Button, Field, Input, Notice, clsx } from "./ui";
 import { Modal } from "./ui-client";
+import { ProductThumb } from "@/app/(app)/productos/product-cards";
 
 export function ProductPicker({
   onSelect,
@@ -94,12 +95,18 @@ export function ProductPicker({
         }}
       />
       {showList && (
-        <div id={listId} role="listbox" className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-[var(--radius-sm)] border border-line-strong bg-surface shadow-[0_12px_32px_-16px_rgba(24,32,43,0.45)]">
+        <div
+          id={listId}
+          role="listbox"
+          className="absolute z-20 mt-1 max-h-[min(24rem,55dvh)] w-full animate-rise overflow-y-auto rounded-[var(--radius-md)] border border-line-strong bg-surface shadow-[var(--shadow-pop)]"
+        >
           {loading && <p className="px-3 py-2.5 text-sm text-muted">Buscando…</p>}
           {!loading && error && <p className="px-3 py-2.5 text-sm text-danger">{error}</p>}
           {!loading && !error && results.length === 0 && (
             <div className="px-3 py-2.5 text-sm">
-              <p className="text-muted">No hay ningún producto con «{q.trim()}»{onlyInStock ? " con stock" : ""}.</p>
+              <p className="text-muted">
+                No hay ningún producto con «{q.trim()}»{onlyInStock ? " con stock" : ""}.
+              </p>
               {allowCreate && (
                 <Button
                   size="sm"
@@ -126,9 +133,10 @@ export function ProductPicker({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => choose(v)}
                 onMouseEnter={() => setActive(i)}
-                className={clsx("flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm", i === active && "bg-paper")}
+                className={clsx("flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors", i === active && "bg-brand-soft/60")}
               >
-                <span className="min-w-0">
+                <ProductThumb url={v.photo_url ?? undefined} size={44} />
+                <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{variantDisplay(v.product_name, v.variant_name, v.variant_count)}</span>
                   <span className="block truncate text-xs text-muted">
                     {[v.brand_name, v.category_name, v.sku].filter(Boolean).join(", ") || "Sin marca ni categoría"}
@@ -160,7 +168,17 @@ export function ProductPicker({
   );
 }
 
-function QuickCreate({ open, initialName, onClose, onCreated }: { open: boolean; initialName: string; onClose: () => void; onCreated: (name: string) => void }) {
+function QuickCreate({
+  open,
+  initialName,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  initialName: string;
+  onClose: () => void;
+  onCreated: (name: string) => void;
+}) {
   const [name, setName] = useState(initialName);
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");

@@ -16,16 +16,16 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md";
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-sm)] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-55 whitespace-nowrap";
+  "press inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-sm)] font-semibold disabled:cursor-not-allowed disabled:opacity-55 whitespace-nowrap select-none [&_svg]:shrink-0";
 const buttonVariants: Record<Variant, string> = {
-  primary: "bg-ledger text-white hover:bg-ledger-dark",
-  secondary: "bg-surface text-ink border border-line-strong hover:border-ink/40 hover:bg-paper",
-  ghost: "text-ink-soft hover:bg-ink/5",
+  primary: "bg-brand text-on-brand hover:bg-brand-strong shadow-[0_6px_16px_-8px_var(--brand)]",
+  secondary: "bg-surface text-ink border border-line-strong hover:border-ink/45",
+  ghost: "text-ink-soft hover:bg-ink/6",
   danger: "bg-surface text-danger border border-danger/40 hover:bg-danger-soft",
 };
 const buttonSizes: Record<Size, string> = {
-  sm: "h-8 px-2.5 text-[13px]",
-  md: "h-10 px-3.5 text-sm",
+  sm: "h-9 px-3 text-[13px] sm:h-8 sm:px-2.5",
+  md: "h-11 px-4 text-sm sm:h-10 sm:px-3.5",
 };
 
 export function buttonClass(variant: Variant = "secondary", size: Size = "md", className?: string) {
@@ -43,16 +43,17 @@ export function LinkButton({ variant = "secondary", size = "md", className, ...p
 // ---------------------------------------------------------------------
 // Formularios
 // ---------------------------------------------------------------------
+// Texto a 16px en el móvil: así el iPhone no hace zoom al escribir
 const control =
-  "w-full rounded-[var(--radius-sm)] border border-line-strong bg-surface px-3 text-sm text-ink placeholder:text-faint focus:border-ledger focus:outline-none focus:ring-2 focus:ring-ledger/15 disabled:bg-paper disabled:text-muted";
+  "w-full rounded-[var(--radius-sm)] border border-line-strong bg-surface px-3 text-base text-ink placeholder:text-faint transition-[border-color,box-shadow] focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/20 disabled:bg-paper disabled:text-muted sm:text-sm";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
-  return <input {...props} className={clsx(control, "h-10", props.type === "number" && "num", className)} />;
+  return <input {...props} className={clsx(control, "h-11 sm:h-10", props.type === "number" && "num", className)} />;
 }
 
 export function Select({ className, children, ...props }: ComponentProps<"select">) {
   return (
-    <select {...props} className={clsx(control, "h-10 pr-8", className)}>
+    <select {...props} className={clsx(control, "h-11 pr-8 sm:h-10", className)}>
       {children}
     </select>
   );
@@ -125,11 +126,11 @@ export function PageHeader({
   back?: { href: string; label: string };
 }) {
   return (
-    <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <header className="mb-5 flex animate-rise flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {back && <BackLink href={back.href} label={back.label} />}
-        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.01em] text-ink">{title}</h1>
-        {description && <p className="mt-1 max-w-[70ch] text-sm text-muted">{description}</p>}
+        <h1 className="display text-[34px] uppercase text-ink text-balance sm:text-[40px]">{title}</h1>
+        {description && <p className="mt-1.5 max-w-[70ch] text-sm text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -152,11 +153,11 @@ export function Panel({
   padded?: boolean;
 }) {
   return (
-    <section className={clsx("rounded-[var(--radius-md)] border border-line bg-surface", className)}>
+    <section className={clsx("overflow-hidden rounded-[var(--radius-md)] border border-line bg-surface shadow-[var(--shadow-card)]", className)}>
       {(title || actions) && (
         <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-4 py-3">
           <div>
-            {title && <h2 className="text-[15px] font-bold text-ink">{title}</h2>}
+            {title && <h2 className="display text-[19px] uppercase text-ink">{title}</h2>}
             {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
           </div>
           {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -183,16 +184,14 @@ export function Figures({
   return (
     <dl
       className={clsx(
-        "grid grid-cols-2 overflow-hidden rounded-[var(--radius-md)] border border-line bg-surface sm:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]",
+        "grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-md)] border border-line bg-line shadow-[var(--shadow-card)] max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]",
         className,
       )}
     >
       {items.map((it, i) => (
-        <div key={i} className="border-b border-r border-line px-4 py-3 last:border-r-0 sm:border-b-0">
-          <dt className="text-[13px] text-muted">{it.label}</dt>
-          <dd className={clsx("num mt-1 text-[22px] font-bold leading-tight", it.tone === "good" && "text-ledger", it.tone === "bad" && "text-danger")}>
-            {it.value}
-          </dd>
+        <div key={i} className="bg-surface px-4 py-3">
+          <dt className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-muted">{it.label}</dt>
+          <dd className={clsx("display num mt-1 text-[28px]", it.tone === "good" && "text-good", it.tone === "bad" && "text-danger")}>{it.value}</dd>
           {it.note && <p className="mt-0.5 text-xs text-muted">{it.note}</p>}
         </div>
       ))}
@@ -216,7 +215,7 @@ export function Th({ children, num, className }: { children?: ReactNode; num?: b
     <th
       scope="col"
       className={clsx(
-        "sticky top-0 border-b border-line bg-paper/95 px-3 py-2 text-left text-[12.5px] font-semibold text-muted",
+        "sticky top-0 border-b border-line bg-surface-2 px-3 py-2.5 text-left text-[11.5px] font-semibold uppercase tracking-[0.05em] text-muted",
         num && "text-right",
         className,
       )}
@@ -235,7 +234,7 @@ export function Td({ children, num, className, colSpan }: { children?: ReactNode
 }
 
 export function Tr({ children, className, muted }: { children: ReactNode; className?: string; muted?: boolean }) {
-  return <tr className={clsx("hover:bg-paper/60", muted && "text-muted", className)}>{children}</tr>;
+  return <tr className={clsx("transition-colors hover:bg-brand-soft/40", muted && "text-muted", className)}>{children}</tr>;
 }
 
 // ---------------------------------------------------------------------
@@ -244,7 +243,7 @@ export function Tr({ children, className, muted }: { children: ReactNode; classN
 type Tone = "neutral" | "good" | "warn" | "bad" | "info";
 const tones: Record<Tone, string> = {
   neutral: "bg-ink/6 text-ink-soft",
-  good: "bg-ledger-soft text-ledger-dark",
+  good: "bg-good-soft text-good-ink",
   warn: "bg-warn-soft text-warn",
   bad: "bg-danger-soft text-danger",
   info: "bg-info-soft text-info",
@@ -278,10 +277,10 @@ export function Notice({ tone = "info", title, children, className }: { tone?: T
     <div
       role={tone === "bad" ? "alert" : "status"}
       className={clsx(
-        "rounded-[var(--radius-sm)] border-l-4 px-3.5 py-2.5 text-sm",
+        "animate-rise rounded-[var(--radius-sm)] border-l-4 px-3.5 py-2.5 text-sm",
         tone === "bad" && "border-danger bg-danger-soft text-danger",
         tone === "warn" && "border-warn bg-warn-soft text-warn",
-        tone === "good" && "border-ledger bg-ledger-soft text-ledger-dark",
+        tone === "good" && "border-good bg-good-soft text-good-ink",
         tone === "info" && "border-info bg-info-soft text-info",
         tone === "neutral" && "border-line-strong bg-paper text-ink-soft",
         className,
@@ -353,7 +352,7 @@ export function Tabs({ items, current }: { items: { href: string; label: string;
           aria-current={t.key === current ? "page" : undefined}
           className={clsx(
             "-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-semibold",
-            t.key === current ? "border-ledger text-ink" : "border-transparent text-muted hover:text-ink",
+            t.key === current ? "border-brand text-ink" : "border-transparent text-muted hover:text-ink",
           )}
         >
           {t.label}

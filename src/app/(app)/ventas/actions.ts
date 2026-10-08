@@ -1,6 +1,7 @@
 "use server";
 import { callRpc } from "@/lib/rpc";
 import { friendlyError, type ActionResult } from "@/lib/errors";
+import { signedPhotoUrls } from "@/lib/photos";
 import { createClient } from "@/lib/supabase/server";
 import type { AvailableLot, SellableVariant } from "@/lib/types";
 
@@ -12,7 +13,10 @@ export async function searchVariants(query: string, onlyInStock = false): Promis
     p_limit: 25,
   });
   if (error) return { ok: false, error: friendlyError(error) };
-  return { ok: true, data: (data ?? []) as SellableVariant[] };
+  const rows = (data ?? []) as SellableVariant[];
+  // Miniaturas: enlaces temporales de las fotos (una sola petición)
+  const photos = await signedPhotoUrls(rows.map((r) => r.photo_path));
+  return { ok: true, data: rows.map((r) => ({ ...r, photo_url: r.photo_path ? (photos.get(r.photo_path) ?? null) : null })) };
 }
 
 export async function getLots(variantId: string): Promise<ActionResult<AvailableLot[]>> {

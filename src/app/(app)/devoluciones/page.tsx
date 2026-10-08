@@ -66,7 +66,7 @@ export default async function ReturnsPage({ searchParams }: { searchParams: Prom
                 <Tr key={r.return_item_id}>
                   <Td className="num">{date(r.return_date)}</Td>
                   <Td>
-                    <Link href={`/ventas/${r.sale_id}`} className="whitespace-nowrap font-semibold text-ledger hover:underline">
+                    <Link href={`/ventas/${r.sale_id}`} className="whitespace-nowrap font-semibold text-brand-ink hover:underline">
                       {r.sale_number}
                     </Link>
                   </Td>

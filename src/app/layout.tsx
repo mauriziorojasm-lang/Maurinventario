@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/public-sans";
+import "@fontsource/barlow-condensed/600.css";
+import "@fontsource/barlow-condensed/700.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,7 +11,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#18202b",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#121110" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0a09" },
+  ],
+  viewportFit: "cover",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

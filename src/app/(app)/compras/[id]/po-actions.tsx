@@ -98,7 +98,7 @@ export function ReceiveButton({ poId, orderNumber, items, extra, today }: { poId
                     </div>
                   ) : (
                     <details className="mt-1 text-[13px]">
-                      <summary className="cursor-pointer text-ledger">Llegó otro producto en su lugar</summary>
+                      <summary className="cursor-pointer text-brand-ink">Llegó otro producto en su lugar</summary>
                       <div className="mt-2">
                         <ProductPicker allowCreate onSelect={(v) => set(r.id, { sub: v, subQty: String(r.quantity_ordered), received: "0" })} placeholder="Busca el producto recibido" />
                       </div>

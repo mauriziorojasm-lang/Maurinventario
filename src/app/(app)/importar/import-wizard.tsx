@@ -139,7 +139,7 @@ export function ImportWizard({ existing, previous }: { existing: ImportExisting;
             aria-current={i === step ? "step" : undefined}
             className={clsx(
               "rounded-full border px-3 py-1 font-semibold",
-              i === step ? "border-ink bg-ink text-white" : i < step ? "border-ledger/40 bg-ledger-soft text-ledger-dark" : "border-line text-muted",
+              i === step ? "border-ink bg-ink text-paper" : i < step ? "border-good/40 bg-good-soft text-good-ink" : "border-line text-muted",
             )}
           >
             {i + 1}. {s}
@@ -150,11 +150,11 @@ export function ImportWizard({ existing, previous }: { existing: ImportExisting;
       {step === 0 && (
         <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
           <Panel title="Selecciona el archivo Excel">
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-line-strong bg-paper px-6 py-12 text-center hover:border-ledger">
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[var(--radius-md)] border-2 border-dashed border-line-strong bg-paper px-6 py-12 text-center hover:border-brand">
               <span className="text-base font-semibold">Elige tu archivo .xlsx</span>
               <span className="text-sm text-muted">Se lee en tu navegador. Nada se guarda hasta que confirmes al final.</span>
               <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="sr-only" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-              <span className="mt-2 rounded-[var(--radius-sm)] bg-ledger px-4 py-2 text-sm font-semibold text-white">{reading ? "Leyendo…" : "Elegir archivo"}</span>
+              <span className="mt-2 rounded-[var(--radius-sm)] bg-brand px-4 py-2 text-sm font-semibold text-on-brand">{reading ? "Leyendo…" : "Elegir archivo"}</span>
             </label>
             {readError && (
               <Notice tone="bad" className="mt-3">
@@ -333,7 +333,7 @@ export function ImportWizard({ existing, previous }: { existing: ImportExisting;
                 {merges.map((m, i) => (
                   <li key={i}>
                     <label className="flex items-start gap-2 text-sm">
-                      <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--color-ledger)]" checked={m.on} onChange={(e) => setMerges((ms) => ms.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
+                      <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--color-brand)]" checked={m.on} onChange={(e) => setMerges((ms) => ms.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} />
                       <span>
                         «{m.from}» es «{m.to}»
                         <span className="block text-xs text-muted">{m.reason}</span>
@@ -347,7 +347,7 @@ export function ImportWizard({ existing, previous }: { existing: ImportExisting;
 
           <Panel title="Reglas">
             <label className="flex items-start gap-2 text-sm">
-              <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--color-ledger)]" checked={zeroAsExit} onChange={(e) => setZeroAsExit(e.target.checked)} />
+              <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--color-brand)]" checked={zeroAsExit} onChange={(e) => setZeroAsExit(e.target.checked)} />
               <span>
                 Las ventas a 0 € son salidas sin venta (regalo, pérdida…)
                 <span className="block text-xs text-muted">No cuentan como ventas ni bajan el ticket medio; su coste se registra como pérdida. Si la nota dice «regalo» o «pérdida» se usa como motivo.</span>
@@ -487,7 +487,7 @@ export function ImportWizard({ existing, previous }: { existing: ImportExisting;
           {dry.errors.length > 0 && <ErrorsPanel r={dry} />}
           <Panel title="Confirmación del administrador">
             <label className="flex items-start gap-2 text-sm">
-              <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--color-ledger)]" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
+              <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--color-brand)]" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
               He revisado el resumen, los avisos y la simulación, y quiero importar estos datos.
             </label>
           </Panel>
@@ -510,7 +510,7 @@ export function ImportWizard({ existing, previous }: { existing: ImportExisting;
           <IntegrityPanel r={final} checks={checks} />
           {final.errors.length > 0 && <ErrorsPanel r={final} />}
           <div className="flex flex-wrap gap-2">
-            <Link href="/" className="rounded-[var(--radius-sm)] bg-ledger px-4 py-2 text-sm font-semibold text-white">
+            <Link href="/" className="rounded-[var(--radius-sm)] bg-brand px-4 py-2 text-sm font-semibold text-on-brand">
               Ir al inicio
             </Link>
             <Link href="/revision" className="rounded-[var(--radius-sm)] border border-line-strong px-4 py-2 text-sm font-semibold">

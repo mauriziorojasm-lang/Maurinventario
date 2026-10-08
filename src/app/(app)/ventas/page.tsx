@@ -9,6 +9,7 @@ import { loadSaleOptions } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import { type SaleLine, variantDisplay } from "@/lib/types";
 import { BulkShippingBar, SaleCheckbox, SelectAllCheckbox, ShippingSelection } from "./bulk-shipping";
+import { SaleCards, type CardSale } from "./sale-cards";
 
 export const metadata: Metadata = { title: "Ventas" };
 
@@ -63,14 +64,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     const rows = (data ?? []) as unknown as Row[];
     return (
       <>
-        <PageHeader
-          title="Mis ventas"
-          actions={
-            <LinkButton href="/ventas/nueva" variant="primary">
-              Nueva venta
-            </LinkButton>
-          }
-        />
+        <PageHeader title="Mis ventas" />
         <FilterBar
           basePath="/ventas"
           values={filters}
@@ -91,11 +85,25 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
         {error && <Notice tone="bad">{error.message}</Notice>}
         <ShippingSelection>
           <BulkShippingBar />
-          <Panel padded={false}>
+          <SaleCards
+            sales={rows.map<CardSale>((s) => ({
+              id: s.id,
+              number: s.sale_number,
+              date: s.sale_date,
+              total: s.sale_items.reduce((a, i) => a + i.quantity * Number(i.unit_price), 0),
+              platform: s.platforms?.name ?? "",
+              shipping: shipOf(s.shipping_status, !!s.platforms?.requires_shipping),
+              lines: s.sale_items.map((i) => ({
+                quantity: i.quantity,
+                text: variantDisplay(i.product_variants?.products?.name ?? "", i.product_variants?.name),
+              })),
+            }))}
+          />
+          <Panel padded={false} className={rows.length ? "max-md:mt-3 max-md:border-0 max-md:bg-transparent max-md:shadow-none" : undefined}>
             {rows.length === 0 ? (
               <Empty title="Aún no hay ventas con estos filtros" action={<LinkButton href="/ventas/nueva">Registrar una venta</LinkButton>} />
             ) : (
-              <Table>
+              <Table className="max-md:hidden">
                 <thead>
                   <tr>
                     <Th className="w-8">
@@ -122,7 +130,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                       </Td>
                       <Td className="num">{date(s.sale_date)}</Td>
                       <Td>
-                        <Link className="whitespace-nowrap font-semibold text-ledger hover:underline" href={`/ventas/${s.id}`}>
+                        <Link className="whitespace-nowrap font-semibold text-brand-ink hover:underline" href={`/ventas/${s.id}`}>
                           {s.sale_number}
                         </Link>
                       </Td>
@@ -166,15 +174,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHeader
-        title="Ventas"
-        description="Cada línea muestra de qué pedido/lote salió la unidad y el beneficio real con el coste de ese lote."
-        actions={
-          <LinkButton href="/ventas/nueva" variant="primary">
-            Nueva venta
-          </LinkButton>
-        }
-      />
+      <PageHeader title="Ventas" description="Cada línea muestra de qué pedido/lote salió la unidad y el beneficio real con el coste de ese lote." />
       <FilterBar
         basePath="/ventas"
         values={filters}
@@ -246,11 +246,12 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
       )}
       <ShippingSelection>
         <BulkShippingBar />
-        <Panel padded={false}>
+        <SaleCards sales={groupLines(rows)} />
+        <Panel padded={false} className={rows.length ? "max-md:mt-3 max-md:border-0 max-md:bg-transparent max-md:shadow-none" : undefined}>
           {rows.length === 0 ? (
             <Empty title="No hay ventas con estos filtros" action={<LinkButton href="/ventas/nueva">Registrar una venta</LinkButton>} />
           ) : (
-            <Table>
+            <Table className="max-md:hidden">
               <thead>
                 <tr>
                   <Th className="w-8">
@@ -282,7 +283,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                     </Td>
                     <Td className="num">{date(l.sale_date)}</Td>
                     <Td>
-                      <Link className="whitespace-nowrap font-semibold text-ledger hover:underline" href={`/ventas/${l.sale_id}`}>
+                      <Link className="whitespace-nowrap font-semibold text-brand-ink hover:underline" href={`/ventas/${l.sale_id}`}>
                         {l.sale_number}
                       </Link>
                     </Td>
@@ -319,4 +320,30 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
       </ShippingSelection>
     </>
   );
+}
+
+/** Junta las líneas de cada venta en una sola tarjeta (mismo orden que la tabla). */
+function groupLines(rows: SaleLine[]): CardSale[] {
+  const map = new Map<string, CardSale>();
+  for (const l of rows) {
+    let c = map.get(l.sale_id);
+    if (!c) {
+      c = {
+        id: l.sale_id,
+        number: l.sale_number,
+        date: l.sale_date,
+        total: 0,
+        profit: 0,
+        platform: l.platform_name,
+        responsible: l.responsible_name,
+        shipping: shipOf(l.shipping_status, l.requires_shipping),
+        lines: [],
+      };
+      map.set(l.sale_id, c);
+    }
+    c.total += Number(l.net_amount);
+    c.profit = (c.profit ?? 0) + Number(l.profit);
+    c.lines.push({ quantity: l.quantity, text: variantDisplay(l.product_name, l.variant_name), lot: l.lot_label, returned: l.returned_qty });
+  }
+  return [...map.values()];
 }

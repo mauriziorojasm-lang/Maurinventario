@@ -53,7 +53,7 @@ export function ShippingSelection({ children }: { children: ReactNode }) {
   return <SelectionCtx.Provider value={value}>{children}</SelectionCtx.Provider>;
 }
 
-const boxClass = "h-[18px] w-[18px] cursor-pointer accent-[var(--color-ledger)] align-middle";
+const boxClass = "h-[18px] w-[18px] cursor-pointer accent-[var(--color-brand)] align-middle";
 
 /** Casilla de una venta. Las ventas en mano (sin envío) no tienen casilla. */
 export function SaleCheckbox({ saleId, status, label }: { saleId: string; status: Status | null; label: string }) {
@@ -101,7 +101,7 @@ export function BulkShippingBar() {
     ) : null;
 
   return (
-    <div className="sticky top-14 z-10 mb-3 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-ledger/40 bg-surface px-4 py-2.5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)] lg:top-2">
+    <div className="sticky top-14 z-10 mb-3 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-brand/60 bg-surface px-4 py-2.5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)] lg:top-2">
       <span className="text-[14px] font-semibold">
         {n} {n === 1 ? "venta seleccionada" : "ventas seleccionadas"}
       </span>

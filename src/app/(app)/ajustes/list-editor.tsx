@@ -46,13 +46,13 @@ function RowEditor({ list, row, kind, onDone }: { list: Parameters<typeof saveLi
       )}
       {kind === "platform" && (
         <label className="flex items-center gap-1.5 text-[13px]">
-          <input type="checkbox" checked={!!v.requires_shipping} onChange={(e) => setV({ ...v, requires_shipping: e.target.checked })} className="accent-[var(--color-ledger)]" />
+          <input type="checkbox" checked={!!v.requires_shipping} onChange={(e) => setV({ ...v, requires_shipping: e.target.checked })} className="accent-[var(--color-brand)]" />
           Con envío
         </label>
       )}
       {kind !== "simple" && (
         <label className="flex items-center gap-1.5 text-[13px]">
-          <input type="checkbox" checked={v.active !== false} onChange={(e) => setV({ ...v, active: e.target.checked })} className="accent-[var(--color-ledger)]" />
+          <input type="checkbox" checked={v.active !== false} onChange={(e) => setV({ ...v, active: e.target.checked })} className="accent-[var(--color-brand)]" />
           Activo
         </label>
       )}
