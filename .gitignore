@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# MaurInventario: nunca subir datos reales del negocio ni archivos locales de Supabase
+!.env.example
+/data/
+*.xlsx
+*.xls
+*.csv
+supabase/.temp/
+supabase/.branches/

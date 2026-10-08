@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Gestión de usuarios. Necesita la service role key (solo en el servidor)
+ * Gestión de usuarios. Necesita la secret key de Supabase (solo en el servidor)
  * porque crear usuarios o cambiar contraseñas de otros no se puede hacer
  * con la clave pública. Siempre se comprueba antes que quien lo pide es admin.
  */
@@ -26,7 +26,7 @@ export async function createUserAction(input: {
   try {
     admin = createAdminClient();
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Falta configurar la service role key." };
+    return { ok: false, error: e instanceof Error ? e.message : "Falta configurar SUPABASE_SECRET_KEY." };
   }
   const { data, error } = await admin.auth.admin.createUser({
     email,
@@ -39,8 +39,10 @@ export async function createUserAction(input: {
     return { ok: false, error: /already been registered|already exists/i.test(error?.message ?? "") ? "Ya existe un usuario con ese email." : (error?.message ?? "No se ha podido crear el usuario.") };
   }
   const supabase = await createClient();
-  // El trigger crea el perfil; nos aseguramos del rol y del nombre
-  await supabase.from("profiles").update({ role: input.role, full_name: input.full_name.trim() || null }).eq("id", data.user.id);
+  // El trigger crea el perfil (desactivado por seguridad); como lo ha creado un
+  // administrador, lo activamos con su rol y su nombre.
+  const { error: e1 } = await supabase.from("profiles").update({ role: input.role, active: true, full_name: input.full_name.trim() || null }).eq("id", data.user.id);
+  if (e1) return { ok: false, error: `Usuario creado, pero no se ha podido activar: ${friendlyError(e1)}. Actívalo desde «Gestionar».` };
   if (input.responsible === "new") {
     const { error: e2 } = await supabase.from("responsibles").insert({ name: input.full_name.trim() || email, email, profile_id: data.user.id });
     if (e2) return { ok: false, error: `Usuario creado, pero no el responsable: ${friendlyError(e2)}` };
@@ -63,7 +65,7 @@ export async function updateUserAction(input: { id: string; role: "admin" | "ven
     const admin = createAdminClient();
     await admin.auth.admin.updateUserById(input.id, { ban_duration: input.active ? "none" : "876000h", app_metadata: { role: input.role } });
   } catch {
-    // Sin service role el perfil ya queda desactivado: la base de datos le niega el acceso igualmente.
+    // Sin la secret key el perfil ya queda desactivado: la base de datos le niega el acceso igualmente.
   }
   revalidatePath("/usuarios");
   return { ok: true, message: "Usuario actualizado." };
@@ -76,7 +78,7 @@ export async function resetPasswordAction(id: string, password: string): Promise
   try {
     admin = createAdminClient();
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Falta configurar la service role key." };
+    return { ok: false, error: e instanceof Error ? e.message : "Falta configurar SUPABASE_SECRET_KEY." };
   }
   const { error } = await admin.auth.admin.updateUserById(id, { password });
   if (error) return { ok: false, error: error.message };

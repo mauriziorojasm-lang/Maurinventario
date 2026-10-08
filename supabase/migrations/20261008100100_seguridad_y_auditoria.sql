@@ -90,21 +90,30 @@ as $$
 declare
   v_role public.app_role;
   v_meta_role text := new.raw_app_meta_data ->> 'role';
+  v_active boolean;
 begin
   if v_meta_role in ('admin', 'vendedor') then
+    -- Creado por el administrador desde la aplicación (rol fijado por el servidor)
     v_role := v_meta_role::public.app_role;
+    v_active := true;
   elsif not exists (select 1 from public.profiles) then
+    -- Primer usuario del proyecto: administrador
     v_role := 'admin';
+    v_active := true;
   else
+    -- Cualquier otro alta (p. ej. desde el panel de Supabase o un registro público
+    -- activado por error) entra DESACTIVADA hasta que un admin la active.
     v_role := 'vendedor';
+    v_active := false;
   end if;
 
-  insert into public.profiles (id, email, full_name, role)
+  insert into public.profiles (id, email, full_name, role, active)
   values (
     new.id,
     coalesce(new.email, ''),
     nullif(trim(coalesce(new.raw_user_meta_data ->> 'full_name', '')), ''),
-    v_role
+    v_role,
+    v_active
   )
   on conflict (id) do nothing;
   return new;

@@ -57,7 +57,7 @@ run("Lógica de negocio de MaurInventario", () => {
   beforeAll(async () => {
     db = await createTestDatabase();
     admin = await createUser(db, "admin@prueba.local");
-    seller = await createUser(db, "vendedor@prueba.local");
+    seller = await createUser(db, "vendedor@prueba.local", "vendedor");
     respAdmin = (
       await selectAs<{ id: string }>(db, admin, "insert into responsibles (name, profile_id, is_partner) values ('Responsable A', $1, true) returning id", [admin])
     )[0].id;
@@ -387,6 +387,22 @@ run("Lógica de negocio de MaurInventario", () => {
     await expect(
       asUser(db, seller, (q) => q("insert into storage.objects (bucket_id, name) values ('product-photos', 'x.png')")),
     ).rejects.toThrow(/row-level security/);
+  });
+
+  it("un alta que no viene del administrador entra desactivada y no ve nada", async () => {
+    const intruso = await createUser(db, "desconocido@prueba.local");
+    const prof = await db.client.query("select role, active from profiles where id = $1", [intruso]);
+    expect(prof.rows[0]).toEqual({ role: "vendedor", active: false });
+    expect(await selectAs(db, intruso, "select * from products")).toEqual([]);
+    await expect(rpc(db, intruso, "search_sellable_variants", "a")).rejects.toThrow(/no está activo/);
+    const creadoPorAdmin = await createUser(db, "nuevo@prueba.local", "vendedor");
+    const p2 = await db.client.query("select active from profiles where id = $1", [creadoPorAdmin]);
+    expect(p2.rows[0].active).toBe(true);
+  });
+
+  it("nadie puede escribir en la auditoría directamente", async () => {
+    await expect(rpc(db, seller, "log_action", "x", "y", "z", "falso", null)).rejects.toThrow(/permission denied/);
+    await expect(asUser(db, admin, (q) => q("insert into audit_log (action, entity) values ('x','y')"))).rejects.toThrow();
   });
 
   it("no se puede quitar el último administrador", async () => {

@@ -16,7 +16,7 @@ export default async function UsersPage() {
   ]);
   const respOf = new Map((resp ?? []).filter((r) => r.profile_id).map((r) => [r.profile_id as string, r.name as string]));
   const free = (resp ?? []).filter((r) => !r.profile_id).map((r) => ({ id: r.id, name: r.name }));
-  const serviceRole = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRole = !!process.env.SUPABASE_SECRET_KEY;
   return (
     <>
       <PageHeader
@@ -25,7 +25,7 @@ export default async function UsersPage() {
         actions={<NewUserButton freeResponsibles={free} />}
       />
       {!serviceRole && (
-        <Notice tone="warn" className="mb-4" title="Falta SUPABASE_SERVICE_ROLE_KEY">
+        <Notice tone="warn" className="mb-4" title="Falta SUPABASE_SECRET_KEY">
           Sin ella no se pueden crear usuarios ni cambiar contraseñas desde aquí. Añádela en las variables de entorno (ver README) o crea los usuarios desde el panel de Supabase.
         </Notice>
       )}

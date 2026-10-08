@@ -8,6 +8,11 @@
 revoke execute on all functions in schema public from public, anon;
 grant execute on all functions in schema public to authenticated, service_role;
 
+-- Funciones internas que nadie debe llamar directamente desde la API
+revoke execute on function public.log_action(text, text, text, text, jsonb) from authenticated;
+revoke execute on function public.audit_row_change(), public.apply_inventory_movement(), public.prevent_movement_changes(),
+  public.check_sku_unique(), public.set_updated_at(), public.handle_new_user(), public.protect_last_admin() from authenticated;
+
 revoke execute on all functions in schema private from public, anon, authenticated;
 grant usage on schema private to authenticated, service_role;
 -- Utilidades puras de lectura de parámetros que usan los informes

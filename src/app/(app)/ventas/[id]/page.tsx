@@ -40,6 +40,10 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
     ? ((await supabase.from("v_returns").select("id, return_date, return_type, reason, product_name, variant_name, quantity, refund_amount, restocked, lost_cost").eq("sale_id", id).order("return_date")).data ?? [])
     : [];
   const refundTotal = returns.reduce((a, r) => a + Number(r.refund_amount), 0);
+  const netProfit =
+    isAdmin && returns.length
+      ? ((await supabase.from("v_sale_lines").select("profit").eq("sale_id", id)).data ?? []).reduce((a, r) => a + Number(r.profit), 0)
+      : null;
 
   const opts = await loadSaleOptions();
   const s = sale as unknown as {
@@ -167,7 +171,8 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
             </Table>
             {isAdmin && returns.length > 0 && (
               <p className="border-t border-line px-3 py-2.5 text-[13px] text-muted">
-                El beneficio de arriba es antes de devoluciones. Reembolsado: <span className="num font-semibold text-ink">{money(refundTotal)}</span>. Los informes ya lo descuentan.
+                Reembolsado: <span className="num font-semibold text-ink">{money(refundTotal)}</span>. Beneficio después de devoluciones:{" "}
+                <span className={`num font-semibold ${Number(netProfit) < 0 ? "text-danger" : "text-ink"}`}>{money(netProfit)}</span>. Los informes ya usan esta cifra.
               </p>
             )}
           </Panel>

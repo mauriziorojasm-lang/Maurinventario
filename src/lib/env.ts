@@ -9,7 +9,7 @@ export function supabaseUrl(): string {
 }
 
 export function supabaseAnonKey(): string {
-  const v = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!v) throw new Error("Falta la variable de entorno NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const v = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!v) throw new Error("Falta la variable de entorno NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
   return v;
 }

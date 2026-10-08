@@ -17,7 +17,7 @@ run("Importación de Excel en la base de datos", () => {
   beforeAll(async () => {
     db = await createTestDatabase();
     admin = await createUser(db, "admin@prueba.local");
-    seller = await createUser(db, "vendedor@prueba.local");
+    seller = await createUser(db, "vendedor@prueba.local", "vendedor");
   }, 60_000);
   afterAll(async () => db?.close());
 
