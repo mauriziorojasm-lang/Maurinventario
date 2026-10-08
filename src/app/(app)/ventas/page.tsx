@@ -1,65 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ExportLinks, FilterBar } from "@/components/filter-bar";
-import {
-  Badge,
-  Empty,
-  Figures,
-  LinkButton,
-  LotTag,
-  Notice,
-  PageHeader,
-  Pagination,
-  Panel,
-  Table,
-  Td,
-  Th,
-  Tr,
-} from "@/components/ui";
+import { Badge, Empty, Figures, LinkButton, LotTag, Notice, PageHeader, Pagination, Panel, Table, Td, Th, Tr } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
-import {
-  filtersFrom,
-  pageFrom,
-  toQuery,
-  type SearchParams,
-} from "@/lib/filters";
+import { filtersFrom, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
 import { date, money, units } from "@/lib/format";
 import { loadSaleOptions } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import { type SaleLine, variantDisplay } from "@/lib/types";
-import {
-  BulkShippingBar,
-  SaleCheckbox,
-  SelectAllCheckbox,
-  ShippingSelection,
-} from "./bulk-shipping";
+import { BulkShippingBar, SaleCheckbox, SelectAllCheckbox, ShippingSelection } from "./bulk-shipping";
 
 export const metadata: Metadata = { title: "Ventas" };
 
 type Ship = "pendiente" | "enviado" | null;
-const shipOf = (status: string | null, requires: boolean): Ship =>
-  requires ? (status === "enviado" ? "enviado" : "pendiente") : null;
+const shipOf = (status: string | null, requires: boolean): Ship => (requires ? (status === "enviado" ? "enviado" : "pendiente") : null);
 
-function ShippingBadge({
-  status,
-  requires,
-}: {
-  status: string | null;
-  requires: boolean;
-}) {
+function ShippingBadge({ status, requires }: { status: string | null; requires: boolean }) {
   if (!requires) return <span className="text-xs text-muted">En mano</span>;
-  return status === "enviado" ? (
-    <Badge tone="good">Enviado</Badge>
-  ) : (
-    <Badge tone="warn">Pendiente</Badge>
-  );
+  return status === "enviado" ? <Badge tone="good">Enviado</Badge> : <Badge tone="warn">Pendiente</Badge>;
 }
 
-export default async function SalesPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
+export default async function SalesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const user = await requireUser();
   const sp = await searchParams;
   const filters = filtersFrom(sp);
@@ -82,8 +43,7 @@ export default async function SalesPage({
       .range(from, to);
     if (filters.from) q = q.gte("sale_date", filters.from);
     if (filters.to) q = q.lte("sale_date", filters.to);
-    if (filters.shipping_status)
-      q = q.eq("shipping_status", filters.shipping_status);
+    if (filters.shipping_status) q = q.eq("shipping_status", filters.shipping_status);
     const { data, count, error } = await q;
     type Row = {
       id: string;
@@ -133,14 +93,7 @@ export default async function SalesPage({
           <BulkShippingBar />
           <Panel padded={false}>
             {rows.length === 0 ? (
-              <Empty
-                title="Aún no hay ventas con estos filtros"
-                action={
-                  <LinkButton href="/ventas/nueva">
-                    Registrar una venta
-                  </LinkButton>
-                }
-              />
+              <Empty title="Aún no hay ventas con estos filtros" action={<LinkButton href="/ventas/nueva">Registrar una venta</LinkButton>} />
             ) : (
               <Table>
                 <thead>
@@ -149,10 +102,7 @@ export default async function SalesPage({
                       <SelectAllCheckbox
                         sales={rows.map((s) => ({
                           id: s.id,
-                          status: shipOf(
-                            s.shipping_status,
-                            !!s.platforms?.requires_shipping,
-                          ),
+                          status: shipOf(s.shipping_status, !!s.platforms?.requires_shipping),
                         }))}
                       />
                     </Th>
@@ -168,61 +118,32 @@ export default async function SalesPage({
                   {rows.map((s) => (
                     <Tr key={s.id}>
                       <Td>
-                        <SaleCheckbox
-                          saleId={s.id}
-                          status={shipOf(
-                            s.shipping_status,
-                            !!s.platforms?.requires_shipping,
-                          )}
-                          label={`la venta ${s.sale_number}`}
-                        />
+                        <SaleCheckbox saleId={s.id} status={shipOf(s.shipping_status, !!s.platforms?.requires_shipping)} label={`la venta ${s.sale_number}`} />
                       </Td>
                       <Td className="num">{date(s.sale_date)}</Td>
                       <Td>
-                        <Link
-                          className="whitespace-nowrap font-semibold text-ledger hover:underline"
-                          href={`/ventas/${s.id}`}
-                        >
+                        <Link className="whitespace-nowrap font-semibold text-ledger hover:underline" href={`/ventas/${s.id}`}>
                           {s.sale_number}
                         </Link>
                       </Td>
                       <Td>
                         {s.sale_items.map((i, k) => (
                           <span key={k} className="block">
-                            {i.quantity} x{" "}
-                            {variantDisplay(
-                              i.product_variants?.products?.name ?? "",
-                              i.product_variants?.name,
-                            )}
+                            {i.quantity} x {variantDisplay(i.product_variants?.products?.name ?? "", i.product_variants?.name)}
                           </span>
                         ))}
                       </Td>
                       <Td>{s.platforms?.name}</Td>
                       <Td>
-                        <ShippingBadge
-                          status={s.shipping_status}
-                          requires={!!s.platforms?.requires_shipping}
-                        />
+                        <ShippingBadge status={s.shipping_status} requires={!!s.platforms?.requires_shipping} />
                       </Td>
-                      <Td num>
-                        {money(
-                          s.sale_items.reduce(
-                            (a, i) => a + i.quantity * Number(i.unit_price),
-                            0,
-                          ),
-                        )}
-                      </Td>
+                      <Td num>{money(s.sale_items.reduce((a, i) => a + i.quantity * Number(i.unit_price), 0))}</Td>
                     </Tr>
                   ))}
                 </tbody>
               </Table>
             )}
-            <Pagination
-              page={page}
-              size={size}
-              total={count ?? 0}
-              hrefFor={hrefFor}
-            />
+            <Pagination page={page} size={size} total={count ?? 0} hrefFor={hrefFor} />
           </Panel>
         </ShippingSelection>
       </>
@@ -230,9 +151,7 @@ export default async function SalesPage({
   }
 
   const [{ data, count, error }, { data: summary }] = await Promise.all([
-    supabase
-      .rpc("report_sale_lines", { p_filters: filters }, { count: "exact" })
-      .range(from, to),
+    supabase.rpc("report_sale_lines", { p_filters: filters }, { count: "exact" }).range(from, to),
     supabase.rpc("report_sales_summary", { p_filters: filters }),
   ]);
   const rows = (data ?? []) as SaleLine[];
@@ -314,10 +233,7 @@ export default async function SalesPage({
             {
               label: "Facturación",
               value: money(sum.net_amount),
-              note:
-                sum.refunded_amount > 0
-                  ? `${money(sum.refunded_amount)} devueltos`
-                  : undefined,
+              note: sum.refunded_amount > 0 ? `${money(sum.refunded_amount)} devueltos` : undefined,
             },
             { label: "Ticket medio", value: money(sum.avg_ticket) },
             {
@@ -332,14 +248,7 @@ export default async function SalesPage({
         <BulkShippingBar />
         <Panel padded={false}>
           {rows.length === 0 ? (
-            <Empty
-              title="No hay ventas con estos filtros"
-              action={
-                <LinkButton href="/ventas/nueva">
-                  Registrar una venta
-                </LinkButton>
-              }
-            />
+            <Empty title="No hay ventas con estos filtros" action={<LinkButton href="/ventas/nueva">Registrar una venta</LinkButton>} />
           ) : (
             <Table>
               <thead>
@@ -369,74 +278,43 @@ export default async function SalesPage({
                 {rows.map((l) => (
                   <Tr key={l.sale_item_id}>
                     <Td>
-                      <SaleCheckbox
-                        saleId={l.sale_id}
-                        status={shipOf(l.shipping_status, l.requires_shipping)}
-                        label={`la venta ${l.sale_number}`}
-                      />
+                      <SaleCheckbox saleId={l.sale_id} status={shipOf(l.shipping_status, l.requires_shipping)} label={`la venta ${l.sale_number}`} />
                     </Td>
                     <Td className="num">{date(l.sale_date)}</Td>
                     <Td>
-                      <Link
-                        className="whitespace-nowrap font-semibold text-ledger hover:underline"
-                        href={`/ventas/${l.sale_id}`}
-                      >
+                      <Link className="whitespace-nowrap font-semibold text-ledger hover:underline" href={`/ventas/${l.sale_id}`}>
                         {l.sale_number}
                       </Link>
                     </Td>
                     <Td>
-                      <Link
-                        href={`/productos/${l.product_id}`}
-                        className="hover:underline"
-                      >
+                      <Link href={`/productos/${l.product_id}`} className="hover:underline">
                         {variantDisplay(l.product_name, l.variant_name)}
                       </Link>
-                      {l.line_notes && (
-                        <span className="block text-xs text-muted">
-                          {l.line_notes}
-                        </span>
-                      )}
+                      {l.line_notes && <span className="block text-xs text-muted">{l.line_notes}</span>}
                     </Td>
                     <Td>
                       <LotTag label={l.lot_label} />
                     </Td>
                     <Td num>
                       {l.quantity}
-                      {l.returned_qty > 0 && (
-                        <span className="block text-xs text-danger">
-                          −{l.returned_qty} dev.
-                        </span>
-                      )}
+                      {l.returned_qty > 0 && <span className="block text-xs text-danger">−{l.returned_qty} dev.</span>}
                     </Td>
                     <Td num>{money(l.unit_price)}</Td>
                     <Td num>{money(l.net_amount)}</Td>
-                    <Td
-                      num
-                      className={
-                        Number(l.profit) < 0 ? "text-danger" : undefined
-                      }
-                    >
+                    <Td num className={Number(l.profit) < 0 ? "text-danger" : undefined}>
                       {money(l.profit)}
                     </Td>
                     <Td>{l.responsible_name}</Td>
                     <Td>{l.platform_name}</Td>
                     <Td>
-                      <ShippingBadge
-                        status={l.shipping_status}
-                        requires={l.requires_shipping}
-                      />
+                      <ShippingBadge status={l.shipping_status} requires={l.requires_shipping} />
                     </Td>
                   </Tr>
                 ))}
               </tbody>
             </Table>
           )}
-          <Pagination
-            page={page}
-            size={size}
-            total={count ?? 0}
-            hrefFor={hrefFor}
-          />
+          <Pagination page={page} size={size} total={count ?? 0} hrefFor={hrefFor} />
         </Panel>
       </ShippingSelection>
     </>

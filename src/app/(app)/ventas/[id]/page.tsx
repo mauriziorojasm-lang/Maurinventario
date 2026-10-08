@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Badge, LinkButton, LotTag, Notice, PageHeader, Panel, Table, Td, Th, Tr } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { RETURN_TYPES, date, dateTime, money } from "@/lib/format";
+import { signLabels } from "@/lib/labels";
 import { loadSaleOptions } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import { variantDisplay } from "@/lib/types";
@@ -15,6 +16,8 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
   const isAdmin = user.role === "admin";
   const { id } = await params;
   const sp = await searchParams;
+  // Si se llega desde «Pendientes de envío», el enlace de volver lleva allí
+  const fromShipments = typeof sp.desde === "string" && /^[0-9a-z-]{1,40}$/i.test(sp.desde) ? sp.desde : null;
   const supabase = await createClient();
 
   const { data: sale } = await supabase
@@ -37,7 +40,13 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
   const lotMap = new Map(lots.map((l) => [l.lot_id as string, l]));
 
   const returns = isAdmin
-    ? ((await supabase.from("v_returns").select("id, return_date, return_type, reason, product_name, variant_name, quantity, refund_amount, restocked, lost_cost").eq("sale_id", id).order("return_date")).data ?? [])
+    ? ((
+        await supabase
+          .from("v_returns")
+          .select("id, return_date, return_type, reason, product_name, variant_name, quantity, refund_amount, restocked, lost_cost")
+          .eq("sale_id", id)
+          .order("return_date")
+      ).data ?? [])
     : [];
   const refundTotal = returns.reduce((a, r) => a + Number(r.refund_amount), 0);
   const netProfit =
@@ -46,6 +55,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
       : null;
 
   const opts = await loadSaleOptions();
+  const labelUrl = sale.shipping_label_path ? ((await signLabels([sale.shipping_label_path])).get(sale.shipping_label_path) ?? null) : null;
   const s = sale as unknown as {
     id: string;
     sale_number: string;
@@ -68,7 +78,15 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
     carriers: { name: string } | null;
     mobile_devices: { number: number; name: string } | null;
   };
-  type Item = { id: string; line_number: number; quantity: number; unit_price: number; notes: string | null; lot_id: string; product_variants: { name: string; product_id: string; products: { name: string } | null } | null };
+  type Item = {
+    id: string;
+    line_number: number;
+    quantity: number;
+    unit_price: number;
+    notes: string | null;
+    lot_id: string;
+    product_variants: { name: string; product_id: string; products: { name: string } | null } | null;
+  };
   const lines = (items ?? []) as unknown as Item[];
   const gross = lines.reduce((a, l) => a + l.quantity * Number(l.unit_price), 0);
   const cost = lines.reduce((a, l) => a + l.quantity * Number(lotMap.get(l.lot_id)?.unit_cost ?? 0), 0);
@@ -77,7 +95,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
   return (
     <>
       <PageHeader
-        back={{ href: "/ventas", label: "Ventas" }}
+        back={fromShipments ? { href: `/envios/${fromShipments}`, label: "Pendientes de envío" } : { href: "/ventas", label: "Ventas" }}
         title={
           <span className="flex flex-wrap items-center gap-3">
             Venta {s.sale_number}
@@ -172,7 +190,8 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
             {isAdmin && returns.length > 0 && (
               <p className="border-t border-line px-3 py-2.5 text-[13px] text-muted">
                 Reembolsado: <span className="num font-semibold text-ink">{money(refundTotal)}</span>. Beneficio después de devoluciones:{" "}
-                <span className={`num font-semibold ${Number(netProfit) < 0 ? "text-danger" : "text-ink"}`}>{money(netProfit)}</span>. Los informes ya usan esta cifra.
+                <span className={`num font-semibold ${Number(netProfit) < 0 ? "text-danger" : "text-ink"}`}>{money(netProfit)}</span>. Los informes ya usan esta
+                cifra.
               </p>
             )}
           </Panel>
@@ -213,7 +232,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
         <div className="flex flex-col gap-5">
           {s.platforms?.requires_shipping && active && (
             <Panel title="Envío">
-              <ShippingEditor sale={{ ...s, requires_shipping: true }} carriers={opts.carriers} />
+              <ShippingEditor sale={{ ...s, requires_shipping: true }} carriers={opts.carriers} labelUrl={labelUrl} />
             </Panel>
           )}
           <Panel title="Datos">
@@ -233,7 +252,11 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
                 </>
               )}
               <dt className="text-muted">Móvil</dt>
-              <dd>{s.mobile_devices ? `Móvil ${s.mobile_devices.number}${s.mobile_devices.name !== `Móvil ${s.mobile_devices.number}` ? ` (${s.mobile_devices.name})` : ""}` : "Sin indicar"}</dd>
+              <dd>
+                {s.mobile_devices
+                  ? `Móvil ${s.mobile_devices.number}${s.mobile_devices.name !== `Móvil ${s.mobile_devices.number}` ? ` (${s.mobile_devices.name})` : ""}`
+                  : "Sin indicar"}
+              </dd>
               {s.external_reference && (
                 <>
                   <dt className="text-muted">Referencia</dt>

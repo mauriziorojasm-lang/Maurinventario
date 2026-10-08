@@ -40,7 +40,12 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
 
   if (user.role !== "admin") {
     const { data } = await supabase.rpc("my_dashboard");
-    const d = data as { linked: boolean; today: { units: number; revenue: number; orders: number }; month: { units: number; revenue: number; orders: number }; pending_shipments: number } | null;
+    const d = data as {
+      linked: boolean;
+      today: { units: number; revenue: number; orders: number };
+      month: { units: number; revenue: number; orders: number };
+      pending_shipments: number;
+    } | null;
     return (
       <>
         {sinPermiso}
@@ -69,7 +74,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
         {(d?.pending_shipments ?? 0) > 0 && (
           <Notice tone="warn" className="mt-4">
             Tienes {d!.pending_shipments} envío{d!.pending_shipments === 1 ? "" : "s"} pendiente{d!.pending_shipments === 1 ? "" : "s"}.{" "}
-            <Link href="/ventas?shipping_status=pendiente">Ver envíos pendientes</Link>
+            <Link href="/envios">Ver envíos pendientes</Link>
           </Notice>
         )}
       </>
@@ -108,7 +113,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
           {s.pending_shipments > 0 && (
             <Notice tone="warn" className="flex-1">
               {s.pending_shipments} envío{s.pending_shipments === 1 ? "" : "s"} pendiente{s.pending_shipments === 1 ? "" : "s"} de Vinted o Wallapop.{" "}
-              <Link href="/ventas?shipping_status=pendiente">Ver envíos</Link>
+              <Link href="/envios">Ver envíos</Link>
             </Notice>
           )}
           {s.pending_reviews > 0 && (

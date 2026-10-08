@@ -4,7 +4,8 @@ import { Button, Field, Input, Notice, Select, Textarea } from "@/components/ui"
 import { ActionMessages, ConfirmAction, Modal, useServerAction } from "@/components/ui-client";
 import { createClient } from "@/lib/supabase/client";
 import type { MobileOption, Option, PlatformOption } from "@/lib/types";
-import { labelUrl, updateSale, updateSaleItem, voidSale } from "../actions";
+import { LabelButton, labelFileName } from "@/components/label-viewer";
+import { updateSale, updateSaleItem, voidSale } from "../actions";
 
 type Sale = {
   id: string;
@@ -20,35 +21,44 @@ type Sale = {
   requires_shipping: boolean;
 };
 
-export function ShippingEditor({ sale, carriers }: { sale: Sale; carriers: Option[] }) {
+export function ShippingEditor({ sale, carriers, labelUrl }: { sale: Sale; carriers: Option[]; labelUrl: string | null }) {
   const [status, setStatus] = useState(sale.shipping_status ?? "pendiente");
   const [carrier, setCarrier] = useState(sale.carrier_id ?? "");
-  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [inputKey, setInputKey] = useState(0);
   const { run, pending, error, message } = useServerAction(updateSale);
+  const label = useServerAction(updateSale);
 
   async function save() {
-    setUploadError(null);
-    let path: string | undefined;
-    if (file) {
-      const supabase = createClient();
-      path = `${sale.id}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, "_")}`;
-      const up = await supabase.storage.from("shipping-labels").upload(path, file, { contentType: file.type });
-      if (up.error) {
-        setUploadError(`No se ha podido subir la etiqueta: ${up.error.message}`);
-        return;
-      }
-    }
-    await run({ id: sale.id, shipping_status: status, carrier_id: carrier || null, ...(path ? { shipping_label_path: path } : {}) });
-    setFile(null);
+    await run({ id: sale.id, shipping_status: status, carrier_id: carrier || null });
   }
 
-  async function openLabel() {
-    if (!sale.shipping_label_path) return;
-    const res = await labelUrl(sale.shipping_label_path);
-    if (res.ok && res.data) window.open(res.data, "_blank", "noopener");
-    else setUploadError(res.ok ? "No se ha podido abrir la etiqueta." : res.error);
+  /** La etiqueta se sube y se guarda en la venta en cuanto se elige: no hace falta pulsar nada más. */
+  async function uploadLabel(file: File | undefined) {
+    if (!file) return;
+    setUploadError(null);
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("La etiqueta pesa más de 10 MB.");
+      setInputKey((k) => k + 1);
+      return;
+    }
+    setUploading(true);
+    const supabase = createClient();
+    const path = `${sale.id}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, "_")}`;
+    const up = await supabase.storage.from("shipping-labels").upload(path, file, { contentType: file.type || undefined });
+    if (up.error) {
+      setUploading(false);
+      setUploadError(`No se ha podido subir la etiqueta: ${up.error.message}`);
+      setInputKey((k) => k + 1);
+      return;
+    }
+    await label.run({ id: sale.id, shipping_label_path: path });
+    setUploading(false);
+    setInputKey((k) => k + 1);
   }
+
+  const busyLabel = uploading || label.pending;
 
   return (
     <div className="flex flex-col gap-3">
@@ -70,22 +80,52 @@ export function ShippingEditor({ sale, carriers }: { sale: Sale; carriers: Optio
           </Select>
         </Field>
       </div>
-      <Field label={sale.shipping_label_path ? "Sustituir etiqueta de envío" : "Etiqueta de envío"} hint="PDF o imagen, máximo 10 MB.">
-        <Input type="file" accept="application/pdf,image/*" className="py-1.5" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-      </Field>
-      <div className="flex flex-wrap gap-2">
+      <div>
         <Button variant="primary" onClick={save} disabled={pending}>
           {pending ? "Guardando…" : "Guardar envío"}
         </Button>
-        {sale.shipping_label_path && <Button onClick={openLabel}>Ver etiqueta</Button>}
+        <ActionMessages error={error} message={message} />
       </div>
-      {uploadError && <Notice tone="bad">{uploadError}</Notice>}
-      <ActionMessages error={error} message={message} />
+
+      <div className="flex flex-col gap-2 border-t border-line pt-3">
+        <p className="text-[13px] font-semibold">Etiqueta de envío</p>
+        {sale.shipping_label_path ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <LabelButton url={labelUrl} path={sale.shipping_label_path} variant="primary" />
+            <span className="min-w-0 truncate text-xs text-muted">{labelFileName(sale.shipping_label_path)}</span>
+          </div>
+        ) : (
+          <p className="text-xs text-muted">Aún no hay etiqueta.</p>
+        )}
+        <Field label={sale.shipping_label_path ? "Cambiar por otra" : "Subir etiqueta"} hint="PDF o imagen, máximo 10 MB. Se guarda al elegirla.">
+          <Input
+            key={inputKey}
+            type="file"
+            accept="application/pdf,image/*"
+            className="py-1.5"
+            disabled={busyLabel}
+            onChange={(e) => uploadLabel(e.target.files?.[0])}
+          />
+        </Field>
+        {busyLabel && <p className="text-[13px] font-medium text-muted">Subiendo etiqueta…</p>}
+        {uploadError && <Notice tone="bad">{uploadError}</Notice>}
+        {!busyLabel && <ActionMessages error={label.error} message={label.message ? "Etiqueta guardada." : null} />}
+      </div>
     </div>
   );
 }
 
-export function SaleHeaderEditor({ sale, responsibles, platforms, mobiles }: { sale: Sale; responsibles: Option[]; platforms: PlatformOption[]; mobiles: MobileOption[] }) {
+export function SaleHeaderEditor({
+  sale,
+  responsibles,
+  platforms,
+  mobiles,
+}: {
+  sale: Sale;
+  responsibles: Option[];
+  platforms: PlatformOption[];
+  mobiles: MobileOption[];
+}) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     sale_date: sale.sale_date,

@@ -5,13 +5,7 @@
  * - Solo enviadas seleccionadas → «Marcar como pendientes».
  * - Mezcla → no se ofrece ninguna acción.
  */
-import {
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui";
 import { ActionMessages, useServerAction } from "@/components/ui-client";
 import { setShippingStatusBulk } from "./actions";
@@ -56,48 +50,26 @@ export function ShippingSelection({ children }: { children: ReactNode }) {
     }),
     [selected],
   );
-  return (
-    <SelectionCtx.Provider value={value}>{children}</SelectionCtx.Provider>
-  );
+  return <SelectionCtx.Provider value={value}>{children}</SelectionCtx.Provider>;
 }
 
-const boxClass =
-  "h-[18px] w-[18px] cursor-pointer accent-[var(--color-ledger)] align-middle";
+const boxClass = "h-[18px] w-[18px] cursor-pointer accent-[var(--color-ledger)] align-middle";
 
 /** Casilla de una venta. Las ventas en mano (sin envío) no tienen casilla. */
-export function SaleCheckbox({
-  saleId,
-  status,
-  label,
-}: {
-  saleId: string;
-  status: Status | null;
-  label: string;
-}) {
+export function SaleCheckbox({ saleId, status, label }: { saleId: string; status: Status | null; label: string }) {
   const { selected, toggle } = useSelection();
   if (!status) return null;
   return (
-    <input
-      type="checkbox"
-      className={boxClass}
-      aria-label={`Seleccionar ${label}`}
-      checked={selected.has(saleId)}
-      onChange={() => toggle(saleId, status)}
-    />
+    <input type="checkbox" className={boxClass} aria-label={`Seleccionar ${label}`} checked={selected.has(saleId)} onChange={() => toggle(saleId, status)} />
   );
 }
 
 /** Casilla de la cabecera: selecciona o quita todas las ventas con envío de esta página. */
-export function SelectAllCheckbox({
-  sales,
-}: {
-  sales: { id: string; status: Status | null }[];
-}) {
+export function SelectAllCheckbox({ sales }: { sales: { id: string; status: Status | null }[] }) {
   const { selected, setMany } = useSelection();
   const items = useMemo(() => {
     const seen = new Map<string, Status>();
-    for (const s of sales)
-      if (s.status && !seen.has(s.id)) seen.set(s.id, s.status);
+    for (const s of sales) if (s.status && !seen.has(s.id)) seen.set(s.id, s.status);
     return [...seen].map(([id, status]) => ({ id, status }));
   }, [sales]);
   if (!items.length) return null;
@@ -116,17 +88,10 @@ export function SelectAllCheckbox({
 /** Barra que aparece al seleccionar ventas. */
 export function BulkShippingBar() {
   const { selected, clear } = useSelection();
-  const { run, pending, error, message } = useServerAction(
-    setShippingStatusBulk,
-  );
+  const { run, pending, error, message } = useServerAction(setShippingStatusBulk);
   const n = selected.size;
   const statuses = new Set(selected.values());
-  const target: Status | null =
-    statuses.size === 1
-      ? statuses.has("pendiente")
-        ? "enviado"
-        : "pendiente"
-      : null;
+  const target: Status | null = statuses.size === 1 ? (statuses.has("pendiente") ? "enviado" : "pendiente") : null;
 
   if (n === 0)
     return error || message ? (
@@ -150,19 +115,13 @@ export function BulkShippingBar() {
             if (res.ok) clear();
           }}
         >
-          {pending
-            ? "Guardando…"
-            : target === "enviado"
-              ? "Marcar como enviado"
-              : "Marcar como pendiente"}
+          {pending ? "Guardando…" : target === "enviado" ? "Marcar como enviado" : "Marcar como pendiente"}
         </Button>
       )}
       <Button variant="ghost" size="sm" disabled={pending} onClick={clear}>
         Quitar selección
       </Button>
-      {error && (
-        <span className="text-[13px] font-medium text-danger">{error}</span>
-      )}
+      {error && <span className="text-[13px] font-medium text-danger">{error}</span>}
     </div>
   );
 }

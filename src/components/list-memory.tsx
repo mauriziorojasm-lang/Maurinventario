@@ -20,11 +20,7 @@ const PREFIX = "mi:lista:";
 const EVENT = "mi:lista-cambio";
 
 /** Listas cuyos filtros se recuerdan (todas las secciones del menú salvo Inicio y Nueva venta). */
-export const LIST_PATHS = new Set(
-  NAV.flatMap((g) => g.items.map((i) => i.href)).filter(
-    (h) => h !== "/" && h !== "/ventas/nueva",
-  ),
-);
+export const LIST_PATHS = new Set(NAV.flatMap((g) => g.items.map((i) => i.href)).filter((h) => h !== "/" && h !== "/ventas/nueva"));
 
 function read(path: string): string | null {
   try {
@@ -54,10 +50,7 @@ export function RememberList() {
   useEffect(() => {
     if (!LIST_PATHS.has(pathname)) return;
     try {
-      sessionStorage.setItem(
-        PREFIX + pathname,
-        pathname + (search ? `?${search}` : ""),
-      );
+      sessionStorage.setItem(PREFIX + pathname, pathname + (search ? `?${search}` : ""));
     } catch {
       /* sin almacenamiento: no pasa nada */
     }
@@ -84,10 +77,7 @@ export function useRememberedHref(href: string): string {
 export function BackLink({ href, label }: { href: string; label: string }) {
   const target = useRememberedHref(href);
   return (
-    <Link
-      href={target}
-      className="mb-1 inline-block text-[13px] font-medium text-muted hover:text-ink"
-    >
+    <Link href={target} className="mb-1 inline-block text-[13px] font-medium text-muted hover:text-ink">
       ‹ {label}
     </Link>
   );

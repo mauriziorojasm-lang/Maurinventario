@@ -7,7 +7,8 @@ export const NAV: NavGroup[] = [
     items: [
       { href: "/", label: "Inicio" },
       { href: "/ventas/nueva", label: "Nueva venta" },
-      { href: "/ventas", label: "Ventas", badgeKey: "shipments" },
+      { href: "/ventas", label: "Ventas" },
+      { href: "/envios", label: "Pendientes de envío", badgeKey: "shipments" },
       { href: "/productos", label: "Productos" },
     ],
   },
