@@ -453,7 +453,8 @@ begin
         'purchase_units', (select coalesce(sum(l.quantity_initial), 0) from public.inventory_lots l
                           join public.purchase_orders po on po.id = l.purchase_order_id where po.import_batch_id = v_batch),
         'stock_units', (select coalesce(sum(quantity_available), 0) from public.inventory_lots),
-        'stock_value', (select coalesce(round(sum(quantity_available * unit_cost), 2), 0) from public.inventory_lots),
+        'stock_value', (select coalesce(sum(round(x.v, 2)), 0) from (select sum(quantity_available * unit_cost) as v
+                                                                         from public.inventory_lots group by variant_id) x),
         'exit_units', (select coalesce(sum(quantity), 0) from public.stock_exits where import_batch_id = v_batch)
       )
     );

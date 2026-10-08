@@ -1,26 +1,100 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * MaurInventario · sistema visual
+ * Papel frío, tinta, verde de libro de cuentas y la pegatina amarilla de los lotes.
+ */
+@theme {
+  --font-sans: "Public Sans Variable", "Public Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #f6f7f4;
+  --color-surface: #ffffff;
+  --color-ink: #18202b;
+  --color-ink-soft: #2a3442;
+  --color-muted: #5b6573;
+  --color-faint: #8a93a0;
+  --color-line: #e2e5e0;
+  --color-line-strong: #cdd2cb;
+
+  --color-ledger: #1e6b52;
+  --color-ledger-dark: #165540;
+  --color-ledger-soft: #e3efe9;
+
+  --color-tag: #f5d547;
+  --color-tag-ink: #4a3d00;
+
+  --color-danger: #b42318;
+  --color-danger-soft: #fbe9e7;
+  --color-warn: #a15c07;
+  --color-warn-soft: #fbf0dc;
+  --color-info: #2f5d8a;
+  --color-info-soft: #e6eef6;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 0;
+}
+
+/* Cifras siempre alineadas */
+.num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ledger);
+  outline-offset: 2px;
+}
+
+/* La pegatina del lote: el elemento característico de la aplicación */
+.lot-tag {
+  --notch: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.12rem 0.55rem 0.12rem calc(0.55rem + var(--notch));
+  background: var(--color-tag);
+  color: var(--color-tag-ink);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.35;
+  white-space: nowrap;
+  clip-path: polygon(var(--notch) 0, 100% 0, 100% 100%, var(--notch) 100%, 0 50%);
+  border-radius: 0 3px 3px 0;
+}
+.lot-tag::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-tag-ink);
+  opacity: 0.55;
+}
+.lot-tag[data-origin="ajuste"] {
+  background: #ece6c8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }

@@ -361,7 +361,7 @@ export function buildPlan(
   // ------------------------------------------------------------------
   // 2. Compras → pedidos de compra con sus líneas (cada línea = un lote)
   // ------------------------------------------------------------------
-  type PO = ImportPayload["purchase_orders"][number] & { dates: Set<string>; suppliers: Set<string>; costMap: Map<string, Set<number>> };
+  type PO = ImportPayload["purchase_orders"][number] & { dates: Set<string>; suppliers: Set<string>; costMap: Map<string, Set<number>>; sheet: string };
   const pos = new Map<number, PO>();
   const purchased = new Map<string, number>(); // `${key}|${po}` → unidades
   const expectedRealCosts: ImportPlan["expectedRealCosts"] = [];
@@ -419,6 +419,7 @@ export function buildPlan(
           dates: new Set(),
           suppliers: new Set(),
           costMap: new Map(),
+          sheet: cfg.sheetName,
         };
         pos.set(orderNumber, po);
       }
@@ -451,22 +452,22 @@ export function buildPlan(
   const payloadPOs: ImportPayload["purchase_orders"] = [];
   for (const po of Array.from(pos.values()).sort((a, b) => a.order_number - b.order_number)) {
     if (po.dates.size > 1) {
-      add("warning", "Compras", null, `El pedido #${po.order_number} tiene varias fechas (${Array.from(po.dates).join(", ")}): se usa la primera, ${po.order_date}.`);
+      add("warning", po.sheet, null, `El pedido #${po.order_number} tiene varias fechas (${Array.from(po.dates).join(", ")}): se usa la primera, ${po.order_date}.`);
     }
     if (po.suppliers.size > 1) {
-      add("warning", "Compras", null, `El pedido #${po.order_number} tiene varios proveedores (${Array.from(po.suppliers).join(", ")}). Un pedido pertenece a un solo proveedor: se usa «${Array.from(po.suppliers)[0]}».`);
+      add("warning", po.sheet, null, `El pedido #${po.order_number} tiene varios proveedores (${Array.from(po.suppliers).join(", ")}). Un pedido pertenece a un solo proveedor: se usa «${Array.from(po.suppliers)[0]}».`);
     }
     po.supplier_name = Array.from(po.suppliers)[0] ?? null;
     for (const [cf, set] of po.costMap) {
       const values = Array.from(set);
       if (values.length > 1) {
-        add("warning", "Compras", null, `El pedido #${po.order_number} tiene varios importes de ${cf} (${values.join(", ")}): se usa el primero.`);
+        add("warning", po.sheet, null, `El pedido #${po.order_number} tiene varios importes de ${cf} (${values.join(", ")}): se usa el primero.`);
       }
       po.costs.push({ cost_type: cf, amount: values[0] });
     }
     if (existingPOs.has(po.order_number)) {
       summary.purchaseOrders.duplicated++;
-      add("warning", "Compras", null, `El pedido de compra #${po.order_number} ya existe en MaurInventario: no se vuelve a importar.`);
+      add("warning", po.sheet, null, `El pedido de compra #${po.order_number} ya existe en MaurInventario: no se vuelve a importar.`);
       continue;
     }
     if (!po.supplier_name) {
@@ -805,7 +806,18 @@ export function buildPlan(
     platforms: Array.from(platformsNew.values()),
     mobile_devices: Array.from(mobiles.values()),
     responsibles: respPayload,
-    products: productList.map(({ expectedStock: _e, fromSheet: _f, viaMerge: _v, ...p }) => p),
+    products: productList.map((p) => ({
+      key: p.key,
+      name: p.name,
+      brand: p.brand,
+      category: p.category,
+      description: p.description,
+      sku: p.sku,
+      normal_sale_price: p.normal_sale_price,
+      legacy_code: p.legacy_code,
+      variant_name: p.variant_name,
+      source_ref: p.source_ref,
+    })),
     purchase_orders: payloadPOs,
     sales: payloadSales,
     stock_exits: payloadExits,

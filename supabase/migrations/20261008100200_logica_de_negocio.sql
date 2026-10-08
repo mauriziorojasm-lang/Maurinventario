@@ -759,7 +759,8 @@ $$;
 create or replace function public.search_sellable_variants(
   p_query text default null,
   p_only_in_stock boolean default false,
-  p_limit integer default 20
+  p_limit integer default 20,
+  p_product_id uuid default null
 )
 returns table (
   variant_id uuid,
@@ -800,6 +801,7 @@ begin
     left join public.brands b on b.id = pr.brand_id
     left join public.categories c on c.id = pr.category_id
    where v.deleted_at is null and pr.deleted_at is null
+     and (p_product_id is null or pr.id = p_product_id)
      and (
        v_q is null
        or pr.name ilike '%' || v_q || '%'
@@ -1231,6 +1233,28 @@ begin
   insert into public.inventory_movements (movement_type, variant_id, lot_id, quantity, occurred_at, stock_exit_id, notes, created_by)
   values ('anulacion_salida', v_exit.variant_id, v_exit.lot_id, v_exit.quantity, current_date, v_exit.id, trim(p_reason), auth.uid());
   update public.stock_exits set status = 'anulada', voided_at = now(), void_reason = trim(p_reason) where id = p_exit_id;
+end;
+$$;
+
+-- Completar el motivo de una salida (p. ej. las importadas con "motivo pendiente")
+create or replace function public.update_stock_exit(p_exit_id uuid, p_reason text, p_notes text default null)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform public.require_admin();
+  if p_reason not in ('regalo', 'perdida', 'otro', 'pendiente') then
+    raise exception 'Motivo no válido.';
+  end if;
+  update public.stock_exits
+     set reason = p_reason::public.exit_reason,
+         notes = coalesce(nullif(trim(p_notes), ''), notes)
+   where id = p_exit_id and status = 'activa';
+  if not found then
+    raise exception 'La salida no existe o está anulada.';
+  end if;
 end;
 $$;
 

@@ -277,6 +277,7 @@ select
   sh.unit_cost,
   sh.qty_basis,
   round(sh.qty_basis * sh.unit_cost, 2) as merchandise_cost,
+  sh.qty_basis * sh.unit_cost as merchandise_raw,
   round(sh.share * coalesce(co.transporte, 0), 2) as transporte,
   round(sh.share * coalesce(co.aduanas, 0), 2) as aduanas,
   round(sh.share * coalesce(co.aranceles, 0), 2) as aranceles,
@@ -318,9 +319,11 @@ select
   (select coalesce(sum(i.quantity_ordered), 0) from public.purchase_order_items i
     where i.purchase_order_id = po.id and i.substitutes_item_id is null)::integer as units_ordered,
   (select coalesce(sum(i.quantity_received), 0) from public.purchase_order_items i where i.purchase_order_id = po.id)::integer as units_received,
-  (select coalesce(sum(pl.merchandise_cost), 0) from public.v_purchase_lines pl where pl.purchase_order_id = po.id) as merchandise_cost,
+  (select round(coalesce(sum(pl.merchandise_raw), 0), 2) from public.v_purchase_lines pl where pl.purchase_order_id = po.id) as merchandise_cost,
   (select coalesce(sum(c.amount), 0) from public.purchase_order_costs c where c.purchase_order_id = po.id) as extra_costs,
-  (select coalesce(sum(pl.real_total_cost), 0) from public.v_purchase_lines pl where pl.purchase_order_id = po.id) as total_cost
+  -- Mercancía sin redondear línea a línea + costes adicionales (se reparten enteros)
+  (select round(coalesce(sum(pl.merchandise_raw), 0), 2) from public.v_purchase_lines pl where pl.purchase_order_id = po.id)
+    + (select coalesce(sum(c.amount), 0) from public.purchase_order_costs c where c.purchase_order_id = po.id) as total_cost
 from public.purchase_orders po
 join public.suppliers su on su.id = po.supplier_id;
 

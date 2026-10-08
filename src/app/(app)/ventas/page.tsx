@@ -1,0 +1,212 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ExportLinks, FilterBar } from "@/components/filter-bar";
+import { Badge, Empty, Figures, LinkButton, LotTag, Notice, PageHeader, Pagination, Panel, Table, Td, Th, Tr } from "@/components/ui";
+import { requireUser } from "@/lib/auth";
+import { filtersFrom, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
+import { date, money, units } from "@/lib/format";
+import { loadSaleOptions } from "@/lib/options";
+import { createClient } from "@/lib/supabase/server";
+import { type SaleLine, variantDisplay } from "@/lib/types";
+
+export const metadata: Metadata = { title: "Ventas" };
+
+function ShippingBadge({ status, requires }: { status: string | null; requires: boolean }) {
+  if (!requires) return <span className="text-xs text-muted">En mano</span>;
+  return status === "enviado" ? <Badge tone="good">Enviado</Badge> : <Badge tone="warn">Pendiente</Badge>;
+}
+
+export default async function SalesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const user = await requireUser();
+  const sp = await searchParams;
+  const filters = filtersFrom(sp);
+  const { page, from, to, size } = pageFrom(sp, 50);
+  const supabase = await createClient();
+  const opts = await loadSaleOptions();
+  const hrefFor = (p: number) => `/ventas${toQuery({ ...filters, page: p })}`;
+
+  if (user.role !== "admin") {
+    // Vendedor: solo sus ventas (lo garantiza la base de datos)
+    let q = supabase
+      .from("sales")
+      .select("id, sale_number, sale_date, shipping_status, platforms(name, requires_shipping), sale_items(quantity, unit_price, product_variants(name, products(name)))", { count: "exact" })
+      .eq("status", "activa")
+      .order("sale_date", { ascending: false })
+      .order("sale_number", { ascending: false })
+      .range(from, to);
+    if (filters.from) q = q.gte("sale_date", filters.from);
+    if (filters.to) q = q.lte("sale_date", filters.to);
+    if (filters.shipping_status) q = q.eq("shipping_status", filters.shipping_status);
+    const { data, count, error } = await q;
+    type Row = {
+      id: string;
+      sale_number: string;
+      sale_date: string;
+      shipping_status: string | null;
+      platforms: { name: string; requires_shipping: boolean } | null;
+      sale_items: { quantity: number; unit_price: number; product_variants: { name: string; products: { name: string } | null } | null }[];
+    };
+    const rows = (data ?? []) as unknown as Row[];
+    return (
+      <>
+        <PageHeader title="Mis ventas" actions={<LinkButton href="/ventas/nueva" variant="primary">Nueva venta</LinkButton>} />
+        <FilterBar
+          basePath="/ventas"
+          values={filters}
+          fields={[
+            { type: "date", name: "from", label: "Desde" },
+            { type: "date", name: "to", label: "Hasta" },
+            { type: "select", name: "shipping_status", label: "Envío", options: [{ value: "pendiente", label: "Pendiente" }, { value: "enviado", label: "Enviado" }] },
+          ]}
+        />
+        {error && <Notice tone="bad">{error.message}</Notice>}
+        <Panel padded={false}>
+          {rows.length === 0 ? (
+            <Empty title="Aún no hay ventas con estos filtros" action={<LinkButton href="/ventas/nueva">Registrar una venta</LinkButton>} />
+          ) : (
+            <Table>
+              <thead>
+                <tr>
+                  <Th>Fecha</Th>
+                  <Th>Venta</Th>
+                  <Th>Productos</Th>
+                  <Th>Plataforma</Th>
+                  <Th>Envío</Th>
+                  <Th num>Importe</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((s) => (
+                  <Tr key={s.id}>
+                    <Td className="num">{date(s.sale_date)}</Td>
+                    <Td>
+                      <Link className="whitespace-nowrap font-semibold text-ledger hover:underline" href={`/ventas/${s.id}`}>
+                        {s.sale_number}
+                      </Link>
+                    </Td>
+                    <Td>
+                      {s.sale_items.map((i, k) => (
+                        <span key={k} className="block">
+                          {i.quantity} x {variantDisplay(i.product_variants?.products?.name ?? "", i.product_variants?.name)}
+                        </span>
+                      ))}
+                    </Td>
+                    <Td>{s.platforms?.name}</Td>
+                    <Td>
+                      <ShippingBadge status={s.shipping_status} requires={!!s.platforms?.requires_shipping} />
+                    </Td>
+                    <Td num>{money(s.sale_items.reduce((a, i) => a + i.quantity * Number(i.unit_price), 0))}</Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+          <Pagination page={page} size={size} total={count ?? 0} hrefFor={hrefFor} />
+        </Panel>
+      </>
+    );
+  }
+
+  const [{ data, count, error }, { data: summary }] = await Promise.all([
+    supabase.rpc("report_sale_lines", { p_filters: filters }, { count: "exact" }).range(from, to),
+    supabase.rpc("report_sales_summary", { p_filters: filters }),
+  ]);
+  const rows = (data ?? []) as SaleLine[];
+  const sum = summary as { orders: number; units: number; net_amount: number; profit: number; avg_ticket: number; refunded_amount: number } | null;
+
+  return (
+    <>
+      <PageHeader
+        title="Ventas"
+        description="Cada línea muestra de qué pedido/lote salió la unidad y el beneficio real con el coste de ese lote."
+        actions={<LinkButton href="/ventas/nueva" variant="primary">Nueva venta</LinkButton>}
+      />
+      <FilterBar
+        basePath="/ventas"
+        values={filters}
+        fields={[
+          { type: "date", name: "from", label: "Desde" },
+          { type: "date", name: "to", label: "Hasta" },
+          { type: "text", name: "search", label: "Buscar", placeholder: "Nº de venta, producto o referencia" },
+          { type: "select", name: "responsible_id", label: "Responsable", options: opts.responsibles.map((r) => ({ value: r.id, label: r.name })) },
+          { type: "select", name: "platform_id", label: "Plataforma", empty: "Todas", options: opts.platforms.map((p) => ({ value: p.id, label: p.name })) },
+          { type: "select", name: "shipping_status", label: "Envío", options: [{ value: "pendiente", label: "Pendiente" }, { value: "enviado", label: "Enviado" }] },
+          { type: "number", name: "purchase_order_number", label: "Pedido/lote nº" },
+        ]}
+        extra={<ExportLinks type="ventas" filters={filters} />}
+      />
+      {error && <Notice tone="bad">{error.message}</Notice>}
+      {sum && (
+        <Figures
+          className="mb-4"
+          items={[
+            { label: "Pedidos", value: units(sum.orders) },
+            { label: "Unidades", value: units(sum.units) },
+            { label: "Facturación", value: money(sum.net_amount), note: sum.refunded_amount > 0 ? `${money(sum.refunded_amount)} devueltos` : undefined },
+            { label: "Ticket medio", value: money(sum.avg_ticket) },
+            { label: "Beneficio", value: money(sum.profit), tone: sum.profit < 0 ? "bad" : "good" },
+          ]}
+        />
+      )}
+      <Panel padded={false}>
+        {rows.length === 0 ? (
+          <Empty title="No hay ventas con estos filtros" action={<LinkButton href="/ventas/nueva">Registrar una venta</LinkButton>} />
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                <Th>Fecha</Th>
+                <Th>Venta</Th>
+                <Th>Producto</Th>
+                <Th>Lote</Th>
+                <Th num>Uds.</Th>
+                <Th num>Precio</Th>
+                <Th num>Importe</Th>
+                <Th num>Beneficio</Th>
+                <Th>Responsable</Th>
+                <Th>Plataforma</Th>
+                <Th>Envío</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((l) => (
+                <Tr key={l.sale_item_id}>
+                  <Td className="num">{date(l.sale_date)}</Td>
+                  <Td>
+                    <Link className="whitespace-nowrap font-semibold text-ledger hover:underline" href={`/ventas/${l.sale_id}`}>
+                      {l.sale_number}
+                    </Link>
+                  </Td>
+                  <Td>
+                    <Link href={`/productos/${l.product_id}`} className="hover:underline">
+                      {variantDisplay(l.product_name, l.variant_name)}
+                    </Link>
+                    {l.line_notes && <span className="block text-xs text-muted">{l.line_notes}</span>}
+                  </Td>
+                  <Td>
+                    <LotTag label={l.lot_label} />
+                  </Td>
+                  <Td num>
+                    {l.quantity}
+                    {l.returned_qty > 0 && <span className="block text-xs text-danger">−{l.returned_qty} dev.</span>}
+                  </Td>
+                  <Td num>{money(l.unit_price)}</Td>
+                  <Td num>{money(l.net_amount)}</Td>
+                  <Td num className={Number(l.profit) < 0 ? "text-danger" : undefined}>
+                    {money(l.profit)}
+                  </Td>
+                  <Td>{l.responsible_name}</Td>
+                  <Td>{l.platform_name}</Td>
+                  <Td>
+                    <ShippingBadge status={l.shipping_status} requires={l.requires_shipping} />
+                  </Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+        <Pagination page={page} size={size} total={count ?? 0} hrefFor={hrefFor} />
+      </Panel>
+    </>
+  );
+}
