@@ -41,7 +41,7 @@ En Safari, entra en **supabase.com/dashboard** (crea la cuenta con «Continue wi
 1. En **otra pestaña**, abre tu repositorio de GitHub → carpeta `supabase` → archivo **`instalar-todo.sql`**.
 2. Arriba a la derecha del archivo, pulsa el botón **Copy raw file** (icono de dos hojas). Si no lo ves, pulsa **Raw**, mantén pulsado el texto → **Seleccionar todo** → **Copiar**.
 3. Vuelve a Supabase → menú izquierdo **SQL Editor** → **New query**.
-4. Mantén pulsado dentro del editor → **Pegar**. Es un texto largo (unas 3935 líneas); espera a que aparezca entero.
+4. Mantén pulsado dentro del editor → **Pegar**. Es un texto largo (unas 3.900 líneas); espera a que aparezca entero.
 5. Pulsa **Run**. Si pregunta por operaciones «destructive», confirma: el archivo borra y crea permisos, no datos.
 6. Debe salir **«Success. No rows returned»**.
 
