@@ -8,12 +8,14 @@ MaurInventario lee los correos que llegan a **maurinventario@gmail.com** y regis
 
 | Correo que llega | Qué hace la app |
 |---|---|
-| Vinted · «Has vendido un artículo en Vinted» | **Crea la venta**: producto, precio, comprador y fecha. Descuenta 1 unidad del lote más antiguo. Envío «pendiente», sin etiqueta. |
+| Vinted · «Has vendido un artículo en Vinted» | La **detecta** (producto, precio, comprador y fecha) y la deja en **Ventas detectadas** para que la confirmes. Al confirmar se registra, se descuenta 1 unidad del lote más antiguo y queda con envío «pendiente», sin etiqueta. |
 | Vinted · correo con la **etiqueta en PDF** | **No crea ninguna venta.** Busca la venta que ya existe y le añade el PDF, el nº de seguimiento, el nº de transacción, la fecha límite y la paquetería. |
 | Wallapop · «Has hecho una nueva venta. Selecciona un método de envío» | **Nada.** Se ignora (no trae el importe). |
-| Wallapop · «aquí tienes la confirmación de tu venta» | **Crea la venta** con el precio del artículo (no el total), comprador y fecha de compra. |
+| Wallapop · «aquí tienes la confirmación de tu venta» | La **detecta** con el precio del artículo (no el total), comprador y fecha de compra, y espera tu confirmación en **Ventas detectadas**. |
 | Etiqueta de Wallapop | No se automatiza. La subes tú desde el móvil, en la ficha de la venta («Subir etiqueta»). |
 | Cualquier otro correo | Se ignora y no se guarda nada de él. |
+
+**Tú confirmas cada venta.** Nada cuenta (ni ventas ni stock) hasta que pulsas «Sí, es una venta» en **Ventas detectadas**. Si ya la habías apuntada a mano, pulsa «Ya estaba apuntada»: no se crea otra y la etiqueta de Vinted irá a la tuya. La app te avisa cuando una venta detectada se parece a una que ya tienes.
 
 **Nunca duplica.** Cada correo de Gmail tiene un número único: si se lee dos veces, la segunda no hace nada. La etiqueta de Vinted solo se pone si hay **una** venta posible; si hay dudas, la deja para que elijas tú.
 
@@ -100,6 +102,13 @@ Usa la cuenta **maurinventario@gmail.com** en todo este paso.
 ---
 
 ## 4. El día a día
+
+- **Ventas detectadas** (menú, con número naranja): las ventas que han llegado al correo.
+  - **Sí, es una venta**: la registra (si el producto está reconocido y no hay dudas, de un toque). Con «Confirmar las N sin dudas» confirmas varias a la vez.
+  - **Revisar y confirmar / Cambiar producto o precio**: eliges otro producto o corriges el precio antes de registrarla.
+  - **Ya estaba apuntada**: eliges la venta que ya tenías; no se crea otra ni se toca el stock.
+  - **No es una venta**: la descarta.
+  - ¿Te equivocaste con «Ya estaba apuntada» o «No es una venta»? En **Ventas por correo → Historial**, «Volver a detectadas».
 
 - **Ventas por correo → Revisar**: lo que necesita que decidas. El número naranja del menú te avisa.
   - **Elegir producto**: el producto no se reconoció. Toca uno de los sugeridos o búscalo. Deja «Recordar» marcado.
