@@ -16,8 +16,9 @@ import type { ActionResult } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import { LENGTHS, MAX_FIELD, MAX_LONG_FIELD, MAX_PRODUCTS, PLATFORMS, TONES, type ProductDetails } from "./options";
 
-// Modelos con nivel gratuito. Si el primero se queda sin cupo, se prueba el siguiente.
-const DEFAULT_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite"];
+// Modelos con nivel gratuito.
+// Se prueban en orden: si uno está saturado, sin cupo o no existe, se pasa al siguiente.
+const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
 // GEMINI_BASE_URL solo se usa en las pruebas automáticas (un Gemini simulado en local)
 const GEMINI_URL = process.env.GEMINI_BASE_URL?.trim() || "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -171,10 +172,14 @@ class AiError extends Error {
   constructor(
     public status: number,
     public reason: string,
+    public detail = "",
   ) {
-    super(`${status} ${reason}`);
+    super(`${status} ${reason}${detail ? `: ${detail}` : ""}`);
   }
 }
+
+/** Errores pasajeros o del modelo concreto: merece la pena probar otro modelo. */
+const tryNext = (e: unknown) => e instanceof AiError && (e.status === 429 || e.status === 404 || e.status === 408 || e.status >= 500 || e.reason === "EMPTY");
 
 function friendlyAiError(e: unknown): string {
   if (e instanceof AiError) {
@@ -183,7 +188,7 @@ function friendlyAiError(e: unknown): string {
     if (e.status === 429) return "Se ha agotado el cupo gratuito de Gemini por ahora (por minuto o por día). Espera un poco y vuelve a intentarlo.";
     if (e.status === 404) return "El modelo indicado en GEMINI_MODEL no existe. Quita esa variable para usar el modelo por defecto.";
     if (e.status === 408 || e.reason === "TIMEOUT") return "La IA ha tardado demasiado en responder. Vuelve a intentarlo.";
-    if (e.status >= 500) return "Gemini no está disponible ahora mismo. Inténtalo en unos minutos.";
+    if (e.status >= 500) return "Los servidores de Gemini están saturados ahora mismo (se han probado varios modelos). Inténtalo en unos minutos.";
     if (e.reason === "SAFETY" || e.reason === "BLOCKED") return "La IA no ha querido redactar este texto. Cambia las indicaciones e inténtalo de nuevo.";
     if (e.reason === "EMPTY") return "La IA no ha devuelto texto. Vuelve a intentarlo.";
     return "La IA ha rechazado la petición. Revisa los datos e inténtalo de nuevo.";
@@ -224,7 +229,8 @@ async function callGemini(apiKey: string, model: string, system: string, prompt:
   const json = (await res.json().catch(() => ({}))) as GeminiResponse;
   if (!res.ok) {
     const reason = json.error?.details?.find((d) => d.reason)?.reason ?? json.error?.status ?? "ERROR";
-    throw new AiError(res.status, reason);
+    // El mensaje de Google no contiene la clave; se recorta por si acaso
+    throw new AiError(res.status, reason, (json.error?.message ?? "").replace(/AIza[\w-]+/g, "***").slice(0, 160));
   }
   if (json.promptFeedback?.blockReason) throw new AiError(400, "BLOCKED");
   const cand = json.candidates?.[0];
@@ -288,18 +294,33 @@ export async function generateDescriptions(input: GenerateRequest): Promise<Acti
       const title = v && !GENERIC_VARIANT.test(v.name) ? `${p.name} · ${v.name}` : p.name;
       const prompt = buildPrompt(req, p, v, it.details);
       let lastError: unknown = null;
+      const tried: string[] = [];
       for (const model of models) {
-        try {
-          const text = await callGemini(apiKey, model, SYSTEM, prompt, maxTokens);
-          return { productId: it.productId, variantId: it.variantId, title, text };
-        } catch (e) {
-          lastError = e;
-          console.error("Generador de descripciones:", model, e instanceof AiError ? e.message : (e as Error)?.name);
-          // Solo se prueba el siguiente modelo si este no tiene cupo o no existe
-          if (!(e instanceof AiError && (e.status === 429 || e.status === 404))) break;
+        // Cada modelo: un intento y, si está saturado (503), un reintento tras una pausa corta
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const text = await callGemini(apiKey, model, SYSTEM, prompt, maxTokens);
+            return { productId: it.productId, variantId: it.variantId, title, text };
+          } catch (e) {
+            lastError = e;
+            console.error("Generador de descripciones:", model, e instanceof AiError ? e.message : (e as Error)?.name);
+            if (e instanceof AiError && e.status === 503 && attempt === 0) {
+              await new Promise((r) => setTimeout(r, 1200));
+              continue;
+            }
+            break;
+          }
         }
+        tried.push(`${model}: ${lastError instanceof AiError ? `${lastError.status} ${lastError.reason}` : "sin conexión"}`);
+        if (!tryNext(lastError)) break;
       }
-      return { productId: it.productId, variantId: it.variantId, title, error: friendlyAiError(lastError) };
+      const technical = lastError instanceof AiError && lastError.detail ? ` (${lastError.detail})` : "";
+      return {
+        productId: it.productId,
+        variantId: it.variantId,
+        title,
+        error: `${friendlyAiError(lastError)} Detalle: ${tried.join(" · ")}${technical}`,
+      };
     }),
   );
   return { ok: true, data: results };

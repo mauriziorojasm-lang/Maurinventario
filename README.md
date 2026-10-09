@@ -325,7 +325,7 @@ Estas son **todas** las variables que usa MaurInventario. No hay más.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ (la de **dev**) | ✅ | 🟢 Pública | Conectar como el usuario con sesión, con sus permisos. |
 | `SUPABASE_SECRET_KEY` | ✅ (la de **dev**) | ✅ | 🔴 Secreta | Solo pantalla Usuarios: crear usuarios, desactivarlos y cambiar contraseñas. |
 | `GEMINI_API_KEY` | Opcional | ✅ | 🔴 Secreta | Generador de descripciones (IA de Google Gemini, nivel gratuito). Se crea en aistudio.google.com → *Get API key*. |
-| `GEMINI_MODEL` | Opcional | Opcional | 🔴 Secreta | Cambiar el modelo de Gemini. Por defecto `gemini-3.8-flash` y, si se agota el cupo, `gemini-3.5-flash-lite`. |
+| `GEMINI_MODEL` | Opcional | Opcional | 🔴 Secreta | Cambiar el modelo de Gemini. Por defecto se prueban en orden `gemini-3.5-flash`, `gemini-3.8-flash`, `gemini-3.5-flash-lite` y `gemini-3.1-flash-lite` (si uno está saturado o sin cupo, pasa al siguiente). |
 
 > Sin `SUPABASE_SECRET_KEY` la app funciona, pero la pantalla Usuarios no puede crear usuarios. Lo avisa en pantalla.
 >
