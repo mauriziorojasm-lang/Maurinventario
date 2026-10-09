@@ -15,6 +15,7 @@ import {
   Tag,
   Truck,
   Undo2,
+  WandSparkles,
   UserCog,
   Users,
   type LucideIcon,
@@ -32,6 +33,7 @@ export const NAV: NavGroup[] = [
       { href: "/ventas", label: "Ventas", icon: Receipt },
       { href: "/envios", label: "Pendientes de envío", icon: Truck, badgeKey: "shipments" },
       { href: "/productos", label: "Productos", icon: Tag },
+      { href: "/descripciones", label: "Generador de descripciones", icon: WandSparkles },
     ],
   },
   {

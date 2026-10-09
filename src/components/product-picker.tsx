@@ -35,6 +35,12 @@ export function ProductPicker({
   const [creating, setCreating] = useState(false);
   const listId = useId();
   const reqId = useRef(0);
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keepOpen = () => {
+    if (blurTimer.current) clearTimeout(blurTimer.current);
+    blurTimer.current = null;
+    setOpen(true);
+  };
 
   useEffect(() => {
     const term = q.trim();
@@ -75,11 +81,13 @@ export function ProductPicker({
         placeholder={placeholder}
         onChange={(e) => {
           setQ(e.target.value);
-          setOpen(true);
+          keepOpen();
           if (e.target.value.trim().length >= 2) setLoading(true);
         }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onFocus={keepOpen}
+        onBlur={() => {
+          blurTimer.current = setTimeout(() => setOpen(false), 150);
+        }}
         onKeyDown={(e) => {
           if (!showList || !results.length) return;
           if (e.key === "ArrowDown") {

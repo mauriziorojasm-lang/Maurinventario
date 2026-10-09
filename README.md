@@ -324,8 +324,12 @@ Estas son **todas** las variables que usa MaurInventario. No hay más.
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ (la de **dev**) | ✅ | 🟢 Pública | Dirección del proyecto de Supabase. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ (la de **dev**) | ✅ | 🟢 Pública | Conectar como el usuario con sesión, con sus permisos. |
 | `SUPABASE_SECRET_KEY` | ✅ (la de **dev**) | ✅ | 🔴 Secreta | Solo pantalla Usuarios: crear usuarios, desactivarlos y cambiar contraseñas. |
+| `GEMINI_API_KEY` | Opcional | ✅ | 🔴 Secreta | Generador de descripciones (IA de Google Gemini, nivel gratuito). Se crea en aistudio.google.com → *Get API key*. |
+| `GEMINI_MODEL` | Opcional | Opcional | 🔴 Secreta | Cambiar el modelo de Gemini. Por defecto `gemini-3.8-flash` y, si se agota el cupo, `gemini-3.5-flash-lite`. |
 
 > Sin `SUPABASE_SECRET_KEY` la app funciona, pero la pantalla Usuarios no puede crear usuarios. Lo avisa en pantalla.
+>
+> Sin `GEMINI_API_KEY` el Generador de descripciones se abre, pero no genera: avisa en pantalla de qué variable falta y cómo crearla. La IA solo se llama desde el servidor, al pulsar «Generar», para usuarios con sesión, y **solo lee** productos (no cambia stock ni fichas). El historial de descripciones se guarda en el propio dispositivo, no en la base de datos. En el nivel gratuito, Google puede usar el texto enviado (datos del producto) para mejorar sus servicios.
 
 ### Crear `.env.local` (tu ordenador)
 

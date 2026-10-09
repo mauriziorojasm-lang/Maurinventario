@@ -289,6 +289,18 @@ run("Lógica de negocio de MaurInventario", () => {
     await expect(rpc(db, null, "set_sales_shipping_status", [a1], "enviado")).rejects.toThrow();
   });
 
+  it("el buscador encuentra por palabras sueltas y en cualquier orden", async () => {
+    const brand = (await selectAs<{ id: string }>(db, admin, "insert into brands (name) values ('Marcabusca') returning id"))[0].id;
+    const p = await rpc<string>(db, admin, "create_product", { name: "Marcabusca - Modelazo", brand_id: brand, variants: [{ name: "Rojo" }] });
+    const found = async (q: string) =>
+      (await selectAs<{ product_id: string }>(db, seller, "select product_id from search_sellable_variants($1, false, 50)", [q])).some((r) => r.product_id === p);
+    expect(await found("Marcabusca Modelazo")).toBe(true);
+    expect(await found("modelazo marcabusca")).toBe(true);
+    expect(await found("Modelazo rojo")).toBe(true);
+    expect(await found("Modelazo azul")).toBe(false);
+    expect(await found("  ")).toBe(true);
+  });
+
   it("sin sesión no se puede leer nada", async () => {
     await expect(selectAs(db, null, "select * from products")).rejects.toThrow(/permission denied/);
     await expect(rpc(db, null, "search_sellable_variants", "x")).rejects.toThrow();
