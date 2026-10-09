@@ -7,6 +7,7 @@ import {
   FileSpreadsheet,
   Handshake,
   Mail,
+  MailCheck,
   House,
   ListChecks,
   Receipt,
@@ -22,7 +23,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean; badgeKey?: "reviews" | "shipments" | "emails" };
+export type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean; badgeKey?: "reviews" | "shipments" | "emails" | "detected" };
 export type NavGroup = { label: string | null; items: NavItem[] };
 
 export const NAV: NavGroup[] = [
@@ -32,6 +33,7 @@ export const NAV: NavGroup[] = [
       { href: "/", label: "Inicio", icon: House },
       { href: "/ventas/nueva", label: "Nueva venta", icon: CirclePlus },
       { href: "/ventas", label: "Ventas", icon: Receipt },
+      { href: "/detectadas", label: "Ventas detectadas", icon: MailCheck, adminOnly: true, badgeKey: "detected" },
       { href: "/envios", label: "Pendientes de envío", icon: Truck, badgeKey: "shipments" },
       { href: "/productos", label: "Productos", icon: Tag },
       { href: "/descripciones", label: "Generador de descripciones", icon: WandSparkles },

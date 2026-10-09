@@ -71,7 +71,7 @@ export function Shell({
   children: ReactNode;
   role: "admin" | "vendedor";
   userLabel: string;
-  badges: { reviews: number; shipments: number; emails: number };
+  badges: { reviews: number; shipments: number; emails: number; detected: number };
 }) {
   const pathname = usePathname();
   const [more, setMore] = useState(false);
@@ -149,7 +149,7 @@ export function Shell({
                       />
                       <Icon size={18} strokeWidth={2.25} className={active ? "text-brand" : "text-chrome-ink/55 group-hover:text-chrome-ink/90"} />
                       <span className="flex-1">{it.label}</span>
-                      <Counter n={badgeOf(it)} tone={it.badgeKey === "shipments" ? "brand" : "tag"} />
+                      <Counter n={badgeOf(it)} tone={it.badgeKey === "shipments" || it.badgeKey === "detected" ? "brand" : "tag"} />
                     </NavLink>
                   </li>
                 );
@@ -221,7 +221,7 @@ export function Shell({
           <button type="button" onClick={() => setMore(true)} className={tabClass(!inTabs || more)} aria-expanded={more} aria-controls="menu-mas">
             <span className="relative">
               <LayoutGrid size={23} strokeWidth={2.25} />
-              {badges.reviews + badges.emails > 0 && role === "admin" && <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-tag ring-2 ring-chrome" />}
+              {badges.reviews + badges.emails + badges.detected > 0 && role === "admin" && <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-tag ring-2 ring-chrome" />}
             </span>
             Más
           </button>
@@ -271,7 +271,7 @@ export function Shell({
                           <span>{it.label}</span>
                           {n > 0 && (
                             <span className="absolute right-2 top-2">
-                              <Counter n={n} tone={it.badgeKey === "shipments" ? "brand" : "tag"} />
+                              <Counter n={n} tone={it.badgeKey === "shipments" || it.badgeKey === "detected" ? "brand" : "tag"} />
                             </span>
                           )}
                         </NavLink>

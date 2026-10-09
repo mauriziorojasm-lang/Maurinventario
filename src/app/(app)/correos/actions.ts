@@ -29,7 +29,7 @@ export async function syncNow(): Promise<ActionResult> {
   if (s.error) return { ok: false, error: s.error };
   const parts = [
     `${s.new_emails} ${s.new_emails === 1 ? "correo nuevo" : "correos nuevos"}`,
-    `${s.sales} ${s.sales === 1 ? "venta registrada" : "ventas registradas"}`,
+    `${s.detected} ${s.detected === 1 ? "venta detectada (por confirmar)" : "ventas detectadas (por confirmar)"}`,
     `${s.labels} ${s.labels === 1 ? "etiqueta añadida" : "etiquetas añadidas"}`,
   ];
   if (s.review) parts.push(`${s.review} para revisar`);
@@ -103,6 +103,15 @@ export async function linkLabel(emailId: string, saleId: string, force: boolean)
     }
     return { ok: false, error: err instanceof Error ? err.message : "No se ha podido añadir la etiqueta." };
   }
+}
+
+/** Deshace «duplicado» o «descartado» de una venta: vuelve a Ventas detectadas. */
+export async function undoEmail(emailId: string): Promise<ActionResult> {
+  const r = await callRpc("email_set_status", { p_email_id: emailId, p_status: "pendiente" });
+  if (!r.ok) return r;
+  await runSync("manual").catch(() => undefined);
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Ha vuelto a Ventas detectadas." };
 }
 
 export async function retryEmail(emailId: string): Promise<ActionResult> {

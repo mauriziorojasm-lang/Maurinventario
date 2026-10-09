@@ -8,7 +8,7 @@ import { ActionMessages, ConfirmAction, Modal, useServerAction } from "@/compone
 import { money } from "@/lib/format";
 import type { SellableVariant } from "@/lib/types";
 import { variantDisplay } from "@/lib/types";
-import { disconnectGmail, dismissEmail, linkLabel, resolveSale, retryEmail, saveAccount, setDefaultResponsible, syncNow } from "./actions";
+import { disconnectGmail, dismissEmail, undoEmail, linkLabel, resolveSale, retryEmail, saveAccount, setDefaultResponsible, syncNow } from "./actions";
 import type { EmailRowView } from "./page";
 
 export function ConnectionButtons({ connected, credentials, status }: { connected: boolean; credentials: boolean; status: string }) {
@@ -317,5 +317,17 @@ function ChooseSale({ email, candidates }: { email: EmailRowView; candidates: { 
         )}
       </Modal>
     </>
+  );
+}
+
+export function UndoButton({ id }: { id: string }) {
+  const { run, pending, error, message } = useServerAction(undoEmail);
+  return (
+    <div className="shrink-0">
+      <Button size="sm" onClick={() => run(id)} disabled={pending}>
+        {pending ? "Deshaciendo…" : "Volver a detectadas"}
+      </Button>
+      <ActionMessages error={error} message={message} />
+    </div>
   );
 }

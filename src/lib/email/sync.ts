@@ -22,6 +22,7 @@ export interface SyncSummary {
   read: number;
   new_emails: number;
   sales: number;
+  detected: number;
   labels: number;
   review: number;
   waiting: number;
@@ -68,6 +69,7 @@ export async function runSync(trigger: "auto" | "manual"): Promise<SyncSummary> 
     read: 0,
     new_emails: 0,
     sales: 0,
+    detected: 0,
     labels: 0,
     review: 0,
     waiting: 0,
@@ -181,10 +183,6 @@ async function storeEmail(db: Admin, mail: MailMessage): Promise<"new" | "ignore
       status: parsed ? "pendiente" : "revision",
       review_reason: parsed ? null : "No se han podido leer los datos del correo (puede que el formato haya cambiado).",
     };
-    if (parsed && "doubt" in parsed && parsed.doubt) {
-      row.status = "revision";
-      row.review_reason = `${parsed.doubt} Regístrala a mano si es correcta.`;
-    }
   }
   const { error } = await db.from("email_messages").insert(row);
   if (error) {
@@ -232,6 +230,7 @@ async function processQueue(db: Admin, gmail: Gmail, summary: SyncSummary, deadl
     try {
       const r = e.kind === "vinted_etiqueta" ? await processLabel(db, gmail, e) : await processSale(db, catalog, e);
       if (r === "sale") summary.sales++;
+      else if (r === "detected") summary.detected++;
       else if (r === "label") summary.labels++;
       else if (r === "review") summary.review++;
       else if (r === "waiting") summary.waiting++;
@@ -254,7 +253,7 @@ async function processQueue(db: Admin, gmail: Gmail, summary: SyncSummary, deadl
   }
 }
 
-type Outcome = "sale" | "label" | "review" | "waiting" | "noop";
+type Outcome = "sale" | "detected" | "label" | "review" | "waiting" | "noop";
 
 async function toReview(db: Admin, id: string, reason: string, candidates: unknown = null): Promise<Outcome> {
   await db
@@ -271,21 +270,26 @@ const NEEDS_PERSON = /No hay stock|Falta el responsable|no existe|plataforma|no 
 
 async function processSale(db: Admin, catalog: Catalog, e: EmailRow): Promise<Outcome> {
   if (e.sale_id) {
-    // Ya tenía venta (p. ej. se pulsó «Reintentar»): no se crea otra
+    // Ya tenía venta (confirmada o marcada como duplicado): no se crea otra
     await db.from("email_messages").update({ status: "procesado", review_reason: null, last_error: null, updated_at: new Date().toISOString() }).eq("id", e.id);
     return "noop";
   }
-  const name = String(e.parsed.product ?? "");
-  const match = await catalog.match(name);
-  if (match.variantId === null) {
-    return toReview(db, e.id, match.reason, match.candidates);
-  }
-  const { error } = await db.rpc("email_register_sale", { p_email_id: e.id, p_variant_id: match.variantId });
-  if (error) {
-    if (NEEDS_PERSON.test(error.message)) return toReview(db, e.id, error.message, match.candidates);
-    throw new Error(error.message);
-  }
-  return "sale";
+  // No se registra sola: queda en «Ventas detectadas» con el producto sugerido
+  // para que el administrador la confirme, la marque como duplicado o la descarte.
+  const match = await catalog.match(String(e.parsed.product ?? ""));
+  const notes = [e.parsed.doubt ? `${e.parsed.doubt} Revisa el precio antes de confirmar.` : null, "reason" in match ? match.reason : null].filter(Boolean);
+  await db
+    .from("email_messages")
+    .update({
+      status: "detectada",
+      variant_id: match.variantId,
+      candidates: match.candidates.length ? match.candidates : null,
+      review_reason: notes.length ? notes.join(" ") : null,
+      last_error: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", e.id);
+  return "detected";
 }
 
 interface VariantInfo {
@@ -410,7 +414,10 @@ async function vintedPlatformId(db: Admin): Promise<string | null> {
 }
 
 /** Busca la venta de la etiqueta: nº de transacción y, si no, el artículo (solo si hay UNA posible). */
-export async function findLabelSale(db: Admin, e: EmailRow): Promise<{ sale: SaleLite } | { sale: null; reason: string; candidates: Candidate[]; wait: boolean }> {
+export async function findLabelSale(
+  db: Admin,
+  e: EmailRow,
+): Promise<{ sale: SaleLite } | { sale: null; reason: string; candidates: Candidate[]; wait: boolean; saleUnconfirmed?: boolean }> {
   const trx = (e.parsed.transaction_id as string | null) ?? null;
   const productNorm = (e.parsed.product_norm as string | null) ?? null;
   const account = (e.parsed.account_norm as string | null) ?? null;
@@ -421,7 +428,7 @@ export async function findLabelSale(db: Admin, e: EmailRow): Promise<{ sale: Sal
     if (data?.length === 1) return { sale: data[0] as SaleLite };
   }
 
-  // Ventas creadas desde un correo de Vinted con el mismo artículo y sin etiqueta de correo
+  // Ventas unidas a un correo de Vinted (confirmadas o marcadas como duplicado) con el mismo artículo y sin etiqueta de correo
   const { data: sameName } = await db
     .from("email_messages")
     .select("id, sale_id, status, parsed, received_at")
@@ -451,8 +458,9 @@ export async function findLabelSale(db: Admin, e: EmailRow): Promise<{ sale: Sal
   return {
     sale: null,
     wait: true,
+    saleUnconfirmed: pendingSale,
     reason: pendingSale
-      ? "La venta de este artículo está pendiente de revisión. En cuanto se registre, se pondrá la etiqueta."
+      ? "La venta de este artículo está en «Ventas detectadas» sin confirmar. En cuanto la confirmes, se pondrá la etiqueta sola."
       : "Todavía no hay una venta de Vinted con este artículo. Se volverá a intentar automáticamente.",
     candidates: await recentVintedSales(db),
   };
@@ -484,7 +492,8 @@ async function processLabel(db: Admin, gmail: Gmail, e: EmailRow): Promise<Outco
   const found = await findLabelSale(db, e);
   if (!found.sale) {
     const age = Date.now() - Date.parse(e.received_at);
-    if (found.wait && age < WAIT_LABEL_DAYS * 86400_000) {
+    // Si la venta está detectada pero sin confirmar, espera lo que haga falta
+    if (found.wait && (found.saleUnconfirmed || age < WAIT_LABEL_DAYS * 86400_000)) {
       await db
         .from("email_messages")
         .update({ status: "esperando", review_reason: found.reason, candidates: found.candidates, updated_at: new Date().toISOString() })

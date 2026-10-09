@@ -7,7 +7,7 @@ import { CENTRAL_ACCOUNT, googleCredentials } from "@/lib/email/gmail";
 import { first, type SearchParams } from "@/lib/filters";
 import { dateTime, money } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import { AccountRow, ConnectionButtons, DefaultResponsible, IncidentActions } from "./email-actions";
+import { AccountRow, ConnectionButtons, DefaultResponsible, IncidentActions, UndoButton } from "./email-actions";
 
 export const metadata: Metadata = { title: "Ventas por correo" };
 export const maxDuration = 60;
@@ -19,7 +19,7 @@ type Status = {
   last_error: string | null;
   last_sync_at: string | null;
   last_success_at: string | null;
-  last_summary: { new_emails?: number; sales?: number; labels?: number; review?: number; waiting?: number; errors?: number } | null;
+  last_summary: { new_emails?: number; sales?: number; detected?: number; labels?: number; review?: number; waiting?: number; errors?: number } | null;
   connected_at: string | null;
   default_responsible_id: string | null;
   cron_active: boolean;
@@ -49,6 +49,8 @@ const KIND: Record<string, string> = {
 
 const STATUS: Record<string, { label: string; tone: "good" | "warn" | "bad" | "info" | "neutral" }> = {
   procesado: { label: "Hecho", tone: "good" },
+  detectada: { label: "Por confirmar", tone: "info" },
+  duplicado: { label: "Duplicado (ya estaba apuntada)", tone: "neutral" },
   pendiente: { label: "En cola", tone: "info" },
   esperando: { label: "Esperando la venta", tone: "info" },
   revision: { label: "Revisar", tone: "warn" },
@@ -153,7 +155,15 @@ export default async function EmailSalesPage({ searchParams }: { searchParams: P
             <ul className="divide-y divide-line">
               {hist.map((e) => (
                 <li key={e.id} className="px-4 py-3">
-                  <EmailSummary e={e} saleNumber={e.sale_id ? saleNumber.get(e.sale_id) : undefined} compact />
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <EmailSummary e={e} saleNumber={e.sale_id ? saleNumber.get(e.sale_id) : undefined} compact />
+                    {(e.kind === "vinted_venta" || e.kind === "wallapop_venta") && (e.status === "duplicado" || e.status === "ignorado") && <UndoButton id={e.id} />}
+                    {e.status === "detectada" && (
+                      <Link href="/detectadas" className="shrink-0 text-[13px] font-semibold text-brand-ink hover:underline">
+                        Ir a confirmarla
+                      </Link>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -257,7 +267,7 @@ function ConnectionPanel({
               <>
                 <dt className="text-muted">Último resultado</dt>
                 <dd className="num">
-                  {sum.new_emails ?? 0} nuevos · {sum.sales ?? 0} ventas · {sum.labels ?? 0} etiquetas
+                  {sum.new_emails ?? 0} nuevos · {sum.detected ?? 0} ventas detectadas · {sum.labels ?? 0} etiquetas
                   {sum.review ? ` · ${sum.review} a revisar` : ""}
                   {sum.errors ? ` · ${sum.errors} errores` : ""}
                 </dd>

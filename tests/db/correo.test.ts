@@ -223,6 +223,42 @@ run("Ventas automáticas por correo", () => {
     await expect(rpc(db, admin, "email_set_status", e, "ignorado")).rejects.toThrow(/ya está procesado/);
   });
 
+  it("venta detectada: el administrador puede corregir el precio al confirmar; el proceso automático no", async () => {
+    const e = await email("wallapop_venta", { price: 61, product: "x", account_norm: "mauri" });
+    await expect(svc("select email_register_sale($1, $2, null, null, 55)", [e, variant])).rejects.toThrow(/Solo el administrador/);
+    const id = await rpc<string>(db, admin, "email_register_sale", e, variant, null, null, 55);
+    const price = (await db.client.query("select unit_price from sale_items where sale_id = $1", [id])).rows[0].unit_price;
+    expect(Number(price)).toBe(55);
+  });
+
+  it("marcar como duplicado: no crea venta ni mueve stock, une el correo a la venta y se puede deshacer", async () => {
+    const manual = await rpc<string>(db, admin, "create_sale", {
+      responsible_id: respA,
+      platform_id: (await selectAs<{ id: string }>(db, admin, "select id from platforms where name = 'Vinted'"))[0].id,
+      items: [{ variant_id: variant, lot_id: lotNew, quantity: 1, unit_price: 40 }],
+    });
+    const e = await email("vinted_venta", { price: 40, product: "Oakley", buyer: "dup_buyer", account_norm: "mauri" });
+    const before = await counts();
+    await rpc(db, admin, "email_mark_duplicate", e, manual);
+    await rpc(db, admin, "email_mark_duplicate", e, manual); // dos veces: igual
+    expect(await counts()).toEqual(before);
+    const em = (await db.client.query("select status, sale_id from email_messages where id = $1", [e])).rows[0];
+    expect(em).toMatchObject({ status: "duplicado", sale_id: manual });
+    expect((await db.client.query("select buyer_name from sales where id = $1", [manual])).rows[0].buyer_name).toBe("dup_buyer");
+    // Confirmarla después devuelve la venta ya apuntada, sin crear otra
+    expect(await rpc<string>(db, admin, "email_register_sale", e, variant)).toBe(manual);
+    expect(await counts()).toEqual(before);
+    // Otro correo no puede unirse a la misma venta; una de otra plataforma tampoco
+    const e2 = await email("vinted_venta", { price: 40, account_norm: "mauri" });
+    await expect(rpc(db, admin, "email_mark_duplicate", e2, manual)).rejects.toThrow(/otro correo/);
+    const w = await email("wallapop_venta", { price: 40, account_norm: "mauri" });
+    await expect(rpc(db, admin, "email_mark_duplicate", w, manual)).rejects.toThrow(/otra plataforma/);
+    // Deshacer: vuelve a la cola sin venta unida
+    await rpc(db, admin, "email_set_status", e, "pendiente");
+    expect((await db.client.query("select status, sale_id from email_messages where id = $1", [e])).rows[0]).toMatchObject({ status: "pendiente", sale_id: null });
+    await expect(rpc(db, seller, "email_mark_duplicate", e, manual)).rejects.toThrow(/permisos/);
+  });
+
   it("bloqueo de sincronización: dos procesos a la vez no se pisan", async () => {
     const a = await svc<{ r: boolean }>("select email_sync_try_lock(60) r");
     const b = await svc<{ r: boolean }>("select email_sync_try_lock(60) r");
