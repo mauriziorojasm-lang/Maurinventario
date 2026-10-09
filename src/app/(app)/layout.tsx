@@ -9,11 +9,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const supabase = await createClient();
   let reviews = 0;
   let shipments = 0;
+  let emails = 0;
   if (user.role === "admin") {
-    const [{ count: r }, { count: s }] = await Promise.all([
+    const [{ count: r }, { count: s }, { count: e }] = await Promise.all([
       supabase.from("review_items").select("id", { count: "exact", head: true }).eq("status", "pendiente"),
       supabase.from("sales").select("id", { count: "exact", head: true }).eq("status", "activa").eq("shipping_status", "pendiente"),
+      supabase.from("email_messages").select("id", { count: "exact", head: true }).eq("status", "revision"),
     ]);
+    emails = e ?? 0;
     reviews = r ?? 0;
     shipments = s ?? 0;
   } else if (user.responsibleId) {
@@ -26,7 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     shipments = count ?? 0;
   }
   return (
-    <Shell role={user.role} userLabel={user.fullName ?? user.responsibleName ?? user.email} badges={{ reviews, shipments }}>
+    <Shell role={user.role} userLabel={user.fullName ?? user.responsibleName ?? user.email} badges={{ reviews, shipments, emails }}>
       {children}
     </Shell>
   );

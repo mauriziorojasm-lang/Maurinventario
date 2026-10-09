@@ -6,6 +6,7 @@ import {
   Factory,
   FileSpreadsheet,
   Handshake,
+  Mail,
   House,
   ListChecks,
   Receipt,
@@ -21,7 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean; badgeKey?: "reviews" | "shipments" };
+export type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean; badgeKey?: "reviews" | "shipments" | "emails" };
 export type NavGroup = { label: string | null; items: NavItem[] };
 
 export const NAV: NavGroup[] = [
@@ -57,6 +58,7 @@ export const NAV: NavGroup[] = [
   {
     label: "Administración",
     items: [
+      { href: "/correos", label: "Ventas por correo", icon: Mail, adminOnly: true, badgeKey: "emails" },
       { href: "/importar", label: "Importar Excel", icon: FileSpreadsheet, adminOnly: true },
       { href: "/revision", label: "Pendientes de revisar", icon: ListChecks, adminOnly: true, badgeKey: "reviews" },
       { href: "/usuarios", label: "Usuarios", icon: UserCog, adminOnly: true },

@@ -85,7 +85,7 @@ Esto es lo que hay realmente en el proyecto:
 | Gestor de paquetes | **npm** (`package-lock.json`) |
 | Base de datos | **PostgreSQL de Supabase** |
 | ORM | **No hay ORM** (ni Prisma ni Drizzle). La lógica de negocio está en funciones SQL de la base de datos, que la app llama con `supabase-js`. |
-| Migraciones | **Supabase CLI**, carpeta `supabase/migrations/` (7 archivos SQL) |
+| Migraciones | **Supabase CLI**, carpeta `supabase/migrations/` (11 archivos SQL) |
 | Autenticación | **Supabase Auth**, solo email y contraseña. Los usuarios los crea el administrador; no hay registro público. |
 | Permisos | **Row Level Security** y funciones SQL que comprueban si el usuario es `admin` o `vendedor` |
 | Storage | **Supabase Storage**, 2 buckets privados: `product-photos` y `shipping-labels` (los crea una migración) |
@@ -325,6 +325,8 @@ Estas son **todas** las variables que usa MaurInventario. No hay más.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ (la de **dev**) | ✅ | 🟢 Pública | Conectar como el usuario con sesión, con sus permisos. |
 | `SUPABASE_SECRET_KEY` | ✅ (la de **dev**) | ✅ | 🔴 Secreta | Solo pantalla Usuarios: crear usuarios, desactivarlos y cambiar contraseñas. |
 | `GEMINI_API_KEY` | Opcional | ✅ | 🔴 Secreta | Generador de descripciones (IA de Google Gemini, nivel gratuito). Se crea en aistudio.google.com → *Get API key*. |
+| `GOOGLE_CLIENT_ID` | Opcional | ✅ | 🔴 Secreta | Ventas por correo (Gmail). Ver [docs/VENTAS-POR-CORREO.md](docs/VENTAS-POR-CORREO.md). |
+| `GOOGLE_CLIENT_SECRET` | Opcional | ✅ | 🔴 Secreta | Ventas por correo (Gmail). Mismo sitio que la anterior. |
 | `GEMINI_MODEL` | Opcional | Opcional | 🔴 Secreta | Cambiar el modelo de Gemini. Por defecto se prueban en orden `gemini-3.5-flash`, `gemini-3.8-flash`, `gemini-3.5-flash-lite` y `gemini-3.1-flash-lite` (si uno está saturado o sin cupo, pasa al siguiente). |
 
 > Sin `SUPABASE_SECRET_KEY` la app funciona, pero la pantalla Usuarios no puede crear usuarios. Lo avisa en pantalla.

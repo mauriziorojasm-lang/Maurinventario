@@ -23,7 +23,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
   const { data: sale } = await supabase
     .from("sales")
     .select(
-      "id, sale_number, sale_date, status, void_reason, voided_at, responsible_id, platform_id, carrier_id, mobile_device_id, shipping_status, shipping_label_path, external_reference, notes, source_ref, created_at, responsibles(name), platforms(name, requires_shipping), carriers(name), mobile_devices(number, name)",
+      "id, sale_number, sale_date, status, void_reason, voided_at, responsible_id, platform_id, carrier_id, mobile_device_id, shipping_status, shipping_label_path, external_reference, notes, source_ref, created_at, source, buyer_name, tracking_number, platform_transaction_id, shipping_deadline, responsibles(name), platforms(name, requires_shipping), carriers(name), mobile_devices(number, name)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -73,6 +73,11 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
     notes: string | null;
     source_ref: string | null;
     created_at: string;
+    source: "manual" | "excel" | "correo";
+    buyer_name: string | null;
+    tracking_number: string | null;
+    platform_transaction_id: string | null;
+    shipping_deadline: string | null;
     responsibles: { name: string } | null;
     platforms: { name: string; requires_shipping: boolean } | null;
     carriers: { name: string } | null;
@@ -251,6 +256,30 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
                   <dd>{s.shipping_status === "enviado" ? <Badge tone="good">Enviado</Badge> : <Badge tone="warn">Pendiente</Badge>}</dd>
                 </>
               )}
+              {s.buyer_name && (
+                <>
+                  <dt className="text-muted">Comprador</dt>
+                  <dd>{s.buyer_name}</dd>
+                </>
+              )}
+              {s.tracking_number && (
+                <>
+                  <dt className="text-muted">Seguimiento</dt>
+                  <dd className="num break-all">{s.tracking_number}</dd>
+                </>
+              )}
+              {s.shipping_deadline && (
+                <>
+                  <dt className="text-muted">Enviar antes de</dt>
+                  <dd className="num">{dateTime(s.shipping_deadline)}</dd>
+                </>
+              )}
+              {s.platform_transaction_id && (
+                <>
+                  <dt className="text-muted">Nº de transacción</dt>
+                  <dd className="num break-all">{s.platform_transaction_id}</dd>
+                </>
+              )}
               <dt className="text-muted">Móvil</dt>
               <dd>
                 {s.mobile_devices
@@ -269,12 +298,16 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
                   <dd>{s.notes}</dd>
                 </>
               )}
-              {s.source_ref && (
-                <>
-                  <dt className="text-muted">Origen</dt>
-                  <dd>Importado del Excel ({s.source_ref})</dd>
-                </>
-              )}
+              <dt className="text-muted">Origen</dt>
+              <dd>
+                {s.source === "correo"
+                  ? `Automática, desde el correo de ${s.platforms?.name ?? "la plataforma"}`
+                  : s.source_ref
+                    ? `Importado del Excel (${s.source_ref})`
+                    : s.source === "excel"
+                      ? "Importado del Excel"
+                      : "Registrada a mano"}
+              </dd>
               <dt className="text-muted">Registrada</dt>
               <dd>{dateTime(s.created_at)}</dd>
             </dl>

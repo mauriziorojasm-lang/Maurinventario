@@ -98,3 +98,19 @@ export async function rpc<T = unknown>(db: TestDb, userId: string | null, fn: st
 export async function selectAs<T = Record<string, unknown>>(db: TestDb, userId: string | null, sql: string, params: unknown[] = []): Promise<T[]> {
   return asUser(db, userId, async (q) => (await q(sql, params)).rows as T[]);
 }
+
+/** Ejecuta como el servidor (clave secreta, sin usuario): rol service_role. */
+export async function asService<T>(db: TestDb, fn: (q: Client["query"]) => Promise<T>): Promise<T> {
+  const c = db.client;
+  await c.query("begin");
+  try {
+    await c.query("set local role service_role");
+    await c.query(`select set_config('request.jwt.claim.sub', '', true)`);
+    const result = await fn(c.query.bind(c) as Client["query"]);
+    await c.query("commit");
+    return result;
+  } catch (e) {
+    await c.query("rollback");
+    throw e;
+  }
+}
