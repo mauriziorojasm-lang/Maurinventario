@@ -8,6 +8,7 @@ import {
   Handshake,
   Mail,
   MailCheck,
+  Megaphone,
   House,
   ListChecks,
   Receipt,
@@ -23,7 +24,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean; badgeKey?: "reviews" | "shipments" | "emails" | "detected" };
+export type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean; badgeKey?: "reviews" | "shipments" | "emails" | "detected" | "listings" };
 export type NavGroup = { label: string | null; items: NavItem[] };
 
 export const NAV: NavGroup[] = [
@@ -36,6 +37,7 @@ export const NAV: NavGroup[] = [
       { href: "/detectadas", label: "Ventas detectadas", icon: MailCheck, adminOnly: true, badgeKey: "detected" },
       { href: "/envios", label: "Pendientes de envío", icon: Truck, badgeKey: "shipments" },
       { href: "/productos", label: "Productos", icon: Tag },
+      { href: "/anuncios", label: "Anuncios", icon: Megaphone, adminOnly: true, badgeKey: "listings" },
       { href: "/descripciones", label: "Generador de descripciones", icon: WandSparkles },
     ],
   },

@@ -11,13 +11,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let shipments = 0;
   let emails = 0;
   let detected = 0;
+  let listings = 0;
   if (user.role === "admin") {
-    const [{ count: r }, { count: s }, { count: e }, { count: d }] = await Promise.all([
+    const [{ count: r }, { count: s }, { count: e }, { count: d }, { count: l }] = await Promise.all([
       supabase.from("review_items").select("id", { count: "exact", head: true }).eq("status", "pendiente"),
       supabase.from("sales").select("id", { count: "exact", head: true }).eq("status", "activa").eq("shipping_status", "pendiente"),
       supabase.from("email_messages").select("id", { count: "exact", head: true }).eq("status", "revision"),
       supabase.from("email_messages").select("id", { count: "exact", head: true }).eq("status", "detectada"),
+      supabase.from("v_listings_to_remove").select("id", { count: "exact", head: true }),
     ]);
+    listings = l ?? 0;
     emails = e ?? 0;
     detected = d ?? 0;
     reviews = r ?? 0;
@@ -32,7 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     shipments = count ?? 0;
   }
   return (
-    <Shell role={user.role} userLabel={user.fullName ?? user.responsibleName ?? user.email} badges={{ reviews, shipments, emails, detected }}>
+    <Shell role={user.role} userLabel={user.fullName ?? user.responsibleName ?? user.email} badges={{ reviews, shipments, emails, detected, listings }}>
       {children}
     </Shell>
   );

@@ -1,10 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { uploadProductPhoto } from "@/components/photo-upload";
+import { uploadProductPhotos } from "@/components/photo-upload";
 import { Button, Field, Input, Notice, Textarea } from "@/components/ui";
 import type { Option } from "@/lib/types";
-import { createProduct, setProductPhoto, updateProduct } from "./actions";
+import { createProduct, updateProduct } from "./actions";
 
 export type ProductFormValues = {
   id?: string;
@@ -24,7 +24,8 @@ export function ProductForm({ initial, brands, categories, onDone }: { initial?:
     initial ?? { name: "", brand_name: "", category_name: "", sku: "", description: "", normal_sale_price: "", notes: "" },
   );
   const [variants, setVariants] = useState<string[]>([]);
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const set = (k: keyof ProductFormValues) => (e: { target: { value: string } }) => setV((x) => ({ ...x, [k]: e.target.value }));
@@ -58,16 +59,17 @@ export function ProductForm({ initial, brands, categories, onDone }: { initial?:
       }
       id = r.data;
     }
-    if (photo && id) {
-      const up = await uploadProductPhoto(id, photo);
-      if (up.error) setError(up.error);
-      else await setProductPhoto(id, up.path!);
+    let photoError = false;
+    if (photos.length && id) {
+      const up = await uploadProductPhotos(id, photos, (p) => setProgress(`Subiendo fotos: ${p.done} de ${p.total}`));
+      photoError = up.errors.length > 0;
     }
+    setProgress(null);
     setPending(false);
     if (onDone) {
       onDone();
       router.refresh();
-    } else router.push(`/productos/${id}`);
+    } else router.push(`/productos/${id}${photoError ? "?fotos=error" : ""}`);
   }
 
   return (
@@ -101,9 +103,15 @@ export function ProductForm({ initial, brands, categories, onDone }: { initial?:
         <Field label="Descripción" className="sm:col-span-2">
           <Textarea value={v.description} onChange={set("description")} />
         </Field>
-        <Field label="Foto" hint="JPG, PNG o WebP, máximo 5 MB." className="sm:col-span-2">
-          <Input type="file" accept="image/*" className="py-1.5" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
-        </Field>
+        {!editing && (
+          <Field
+            label="Fotos"
+            hint={photos.length ? `${photos.length} ${photos.length === 1 ? "foto elegida" : "fotos elegidas"}. Las del iPhone se convierten solas.` : "Puedes elegir varias. Luego podrás ordenarlas y añadir más."}
+            className="sm:col-span-2"
+          >
+            <Input type="file" accept="image/*,.heic,.heif" multiple className="py-1.5" onChange={(e) => setPhotos(Array.from(e.target.files ?? []))} />
+          </Field>
+        )}
         <Field label="Notas internas" className="sm:col-span-2">
           <Textarea value={v.notes} onChange={set("notes")} className="min-h-12" />
         </Field>
@@ -133,7 +141,7 @@ export function ProductForm({ initial, brands, categories, onDone }: { initial?:
       {error && <Notice tone="bad">{error}</Notice>}
       <div className="flex gap-2">
         <Button variant="primary" onClick={save} disabled={pending || !v.name.trim()}>
-          {pending ? "Guardando…" : editing ? "Guardar cambios" : "Crear producto"}
+          {pending ? (progress ?? "Guardando…") : editing ? "Guardar cambios" : "Crear producto"}
         </Button>
       </div>
     </div>

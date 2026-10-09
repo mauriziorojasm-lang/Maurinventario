@@ -8,6 +8,7 @@ import { loadSaleOptions } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import { variantDisplay } from "@/lib/types";
 import { LinePriceEditor, SaleHeaderEditor, ShippingEditor, VoidSaleButton } from "./sale-editors";
+import { RemovedButton } from "../../anuncios/listing-buttons";
 
 export const metadata: Metadata = { title: "Venta" };
 
@@ -96,6 +97,16 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
   const gross = lines.reduce((a, l) => a + l.quantity * Number(l.unit_price), 0);
   const cost = lines.reduce((a, l) => a + l.quantity * Number(lotMap.get(l.lot_id)?.unit_cost ?? 0), 0);
   const active = s.status === "activa";
+  // Anuncios que siguen publicados de productos que se han quedado sin stock
+  const productIds = [...new Set((items ?? []).map((i) => (i.product_variants as unknown as { product_id: string } | null)?.product_id).filter((x): x is string => !!x))];
+  const toRemove =
+    isAdmin && active && productIds.length
+      ? (((await supabase.from("v_listings_to_remove").select("product_id, platform, product_name").in("product_id", productIds)).data ?? []) as {
+          product_id: string;
+          platform: "vinted" | "wallapop";
+          product_name: string;
+        }[])
+      : [];
 
   return (
     <>
@@ -124,6 +135,19 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
           )
         }
       />
+      {toRemove.length > 0 && (
+        <Notice tone="warn" className="mb-4" title="Quita el anuncio">
+          <p>
+            {[...new Set(toRemove.map((t) => t.product_name))].join(", ")} se ha quedado sin stock y sigue anunciado en{" "}
+            {[...new Set(toRemove.map((t) => (t.platform === "vinted" ? "Vinted" : "Wallapop")))].join(" y ")}. Quítalo para no venderlo otra vez.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {toRemove.map((t) => (
+              <RemovedButton key={t.product_id + t.platform} productId={t.product_id} platform={t.platform} />
+            ))}
+          </div>
+        </Notice>
+      )}
       {sp.aviso === "creada" && (
         <Notice tone="good" className="mb-4">
           Venta registrada. El stock de cada lote ya se ha descontado.

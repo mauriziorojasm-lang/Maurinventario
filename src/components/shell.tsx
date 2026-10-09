@@ -71,7 +71,7 @@ export function Shell({
   children: ReactNode;
   role: "admin" | "vendedor";
   userLabel: string;
-  badges: { reviews: number; shipments: number; emails: number; detected: number };
+  badges: { reviews: number; shipments: number; emails: number; detected: number; listings: number };
 }) {
   const pathname = usePathname();
   const [more, setMore] = useState(false);
@@ -221,7 +221,7 @@ export function Shell({
           <button type="button" onClick={() => setMore(true)} className={tabClass(!inTabs || more)} aria-expanded={more} aria-controls="menu-mas">
             <span className="relative">
               <LayoutGrid size={23} strokeWidth={2.25} />
-              {badges.reviews + badges.emails + badges.detected > 0 && role === "admin" && <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-tag ring-2 ring-chrome" />}
+              {badges.reviews + badges.emails + badges.detected + badges.listings > 0 && role === "admin" && <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-tag ring-2 ring-chrome" />}
             </span>
             Más
           </button>

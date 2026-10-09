@@ -302,6 +302,24 @@ dialog.mi-dialog::backdrop {
   }
 }
 
+/* Galería de fotos */
+.no-scrollbar {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+dialog.mi-lightbox::backdrop {
+  background: #000;
+}
+dialog.mi-lightbox {
+  color-scheme: dark;
+}
+.safe-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
 /* Espacio para la barra inferior del móvil */
 .safe-bottom {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));

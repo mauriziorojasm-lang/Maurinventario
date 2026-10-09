@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Megaphone } from "lucide-react";
 import { notFound } from "next/navigation";
-import { Badge, Empty, Figures, LotTag, Notice, PageHeader, Panel, StockBadge, Table, Td, Th, Tr } from "@/components/ui";
+import { Badge, Empty, LinkButton, Figures, LotTag, Notice, PageHeader, Panel, StockBadge, Table, Td, Th, Tr } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { EXIT_REASONS, MOVEMENT_TYPES, date, money, units } from "@/lib/format";
 import { loadCatalogOptions } from "@/lib/options";
-import { signedPhotoUrls } from "@/lib/photos";
+import { PhotoGallery } from "@/components/photo-gallery";
+import { loadProductPhotos } from "@/lib/product-photos";
 import { createClient } from "@/lib/supabase/server";
 import type { SellableVariant } from "@/lib/types";
 import { DeleteProductButton, EditProductButton, VariantEditor } from "./product-editors";
@@ -28,7 +30,7 @@ type VariantInv = {
   potential_is_estimated: boolean;
 };
 
-export default async function ProductDetail({ params }: PageProps<"/productos/[id]">) {
+export default async function ProductDetail({ params, searchParams }: PageProps<"/productos/[id]">) {
   const user = await requireUser();
   const isAdmin = user.role === "admin";
   const { id } = await params;
@@ -52,7 +54,7 @@ export default async function ProductDetail({ params }: PageProps<"/productos/[i
     brands: { name: string } | null;
     categories: { name: string } | null;
   };
-  const photo = (await signedPhotoUrls([p.photo_path])).get(p.photo_path ?? "");
+  const [photos, sp] = await Promise.all([loadProductPhotos(p.id), searchParams]);
 
   const info = (
     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
@@ -73,11 +75,13 @@ export default async function ProductDetail({ params }: PageProps<"/productos/[i
     </dl>
   );
 
-  const photoBlock = photo ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={photo} alt={p.name} className="aspect-square w-full rounded-[var(--radius-sm)] border border-line object-cover" />
-  ) : (
-    <div className="flex aspect-square w-full items-center justify-center rounded-[var(--radius-sm)] border border-dashed border-line-strong text-sm text-muted">Sin foto</div>
+  const photoBlock = (
+    <>
+      {sp.fotos === "error" && (
+        <Notice tone="warn">El producto se ha creado, pero alguna foto no se ha podido subir. Vuelve a intentarlo aquí abajo.</Notice>
+      )}
+      <PhotoGallery productId={p.id} name={p.name} photos={photos} editable={isAdmin} />
+    </>
   );
 
   if (!isAdmin) {
@@ -86,7 +90,7 @@ export default async function ProductDetail({ params }: PageProps<"/productos/[i
     return (
       <>
         <PageHeader title={p.name} back={{ href: "/productos", label: "Productos" }} />
-        <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
+        <div className="grid gap-5 lg:grid-cols-[minmax(300px,380px)_1fr]">
           <div className="flex flex-col gap-4">
             {photoBlock}
             <Panel>{info}</Panel>
@@ -151,6 +155,10 @@ export default async function ProductDetail({ params }: PageProps<"/productos/[i
         description={p.source_ref ? `Importado del Excel (${p.source_ref}).` : undefined}
         actions={
           <>
+            <LinkButton href={`/productos/${p.id}/anuncio`} variant="primary">
+              <Megaphone size={17} strokeWidth={2.5} />
+              Preparar anuncio
+            </LinkButton>
             <EditProductButton
               brands={opts.brands}
               categories={opts.categories}
@@ -181,7 +189,7 @@ export default async function ProductDetail({ params }: PageProps<"/productos/[i
           { label: "Beneficio potencial", value: money(totals.profit), tone: "good" },
         ]}
       />
-      <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(300px,380px)_1fr]">
         <div className="flex flex-col gap-4">
           {photoBlock}
           <Panel>{info}</Panel>
