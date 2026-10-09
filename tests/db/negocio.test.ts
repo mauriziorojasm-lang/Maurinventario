@@ -301,6 +301,31 @@ run("Lógica de negocio de MaurInventario", () => {
     expect(await found("  ")).toBe(true);
   });
 
+  it("panel de negocio: cifras coherentes con las ventas y el stock, y solo para el administrador", async () => {
+    type Dash = {
+      current: { revenue: number; profit: number; cost: number };
+      inventory: { units: number; stock_value: number };
+      inventory_then: { units: number; stock_value: number } | null;
+      prev_end: string;
+      series: { month: string; revenue: number }[];
+    };
+    const d = await rpc<Dash>(db, admin, "business_dashboard", 6);
+    const month = await selectAs<{ revenue: string; profit: string; cost: string }>(
+      db,
+      admin,
+      "select coalesce(sum(net_amount),0) revenue, coalesce(sum(profit),0) profit, coalesce(sum(cost_amount),0) cost from v_sale_lines where sale_date >= date_trunc('month', current_date)",
+    );
+    expect(Number(d.current.revenue)).toBeCloseTo(Number(month[0].revenue), 2);
+    expect(Number(d.current.profit)).toBeCloseTo(Number(month[0].profit), 2);
+    expect(Number(d.current.revenue) - Number(d.current.cost)).toBeCloseTo(Number(d.current.profit), 2);
+    expect(d.series).toHaveLength(6);
+    // Stock reconstruido: lo de entonces = lo de ahora deshaciendo los movimientos posteriores
+    const after = await selectAs<{ q: string }>(db, admin, "select coalesce(sum(quantity),0) q from inventory_movements where occurred_at > $1", [d.prev_end]);
+    expect(d.inventory_then).not.toBeNull();
+    expect(Number(d.inventory_then!.units)).toBe(Number(d.inventory.units) - Number(after[0].q));
+    await expect(rpc(db, seller, "business_dashboard", 6)).rejects.toThrow(/permisos/);
+  });
+
   it("sin sesión no se puede leer nada", async () => {
     await expect(selectAs(db, null, "select * from products")).rejects.toThrow(/permission denied/);
     await expect(rpc(db, null, "search_sellable_variants", "x")).rejects.toThrow();

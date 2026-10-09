@@ -71,10 +71,10 @@ export function MonthlyBars({ data }: { data: Point[] }) {
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[12.5px]">
         <span className="flex items-center gap-4 text-muted">
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-[3px] bg-brand" aria-hidden /> Facturación
+            <span className="h-3 w-3 rounded-[3px] bg-brand" aria-hidden /> Ventas
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-[3px] bg-ink" aria-hidden /> Beneficio
+            <span className="h-3 w-3 rounded-[3px] bg-ink" aria-hidden /> Beneficio bruto
           </span>
         </span>
         <button className="font-semibold text-brand-ink underline-offset-2 hover:underline" onClick={() => setAsTable(true)}>
@@ -141,8 +141,8 @@ export function MonthlyBars({ data }: { data: Point[] }) {
           style={{ left: `clamp(0px, calc(${((pad.l + band * hover! + band / 2) / W) * 100}% - 80px), calc(100% - 170px))` }}
         >
           <p className="font-semibold">{monthLabel(h.month)}</p>
-          <p className="num">Facturación: {money(h.revenue)}</p>
-          <p className="num">Beneficio: {money(h.profit)}</p>
+          <p className="num">Ventas: {money(h.revenue)}</p>
+          <p className="num">Beneficio bruto: {money(h.profit)}</p>
           <p className="num text-muted">
             {units(h.orders)} pedidos, {units(h.units)} uds.
           </p>

@@ -1,34 +1,12 @@
 import Link from "next/link";
 import { ChevronRight, Plus, Truck } from "lucide-react";
-import { MonthlyBars } from "@/components/charts/monthly-bars";
+import { Suspense } from "react";
 import { CountUp } from "@/components/count-up";
-import { Figures, LinkButton, Notice, PageHeader, Panel, clsx } from "@/components/ui";
+import { LinkButton, Notice, PageHeader, clsx } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
-import { money, udsLabel, units } from "@/lib/format";
+import { money, units } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-
-type Stats = {
-  today: { units: number; revenue: number; orders: number; profit: number };
-  month: { units: number; revenue: number; orders: number; profit: number };
-  inventory: {
-    units: number;
-    products_with_stock: number;
-    products: number;
-    stock_value: number;
-    potential_value: number;
-    potential_profit: number;
-    unpriced_units: number;
-    estimated_units: number;
-  };
-  best_seller_month: { name: string; revenue: number; units: number } | null;
-  best_seller_all: { name: string; revenue: number; units: number } | null;
-  top_product_month: { name: string; units: number; revenue: number } | null;
-  top_product_all: { name: string; units: number; revenue: number } | null;
-  monthly: { month: string; revenue: number; profit: number; orders: number; units: number }[];
-  losses_month: number;
-  pending_shipments: number;
-  pending_reviews: number;
-};
+import { BusinessDashboard, DashboardSkeleton } from "./business-dashboard";
 
 export default async function Dashboard({ searchParams }: PageProps<"/">) {
   const user = await requireUser();
@@ -75,124 +53,32 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
     );
   }
 
-  const { data, error } = await supabase.rpc("dashboard_stats");
-  const s = data as Stats | null;
-  if (error || !s) {
-    return (
-      <>
-        <PageHeader title="Inicio" />
-        <Notice tone="bad" title="No se han podido cargar los datos">
-          {error?.message ?? "Comprueba la conexión con Supabase y que las migraciones están aplicadas (ver README)."}
-        </Notice>
-      </>
-    );
-  }
-  const inv = s.inventory;
-
+  // Panel de negocio (administrador). Periodo del gráfico y rankings: 6 o 12 meses.
+  const months = sp.meses === "12" ? 12 : 6;
   return (
     <>
       {sinPermiso}
       <PageHeader
         title={`Hola${user.fullName ? `, ${user.fullName.split(" ")[0]}` : ""}`}
-        description="Cómo va el día, qué hay en el almacén y cómo van las ventas."
+        description="Cómo va el negocio: ventas, beneficio bruto, stock y actividad. Solo datos reales."
+        actions={
+          <nav aria-label="Periodo" className="flex rounded-full border border-line-strong bg-surface p-1 text-[13px] font-semibold">
+            {[6, 12].map((m) => (
+              <Link
+                key={m}
+                href={m === 6 ? "/" : "/?meses=12"}
+                aria-current={months === m ? "page" : undefined}
+                className={clsx("press rounded-full px-3.5 py-1.5", months === m ? "bg-ink text-paper" : "text-ink-soft hover:text-ink")}
+              >
+                {m} meses
+              </Link>
+            ))}
+          </nav>
+        }
       />
-
-      <Hero
-        today={{ revenue: s.today.revenue, orders: s.today.orders, units: s.today.units, profit: s.today.profit }}
-        month={{ revenue: s.month.revenue, orders: s.month.orders, units: s.month.units, profit: s.month.profit }}
-        losses={s.losses_month}
-      />
-
-      {(s.pending_reviews > 0 || s.pending_shipments > 0) && (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {s.pending_shipments > 0 && <ShipmentsCallout n={s.pending_shipments} />}
-          {s.pending_reviews > 0 && (
-            <Link
-              href="/revision"
-              className="press flex items-center gap-3 rounded-[var(--radius-md)] border border-line bg-surface p-4 shadow-[var(--shadow-card)] hover:border-ink/30"
-            >
-              <span className="display num flex h-11 min-w-11 items-center justify-center rounded-[12px] bg-tag px-2 text-[24px] text-tag-ink">
-                {s.pending_reviews}
-              </span>
-              <span className="flex-1 text-sm">
-                <span className="block font-semibold">Pendientes de revisar</span>
-                <span className="text-muted">Datos del Excel que necesitan tu confirmación</span>
-              </span>
-              <ChevronRight size={20} className="text-muted" />
-            </Link>
-          )}
-        </div>
-      )}
-
-      <h2 className="display mb-2.5 mt-8 text-[22px] uppercase">Almacén</h2>
-      <Figures
-        items={[
-          { label: "Productos con stock", value: units(inv.products_with_stock), note: `de ${units(inv.products)} en el catálogo` },
-          { label: "Unidades", value: units(inv.units) },
-          { label: "Valor del almacén", value: money(inv.stock_value), note: "a coste medio ponderado" },
-          {
-            label: "Valor potencial de venta",
-            value: money(inv.potential_value),
-            note:
-              inv.estimated_units > 0 || inv.unpriced_units > 0
-                ? `${inv.estimated_units} uds. con precio medio de venta${inv.unpriced_units ? `, ${inv.unpriced_units} sin precio` : ""}`
-                : "con el precio normal de venta",
-          },
-          { label: "Beneficio potencial", value: money(inv.potential_profit), tone: "good" },
-        ]}
-      />
-
-      <div className="mt-7 grid gap-5 lg:grid-cols-[1fr_340px]">
-        <Panel title="Ventas mensuales" description="Últimos 12 meses, descontadas las devoluciones.">
-          <MonthlyBars data={s.monthly} />
-        </Panel>
-        <Panel title="Rendimiento">
-          <dl className="flex flex-col gap-4 text-sm">
-            <div>
-              <dt className="text-[13px] text-muted">Mejor vendedor este mes</dt>
-              <dd className="mt-0.5 font-semibold">
-                {s.best_seller_month ? (
-                  <>
-                    {s.best_seller_month.name} <span className="num font-normal text-muted">· {money(s.best_seller_month.revenue)}</span>
-                  </>
-                ) : (
-                  <span className="font-normal text-muted">Sin ventas este mes</span>
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[13px] text-muted">Producto más vendido este mes</dt>
-              <dd className="mt-0.5 font-semibold">
-                {s.top_product_month ? (
-                  <>
-                    {s.top_product_month.name} <span className="num font-normal text-muted">· {udsLabel(s.top_product_month.units)}</span>
-                  </>
-                ) : (
-                  <span className="font-normal text-muted">Sin ventas este mes</span>
-                )}
-              </dd>
-            </div>
-            <div className="border-t border-line pt-4">
-              <dt className="text-[13px] text-muted">Mejor vendedor (histórico)</dt>
-              <dd className="mt-0.5 font-semibold">{s.best_seller_all ? `${s.best_seller_all.name} · ${money(s.best_seller_all.revenue)}` : "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-[13px] text-muted">Producto más vendido (histórico)</dt>
-              <dd className="mt-0.5 font-semibold">{s.top_product_all ? `${s.top_product_all.name} · ${udsLabel(s.top_product_all.units)}` : "—"}</dd>
-            </div>
-            <div className="border-t border-line pt-4">
-              <dt className="text-[13px] text-muted">Este mes</dt>
-              <dd className="num mt-0.5">
-                {money(s.month.revenue)} vendidos, {money(s.month.profit)} de beneficio
-                {s.losses_month > 0 && <span className="block text-danger">{money(s.losses_month)} en salidas sin venta</span>}
-              </dd>
-            </div>
-          </dl>
-          <Link href="/responsables" className="mt-5 inline-flex items-center gap-1 text-[13px] font-semibold text-brand-ink hover:underline">
-            Ver rendimiento de responsables
-          </Link>
-        </Panel>
-      </div>
+      <Suspense key={months} fallback={<DashboardSkeleton />}>
+        <BusinessDashboard months={months} />
+      </Suspense>
     </>
   );
 }
