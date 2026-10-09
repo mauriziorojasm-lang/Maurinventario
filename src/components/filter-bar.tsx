@@ -106,10 +106,10 @@ export function ExportLinks({ type, filters }: { type: string; filters: Record<s
   const q = new URLSearchParams({ ...filters, tipo: type });
   return (
     <>
-      <a className={buttonClass("secondary", "sm", "h-9")} href={`/api/exportar?${q.toString()}&formato=xlsx`}>
+      <a target="_blank" rel="noopener" className={buttonClass("secondary", "sm", "h-9")} href={`/api/exportar?${q.toString()}&formato=xlsx`}>
         Exportar Excel
       </a>
-      <a className={buttonClass("secondary", "sm", "h-9")} href={`/api/exportar?${q.toString()}&formato=csv`}>
+      <a target="_blank" rel="noopener" className={buttonClass("secondary", "sm", "h-9")} href={`/api/exportar?${q.toString()}&formato=csv`}>
         CSV
       </a>
     </>

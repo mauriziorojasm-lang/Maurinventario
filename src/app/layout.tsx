@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   title: { default: "MaurInventario", template: "%s · MaurInventario" },
   description: "Inventario, ventas, compras y rentabilidad.",
   robots: { index: false, follow: false },
+  // Instalada desde Safari («Añadir a pantalla de inicio») se abre como una app
+  applicationName: "MaurInventario",
+  appleWebApp: { capable: true, title: "MaurInventario", statusBarStyle: "black-translucent" },
+  icons: { apple: [{ url: "/icons/apple-icon-180.png", sizes: "180x180" }] },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
