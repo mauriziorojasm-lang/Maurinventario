@@ -20,6 +20,7 @@ run("Ventas automáticas por correo", () => {
   let lotOld: string;
   let lotNew: string;
   let n = 0;
+  let org: string;
 
   const svc = <T>(sql: string, params: unknown[] = []) => asService(db, async (q) => (await q(sql, params)).rows as T[]);
 
@@ -27,8 +28,8 @@ run("Ventas automáticas por correo", () => {
   async function email(kind: string, parsed: Record<string, unknown>, platform = kind.startsWith("vinted") ? "vinted" : "wallapop") {
     n++;
     const r = await db.client.query(
-      "insert into email_messages (gmail_message_id, received_at, platform, kind, parsed) values ($1, '2026-10-05T10:00:00Z', $2, $3, $4) returning id",
-      [`gm-${n}-${Date.now()}`, platform, kind, parsed],
+      "insert into email_messages (organization_id, gmail_message_id, received_at, platform, kind, parsed) values ($5, $1, '2026-10-05T10:00:00Z', $2, $3, $4) returning id",
+      [`gm-${n}-${Date.now()}`, platform, kind, parsed, org],
     );
     return r.rows[0].id as string;
   }
@@ -44,6 +45,7 @@ run("Ventas automáticas por correo", () => {
     db = await createTestDatabase();
     admin = await createUser(db, "admin@prueba.local");
     seller = await createUser(db, "vendedor@prueba.local", "vendedor");
+    org = (await db.client.query("select id from organizations where name = 'Prueba'")).rows[0].id;
     respA = (await selectAs<{ id: string }>(db, admin, "insert into responsibles (name, profile_id, is_partner) values ('Resp A', $1, true) returning id", [admin]))[0].id;
     respB = (await selectAs<{ id: string }>(db, admin, "insert into responsibles (name, profile_id, is_partner) values ('Resp B', $1, true) returning id", [seller]))[0].id;
     mobile = (await selectAs<{ id: string }>(db, admin, "select id from mobile_devices where number = 3"))[0].id;
@@ -116,7 +118,7 @@ run("Ventas automáticas por correo", () => {
   });
 
   it("Wallapop: la cuenta del correo decide responsable y móvil; un reintento no duplica", async () => {
-    await db.client.query("insert into email_accounts (platform, handle, handle_norm, responsible_id, mobile_device_id) values ('wallapop', 'Fran', 'fran', $1, $2)", [respB, mobile]);
+    await db.client.query("insert into email_accounts (organization_id, platform, handle, handle_norm, responsible_id, mobile_device_id) values ($3, 'wallapop', 'Fran', 'fran', $1, $2)", [respB, mobile, org]);
     const before = await counts();
     const e = await email("wallapop_venta", { price: 55, total: 55, buyer: "Lucía", product: "Oakley Encoder Rosas", account: "Fran", account_norm: "fran", sale_date: "2026-10-04" });
     const [a, b] = await Promise.all([
@@ -260,13 +262,13 @@ run("Ventas automáticas por correo", () => {
   });
 
   it("bloqueo de sincronización: dos procesos a la vez no se pisan", async () => {
-    const a = await svc<{ r: boolean }>("select email_sync_try_lock(60) r");
-    const b = await svc<{ r: boolean }>("select email_sync_try_lock(60) r");
+    const a = await svc<{ r: boolean }>("select email_sync_try_lock($1, 60) r", [org]);
+    const b = await svc<{ r: boolean }>("select email_sync_try_lock($1, 60) r", [org]);
     expect(a[0].r).toBe(true);
     expect(b[0]?.r ?? null).toBeNull();
-    await svc("select email_sync_unlock()");
-    expect((await svc<{ r: boolean }>("select email_sync_try_lock(60) r"))[0].r).toBe(true);
-    await svc("select email_sync_unlock()");
-    await expect(rpc(db, admin, "email_sync_try_lock", 60)).rejects.toThrow();
+    await svc("select email_sync_unlock($1)", [org]);
+    expect((await svc<{ r: boolean }>("select email_sync_try_lock($1, 60) r", [org]))[0].r).toBe(true);
+    await svc("select email_sync_unlock($1)", [org]);
+    await expect(rpc(db, admin, "email_sync_try_lock", org, 60)).rejects.toThrow();
   });
 });

@@ -52,7 +52,7 @@ export async function addProductPhotos(input: z.input<typeof addSchema>): Promis
     .from("product_photos")
     .upsert(
       photos.map((p, i) => ({ product_id: productId, path: p.path, width: p.width, height: p.height, position: start + i, created_by: user.id })),
-      { onConflict: "path", ignoreDuplicates: true },
+      { onConflict: "organization_id,path", ignoreDuplicates: true },
     );
   if (error) return { ok: false, error: friendlyError(error) };
   await syncCover(productId);

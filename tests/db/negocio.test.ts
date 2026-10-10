@@ -75,8 +75,8 @@ run("Lógica de negocio de MaurInventario", () => {
     await db?.close();
   });
 
-  it("el primer usuario es administrador y el segundo vendedor", async () => {
-    const rows = await db.client.query("select email, role from profiles order by created_at");
+  it("el primer usuario es administrador de su espacio y el segundo vendedor", async () => {
+    const rows = await db.client.query("select m.role from memberships m join profiles p on p.id = m.user_id order by p.created_at");
     expect(rows.rows.map((r) => r.role)).toEqual(["admin", "vendedor"]);
   });
 
@@ -464,15 +464,11 @@ run("Lógica de negocio de MaurInventario", () => {
     ).rejects.toThrow(/row-level security/);
   });
 
-  it("un alta que no viene del administrador entra desactivada y no ve nada", async () => {
-    const intruso = await createUser(db, "desconocido@prueba.local");
-    const prof = await db.client.query("select role, active from profiles where id = $1", [intruso]);
-    expect(prof.rows[0]).toEqual({ role: "vendedor", active: false });
+  it("alguien que se registra sin invitación no ve nada de ningún espacio", async () => {
+    const intruso = await createUser(db, "desconocido@prueba.local", "vendedor", "NoExiste");
     expect(await selectAs(db, intruso, "select * from products")).toEqual([]);
+    expect(await selectAs(db, intruso, "select * from sales")).toEqual([]);
     await expect(rpc(db, intruso, "search_sellable_variants", "a")).rejects.toThrow(/no está activo/);
-    const creadoPorAdmin = await createUser(db, "nuevo@prueba.local", "vendedor");
-    const p2 = await db.client.query("select active from profiles where id = $1", [creadoPorAdmin]);
-    expect(p2.rows[0].active).toBe(true);
   });
 
   it("nadie puede escribir en la auditoría directamente", async () => {
@@ -481,6 +477,7 @@ run("Lógica de negocio de MaurInventario", () => {
   });
 
   it("no se puede quitar el último administrador", async () => {
-    await expect(asUser(db, admin, (q) => q("update profiles set role = 'vendedor' where id = $1", [admin]))).rejects.toThrow(/al menos un administrador/);
+    await expect(rpc(db, admin, "update_member_role", admin, "vendedor")).rejects.toThrow(/al menos un administrador/);
+    await expect(rpc(db, admin, "remove_member", admin)).rejects.toThrow(/al menos un administrador/);
   });
 });

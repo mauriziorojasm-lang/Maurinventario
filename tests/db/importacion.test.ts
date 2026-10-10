@@ -59,7 +59,7 @@ run("Importación de Excel en la base de datos", () => {
     expect(again.counts).toMatchObject({ products_created: 0, purchase_orders_duplicated: 1, sales_duplicated: 1, stock_exits_duplicated: 2, review_items_created: 0 });
 
     // La siguiente venta normal continúa la numeración
-    const next = await selectAs<{ v: string }>(db, admin, "select nextval('sale_number_seq')::text as v");
-    expect(next[0].v).toBe("2");
+    const next = await db.client.query("select value::text as v from org_counters where kind = 'venta'");
+    expect(next.rows[0].v).toBe("1");
   });
 });

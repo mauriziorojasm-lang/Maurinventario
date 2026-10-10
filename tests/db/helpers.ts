@@ -25,7 +25,12 @@ export type TestDb = {
   close: () => Promise<void>;
 };
 
-export async function createTestDatabase(): Promise<TestDb> {
+/** Aplica las migraciones en orden. Con `stopBefore`, se detiene antes de esa (y la devuelve para aplicarla luego). */
+export async function applyMigration(db: TestDb, file: string) {
+  await db.client.query(readFileSync(join(root, "supabase/migrations", file), "utf8"));
+}
+
+export async function createTestDatabase(opts: { stopBefore?: string } = {}): Promise<TestDb> {
   if (!TEST_DATABASE_URL) throw new Error("Falta TEST_DATABASE_URL");
   const name = `mi_test_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
   const admin = new Client({ connectionString: TEST_DATABASE_URL });
@@ -42,6 +47,7 @@ export async function createTestDatabase(): Promise<TestDb> {
   await client.query(readFileSync(join(root, "tests/db/supabase_stub.sql"), "utf8"));
   const dir = join(root, "supabase/migrations");
   for (const file of readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
+    if (opts.stopBefore && file >= opts.stopBefore) break;
     await client.query(readFileSync(join(dir, file), "utf8"));
   }
 
@@ -58,13 +64,38 @@ export async function createTestDatabase(): Promise<TestDb> {
   };
 }
 
-/** Crea un usuario de Supabase Auth (el trigger crea su perfil). */
-export async function createUser(db: TestDb, email: string, role?: "admin" | "vendedor"): Promise<string> {
-  const res = await db.client.query(
-    `insert into auth.users (email, raw_app_meta_data) values ($1, $2) returning id`,
-    [email, role ? { role } : {}],
-  );
-  return res.rows[0].id as string;
+/**
+ * Crea un usuario de Supabase Auth (el trigger crea su perfil) y lo añade a
+ * la organización de pruebas. El primero que se crea sin rol es su
+ * administrador (como al registrarse); los demás sin rol quedan FUERA de
+ * la organización (como alguien que se registra y no ha sido invitado).
+ */
+export async function createUser(db: TestDb, email: string, role?: "admin" | "vendedor" | "almacen", orgName = "Prueba"): Promise<string> {
+  const res = await db.client.query(`insert into auth.users (email) values ($1) returning id`, [email]);
+  const id = res.rows[0].id as string;
+  let org = (await db.client.query(`select id from organizations where name = $1`, [orgName])).rows[0]?.id as string | undefined;
+  if (!org) {
+    if (role && role !== "admin") return id;
+    org = await createOrg(db, orgName, id);
+    role = "admin";
+  }
+  if (role) {
+    await db.client.query(`insert into memberships (organization_id, user_id, role) values ($1, $2, $3)`, [org, id, role]);
+    await db.client.query(`update profiles set active_org_id = $1 where id = $2`, [org, id]);
+  }
+  return id;
+}
+
+/** Organización de pruebas con sus listas iniciales y acceso concedido (sin pruebas de pago). */
+export async function createOrg(db: TestDb, name: string, owner: string): Promise<string> {
+  const c = db.client;
+  const org = (await c.query(`insert into organizations (name, created_by) values ($1, $2) returning id`, [name, owner])).rows[0].id as string;
+  await c.query(`insert into subscriptions (organization_id, status, comped) values ($1, 'active', true)`, [org]);
+  await c.query(`insert into platforms (organization_id, name, requires_shipping, sort_order) values ($1, 'Vinted', true, 10), ($1, 'Wallapop', true, 20), ($1, 'En persona', false, 30)`, [org]);
+  await c.query(`insert into carriers (organization_id, name) values ($1, 'InPost'), ($1, 'Seur'), ($1, 'Correos'), ($1, 'DHL'), ($1, 'Vinted Go')`, [org]);
+  await c.query(`insert into mobile_devices (organization_id, number, name) select $1, n, 'Móvil ' || n from generate_series(1, 6) n`, [org]);
+  await c.query(`insert into email_integration (organization_id) values ($1)`, [org]);
+  return org;
 }
 
 /**

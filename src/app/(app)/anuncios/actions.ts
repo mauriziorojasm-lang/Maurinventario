@@ -57,7 +57,7 @@ export async function saveListing(input: z.input<typeof draftSchema>): Promise<A
       updated_by: user.id,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "product_id,platform" },
+    { onConflict: "organization_id,product_id,platform" },
   );
   if (error) return { ok: false, error: friendlyError(error) };
   refresh(d.productId);
@@ -80,7 +80,7 @@ export async function setListingStatus(productId: string, platform: ListingPlatf
       updated_by: user.id,
       updated_at: now,
     },
-    { onConflict: "product_id,platform" },
+    { onConflict: "organization_id,product_id,platform" },
   );
   if (error) return { ok: false, error: friendlyError(error) };
   refresh(productId);
