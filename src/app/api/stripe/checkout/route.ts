@@ -55,7 +55,10 @@ export async function POST(request: NextRequest) {
     });
     if (!session.url) return back("error=stripe");
     return NextResponse.redirect(session.url, { status: 303 });
-  } catch {
-    return back("error=stripe");
+  } catch (e) {
+    // El motivo que da Stripe (sin datos secretos) para poder corregir la configuración
+    const msg = e instanceof Error ? e.message.slice(0, 300) : "";
+    console.error("Stripe checkout:", msg);
+    return back(`error=stripe&detalle=${encodeURIComponent(msg)}`);
   }
 }

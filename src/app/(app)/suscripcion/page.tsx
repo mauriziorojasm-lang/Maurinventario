@@ -37,6 +37,7 @@ export default async function SubscriptionPage({ searchParams }: PageProps<"/sus
   const hasStripeSub = !!s?.hasCustomer && !!s && ["active", "trialing", "past_due", "unpaid", "incomplete", "paused"].includes(s.status ?? "") && s.currentPeriodEnd !== null;
   const deleting = me.orgStatus === "eliminacion_solicitada";
   const error = typeof sp.error === "string" ? ERRORS[sp.error] : undefined;
+  const detail = typeof sp.detalle === "string" ? sp.detalle.slice(0, 300) : null;
   return (
     <>
       <PageHeader title="Suscripción" description={`Plan único: ${PRICE_LABEL} al mes. ${TRIAL_DAYS} días de prueba gratis al crear el espacio.`} />
@@ -48,6 +49,7 @@ export default async function SubscriptionPage({ searchParams }: PageProps<"/sus
       {error && (
         <Notice tone="bad" className="mb-4">
           {error}
+          {detail && <span className="mt-1 block text-xs">Motivo de Stripe: {detail}</span>}
         </Notice>
       )}
       {configured && stripeTestMode() && (
