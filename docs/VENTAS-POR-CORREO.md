@@ -152,4 +152,4 @@ Google retiró el permiso (cambiaste la contraseña de Gmail, quitaste el acceso
 
 - Las ventas se crean con la misma función `create_sale` de siempre (stock por lote, sin negativos, movimientos y auditoría), en nombre del administrador que conectó Gmail.
 - Si se cambia `SUPABASE_SECRET_KEY`, el permiso guardado deja de poder leerse: hay que volver a conectar Gmail.
-- Variables solo para pruebas (no ponerlas en Vercel): `GMAIL_API_BASE`, `GOOGLE_OAUTH_TOKEN_URL`, `GOOGLE_OAUTH_AUTH_URL`.
+- Variables solo para pruebas: `GMAIL_API_BASE`, `GOOGLE_OAUTH_TOKEN_URL`, `GOOGLE_OAUTH_AUTH_URL`. En Vercel producción se ignoran siempre.

@@ -718,6 +718,14 @@ Vercel despliega
 
 ⚠️ **PENDIENTE:** comprueba en 🟩 Authentication que el registro público está **desactivado** en tus dos proyectos. Es un ajuste del panel, no del código.
 
+**Protecciones añadidas (octubre 2026)**
+- Cabeceras de seguridad: nadie puede meter la app dentro de otra web.
+- Después del login solo se vuelve a páginas de la propia app.
+- El vendedor no ve costes de compra ni ventas de otros, tampoco en la ayuda de precio de «Preparar anuncio».
+- Generador de descripciones: como máximo 60 al día por usuario, contadas en la base de datos.
+- Las exportaciones CSV no pueden llevar fórmulas que Excel ejecute.
+- Las variables solo de pruebas (`GMAIL_API_BASE`, `GOOGLE_OAUTH_AUTH_URL`, `GOOGLE_OAUTH_TOKEN_URL`, `GEMINI_BASE_URL`) se ignoran en la web real (Vercel producción), aunque se añadan por error.
+
 ---
 
 ## 17. Tests
