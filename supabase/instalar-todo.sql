@@ -7294,6 +7294,9 @@ $$;
 -- ---------------------------------------------------------------------
 -- 13. Las funciones de negocio dejan de saltarse la seguridad
 -- ---------------------------------------------------------------------
+-- Para cambiar el propietario, el nuevo tiene que poder crear en el esquema
+-- (en Supabase «postgres» no es superusuario). Se quita justo después.
+grant create on schema public, private to mi_definer;
 do $$
 declare
   r record;
@@ -7314,6 +7317,7 @@ begin
     end if;
   end loop;
 end $$;
+revoke create on schema public, private from mi_definer;
 
 -- =====================================================================
 -- 14. Organizaciones: crear, cambiar, invitar, miembros y baja.
