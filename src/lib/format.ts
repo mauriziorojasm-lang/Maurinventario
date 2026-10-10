@@ -89,3 +89,13 @@ export const MOVEMENT_TYPES: Record<string, string> = {
   ajuste_entrada: "Ajuste (entrada)",
   ajuste_salida: "Ajuste (salida)",
 };
+
+/** Días completos que faltan hasta una fecha (0 si ya pasó). */
+export function daysUntil(iso: string): number {
+  return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000));
+}
+
+/** ¿Pasaron al menos `days` días desde esa fecha? */
+export function olderThanDays(iso: string | null | undefined, days: number): boolean {
+  return !!iso && new Date(iso).getTime() < Date.now() - days * 86400000;
+}

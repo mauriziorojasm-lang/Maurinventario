@@ -102,7 +102,7 @@ export default async function EmailSalesPage({ searchParams }: { searchParams: P
     <>
       <PageHeader
         title="Ventas por correo"
-        description={`Lee los correos de Vinted y Wallapop que llegan a ${CENTRAL_ACCOUNT} y registra las ventas solo. Nunca duplica ventas: lo dudoso queda aquí para que lo revises.`}
+        description={`Lee los correos de Vinted y Wallapop que llegan a ${CENTRAL_ACCOUNT ?? "tu Gmail"} y registra las ventas solo. Nunca duplica ventas: lo dudoso queda aquí para que lo revises.`}
       />
       {okMsg === "conectado" && (
         <Notice tone="good" className="mb-4" title="Gmail conectado">
@@ -228,7 +228,7 @@ function ConnectionPanel({
                 <span className="display text-[22px] uppercase leading-none">Gmail</span>
                 <Badge tone={tone}>{label}</Badge>
               </p>
-              <p className="mt-1 truncate text-sm text-muted">{s?.email ?? CENTRAL_ACCOUNT}</p>
+              <p className="mt-1 truncate text-sm text-muted">{s?.email ?? CENTRAL_ACCOUNT ?? "Gmail de tu negocio"}</p>
             </div>
           </div>
           {!credentials && (

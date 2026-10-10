@@ -11,7 +11,8 @@ export const maxDuration = 60;
 /** Paso 2: Google vuelve aquí con el permiso. Se guarda cifrado y solo en el servidor. */
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "admin" || !user.active) return new NextResponse("No autorizado", { status: 403 });
+  if (!user || user.role !== "admin" || !user.active || !user.orgId || !user.hasAccess) return new NextResponse("No autorizado", { status: 403 });
+  const org = user.orgId;
   const sp = request.nextUrl.searchParams;
   const back = new URL("/correos", request.nextUrl.origin);
   const fail = (msg: string) => {
@@ -21,8 +22,9 @@ export async function GET(request: NextRequest) {
     return r;
   };
 
-  const expected = request.cookies.get("gmail_oauth_state")?.value ?? "";
+  const [expected = "", cookieOrg = ""] = (request.cookies.get("gmail_oauth_state")?.value ?? "").split(".");
   const state = sp.get("state") ?? "";
+  if (cookieOrg !== org) return fail("Has cambiado de espacio durante la conexión. Vuelve a pulsar «Conectar Gmail».");
   if (!expected || !state || !safeEqual(expected, state)) return fail("La conexión ha caducado. Pulsa otra vez «Conectar Gmail».");
   if (sp.get("error")) return fail(sp.get("error") === "access_denied" ? "Has cancelado el permiso en Google." : `Google ha devuelto un error (${sp.get("error")}).`);
   const code = sp.get("code");
@@ -34,12 +36,12 @@ export async function GET(request: NextRequest) {
     if (!tok.scope.split(" ").includes(GMAIL_SCOPE)) return fail("Hay que marcar la casilla de permiso para leer el correo de Gmail.");
     if (!tok.refreshToken) return fail("Google no ha dado el permiso permanente. Quita el acceso de MaurInventario en tu cuenta de Google y vuelve a conectar.");
     const profile = await new Gmail(tok.accessToken).profile();
-    if (profile.emailAddress.toLowerCase() !== CENTRAL_ACCOUNT) {
+    if (CENTRAL_ACCOUNT && profile.emailAddress.toLowerCase() !== CENTRAL_ACCOUNT) {
       return fail(`Has elegido ${profile.emailAddress}. Hay que conectar ${CENTRAL_ACCOUNT}.`);
     }
 
     const db = createAdminClient();
-    const { data: prev } = await db.from("email_integration").select("refresh_token_enc, connected_at").eq("id", true).single();
+    const { data: prev } = await db.from("email_integration").select("refresh_token_enc, connected_at").eq("organization_id", org).maybeSingle();
     const now = new Date().toISOString();
     // Conexión nueva: se empieza desde ahora (las ventas anteriores ya están en la app).
     // Reconexión tras un fallo de permiso: se mantiene el punto de partida para no perder correos.
@@ -57,9 +59,10 @@ export async function GET(request: NextRequest) {
         lock_until: null,
         updated_at: now,
       })
-      .eq("id", true);
+      .eq("organization_id", org);
     if (error) return fail(`No se ha podido guardar la conexión: ${error.message}`);
     await db.from("audit_log").insert({
+      organization_id: org,
       user_id: user.id,
       user_email: user.email,
       action: "conectar_gmail",
@@ -67,7 +70,7 @@ export async function GET(request: NextRequest) {
       summary: `Gmail conectado (${profile.emailAddress})`,
     });
 
-    after(() => runSync("manual").catch(() => undefined));
+    after(() => runSync("manual", org).catch(() => undefined));
     back.searchParams.set("ok", "conectado");
     const r = NextResponse.redirect(back);
     r.cookies.delete({ name: "gmail_oauth_state", path: "/api/correo" });

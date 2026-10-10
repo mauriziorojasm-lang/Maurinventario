@@ -12,6 +12,6 @@ export async function saveResponsible(r: ResponsibleInput): Promise<ActionResult
   const supabase = await createClient();
   const res = r.id ? await supabase.from("responsibles").update(row).eq("id", r.id).select("id").single() : await supabase.from("responsibles").insert(row).select("id").single();
   if (res.error) return { ok: false, error: friendlyError(res.error) };
-  for (const p of ["/responsables", "/ventas", "/reparto", "/usuarios"]) revalidatePath(p, "layout");
+  for (const p of ["/responsables", "/ventas", "/reparto", "/equipo"]) revalidatePath(p, "layout");
   return { ok: true, data: res.data.id, message: "Responsable guardado." };
 }

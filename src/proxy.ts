@@ -5,6 +5,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * Se ejecuta antes de cada página: renueva la sesión de Supabase y envía
  * al login a quien no la tenga.
  */
+const PUBLIC = ["/precios", "/privacidad", "/terminos", "/recuperar", "/auth", "/invitacion", "/api/stripe/webhook"];
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -32,13 +34,20 @@ export async function proxy(request: NextRequest) {
   });
 
   const { data } = await supabase.auth.getClaims();
-  const isLogin = request.nextUrl.pathname.startsWith("/login");
+  const path = request.nextUrl.pathname;
+  const isLogin = path.startsWith("/login") || path.startsWith("/registro");
+  // Páginas públicas: presentación, registro, recuperación, invitaciones y webhooks
+  const isPublic = isLogin || PUBLIC.some((p) => path === p || path.startsWith(p + "/"));
 
-  if (!data?.claims && !isLogin) {
+  if (!data?.claims && !isPublic) {
     const to = request.nextUrl.clone();
-    to.pathname = "/login";
     to.search = "";
-    if (request.nextUrl.pathname !== "/") to.searchParams.set("next", request.nextUrl.pathname);
+    if (path === "/") {
+      to.pathname = "/precios";
+    } else {
+      to.pathname = "/login";
+      to.searchParams.set("next", path);
+    }
     return NextResponse.redirect(to);
   }
   if (data?.claims && isLogin) {
@@ -51,5 +60,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api/correo/sincronizar|_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  matcher: ["/((?!api/correo/sincronizar|api/stripe/webhook|_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };

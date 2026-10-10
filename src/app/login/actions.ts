@@ -17,7 +17,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     const msg = /invalid login credentials/i.test(error.message)
       ? "El email o la contraseña no son correctos."
       : /email not confirmed/i.test(error.message)
-        ? "Tu email aún no está confirmado. Pide al administrador que revise tu usuario."
+        ? "Tu email aún no está confirmado. Abre el enlace que te enviamos al registrarte."
         : "No se ha podido iniciar sesión. Inténtalo de nuevo.";
     return { error: msg, email };
   }

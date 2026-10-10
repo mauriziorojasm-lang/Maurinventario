@@ -1,5 +1,7 @@
 import {
   ArrowLeftRight,
+  Building2,
+  CreditCard,
   Boxes,
   ChartColumn,
   CirclePlus,
@@ -25,7 +27,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean; badgeKey?: "reviews" | "shipments" | "emails" | "detected" | "listings" };
+export type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  adminOnly?: boolean;
+  /** Roles que no lo ven (por ejemplo, el almacén no registra ventas). */
+  hideFor?: ("vendedor" | "almacen")[];
+  platformOnly?: boolean;
+  badgeKey?: "reviews" | "shipments" | "emails" | "detected" | "listings";
+};
 export type NavGroup = { label: string | null; items: NavItem[] };
 
 export const NAV: NavGroup[] = [
@@ -33,13 +44,13 @@ export const NAV: NavGroup[] = [
     label: null,
     items: [
       { href: "/", label: "Inicio", icon: House },
-      { href: "/ventas/nueva", label: "Nueva venta", icon: CirclePlus },
+      { href: "/ventas/nueva", label: "Nueva venta", icon: CirclePlus, hideFor: ["almacen"] },
       { href: "/ventas", label: "Ventas", icon: Receipt },
       { href: "/detectadas", label: "Ventas detectadas", icon: MailCheck, adminOnly: true, badgeKey: "detected" },
       { href: "/envios", label: "Pendientes de envío", icon: Truck, badgeKey: "shipments" },
       { href: "/productos", label: "Productos", icon: Tag },
       { href: "/anuncios", label: "Anuncios", icon: Megaphone, adminOnly: true, badgeKey: "listings" },
-      { href: "/descripciones", label: "Generador de descripciones", icon: WandSparkles },
+      { href: "/descripciones", label: "Generador de descripciones", icon: WandSparkles, hideFor: ["almacen"] },
     ],
   },
   {
@@ -66,13 +77,17 @@ export const NAV: NavGroup[] = [
       { href: "/correos", label: "Ventas por correo", icon: Mail, adminOnly: true, badgeKey: "emails" },
       { href: "/importar", label: "Importar Excel", icon: FileSpreadsheet, adminOnly: true },
       { href: "/revision", label: "Pendientes de revisar", icon: ListChecks, adminOnly: true, badgeKey: "reviews" },
-      { href: "/usuarios", label: "Usuarios", icon: UserCog, adminOnly: true },
+      { href: "/equipo", label: "Equipo", icon: UserCog, adminOnly: true },
+      { href: "/suscripcion", label: "Suscripción", icon: CreditCard, adminOnly: true },
       { href: "/auditoria", label: "Auditoría", icon: ScrollText, adminOnly: true },
       { href: "/ajustes", label: "Listas", icon: List, adminOnly: true },
     ],
   },
   {
     label: "Cuenta",
-    items: [{ href: "/configuracion", label: "Ajustes", icon: Settings }],
+    items: [
+      { href: "/configuracion", label: "Ajustes", icon: Settings },
+      { href: "/plataforma", label: "Plataforma", icon: Building2, platformOnly: true },
+    ],
   },
 ];

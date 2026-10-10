@@ -63,20 +63,34 @@ function Counter({ n, tone }: { n: number; tone: "brand" | "tag" }) {
   );
 }
 
+const ROLE_LABEL = { admin: "Administrador", vendedor: "Vendedor", almacen: "Almacén" } as const;
+
 export function Shell({
   children,
   role,
   userLabel,
   badges,
+  orgName,
+  orgSwitcher,
+  banner,
+  isPlatformAdmin = false,
 }: {
   children: ReactNode;
-  role: "admin" | "vendedor";
+  role: "admin" | "vendedor" | "almacen";
   userLabel: string;
   badges: { reviews: number; shipments: number; emails: number; detected: number; listings: number };
+  orgName: string;
+  /** Selector de espacio (solo si el usuario pertenece a varios). */
+  orgSwitcher?: ReactNode;
+  /** Aviso fijo (prueba, pago pendiente, suscripción inactiva…). */
+  banner?: ReactNode;
+  isPlatformAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const [more, setMore] = useState(false);
-  const visible = (i: NavItem) => !i.adminOnly || role === "admin";
+  const visible = (i: NavItem) =>
+    (!i.adminOnly || role === "admin") && (!i.platformOnly || isPlatformAdmin) && !(role !== "admin" && i.hideFor?.includes(role));
+  const canSell = role !== "almacen";
   const badgeOf = (i: NavItem) => (i.badgeKey ? badges[i.badgeKey] : 0);
 
   // Cerrar la hoja «Más» al cambiar de página
@@ -102,7 +116,7 @@ export function Shell({
       <div className="min-w-0 flex-1 text-[13px]">
         <p className="truncate font-semibold text-chrome-ink">{userLabel}</p>
         <p className="text-chrome-ink/55">
-          {role === "admin" ? "Administrador" : "Vendedor"} ·{" "}
+          {ROLE_LABEL[role]} ·{" "}
           <Link href="/cuenta" className="underline-offset-2 hover:text-chrome-ink hover:underline">
             Mi cuenta
           </Link>
@@ -192,6 +206,7 @@ export function Shell({
             </li>
           );
         })}
+        {canSell && (
         <li className="flex flex-1 justify-center">
           <NavLink
             href="/ventas/nueva"
@@ -202,6 +217,7 @@ export function Shell({
             <Plus size={30} strokeWidth={2.75} />
           </NavLink>
         </li>
+        )}
         {tabs.slice(2).map((t) => {
           const active = isActive(pathname, t.href);
           return (
@@ -291,6 +307,7 @@ export function Shell({
               </section>
             );
           })}
+          {orgSwitcher && <div className="rounded-[14px] bg-chrome-2/60 p-3">{orgSwitcher}</div>}
           <div className="rounded-[14px] bg-chrome-2/60 p-3">{account}</div>
         </div>
       </div>
@@ -304,9 +321,12 @@ export function Shell({
       </Suspense>
       {/* Barra lateral (iPad y ordenador) */}
       <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto bg-chrome md:flex">
-        <Link href="/" className="px-5 pb-4 pt-5" aria-label="Inicio">
+        <Link href="/" className="px-5 pb-3 pt-5" aria-label="Inicio">
           <Logo />
         </Link>
+        {/* Espacio de trabajo activo */}
+        <div className="px-3 pb-3">{orgSwitcher ?? <p className="truncate px-2 text-[13px] font-semibold text-chrome-ink/70">{orgName}</p>}</div>
+        {canSell && (
         <div className="px-3 pb-5">
           <NavLink
             href="/ventas/nueva"
@@ -317,6 +337,7 @@ export function Shell({
             Nueva venta
           </NavLink>
         </div>
+        )}
         {sidebar}
         <div className="mt-auto border-t border-white/8 px-4 py-4">{account}</div>
       </aside>
@@ -326,6 +347,7 @@ export function Shell({
         <Link href="/" aria-label="Inicio">
           <Logo />
         </Link>
+        <span className="ml-3 min-w-0 truncate text-[12.5px] font-semibold text-chrome-ink/60">{orgName}</span>
       </header>
       {moreSheet}
 
@@ -334,7 +356,10 @@ export function Shell({
       </Suspense>
 
       <main className="min-w-0 px-4 pb-32 pt-5 sm:px-6 md:py-7 md:pl-7 md:pr-5 lg:py-8 lg:pl-9 xl:pr-6">
-        <div className="mx-auto max-w-[1720px]">{children}</div>
+        <div className="mx-auto max-w-[1720px]">
+          {banner}
+          {children}
+        </div>
       </main>
 
       {tabBar}

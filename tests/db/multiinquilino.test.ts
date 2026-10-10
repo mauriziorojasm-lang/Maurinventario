@@ -193,6 +193,11 @@ run("Varias organizaciones", () => {
     await db.client.query("update subscriptions set trial_ends_at = now() - interval '1 minute' where organization_id = $1", [orgB]);
     await expect(rpc(db, adminB, "create_product", { name: "Prueba caducada", variants: [{ name: "Única" }] })).rejects.toThrow(/suscripción/);
     expect(await rpc<boolean>(db, adminB, "org_has_access", orgB)).toBe(false);
+    // También directamente por la API (sin pasar por las funciones): solo lectura
+    await expect(selectAs(db, adminB, "insert into suppliers (name) values ('Directo')")).rejects.toThrow(/row-level security/);
+    await selectAs(db, adminB, "update products set name = 'Cambiado' where true");
+    await selectAs(db, adminB, "delete from suppliers where true");
+    expect((await selectAs(db, adminB, "select id from products where name = 'Cambiado'")).length).toBe(0);
     await db.client.query("update subscriptions set comped = true where organization_id = $1", [orgB]);
   });
 
@@ -242,6 +247,21 @@ run("Varias organizaciones", () => {
     await expect(rpc(db, late, "accept_invitation", t3)).rejects.toThrow(/no es válida/);
     // Un token inventado no revela nada
     expect(await rpc(db, adminB, "invitation_info", "0".repeat(64))).toBeNull();
+  });
+
+  it("referencias: una sola relación entre tablas (la API puede unirlas) y siempre dentro de la organización", async () => {
+    const dup = await db.client.query(`
+      select cl.relname child, pcl.relname parent, count(*)::int n
+        from pg_constraint con join pg_class cl on cl.oid = con.conrelid join pg_class pcl on pcl.oid = con.confrelid
+       where con.contype = 'f' and cl.relnamespace = 'public'::regnamespace and pcl.relname <> 'organizations'
+         and cl.relname in (select private.org_tables()) and pcl.relname in (select private.org_tables())
+       group by 1, 2, con.conkey[array_upper(con.conkey, 1)] having count(*) > 1`);
+    expect(dup.rows).toEqual([]);
+    const simple = await db.client.query(`
+      select count(*)::int n from pg_constraint con join pg_class cl on cl.oid = con.conrelid join pg_class pcl on pcl.oid = con.confrelid
+       where con.contype = 'f' and cardinality(con.conkey) = 1 and cl.relnamespace = 'public'::regnamespace
+         and cl.relname in (select private.org_tables()) and pcl.relname in (select private.org_tables()) and pcl.relname <> 'organizations'`);
+    expect(simple.rows[0].n).toBe(0);
   });
 
   it("eliminación del espacio: confirmación, se puede anular y el borrado definitivo solo tras 30 días y desde el servidor", async () => {

@@ -18,7 +18,6 @@ export function LoginForm({ next, initialError }: { next: string; initialError: 
       <Button type="submit" variant="primary" disabled={pending} className="mt-1 w-full">
         {pending ? "Entrando…" : "Entrar"}
       </Button>
-      <p className="text-[13px] text-muted">¿Has olvidado la contraseña? Pide al administrador que te ponga una nueva desde Usuarios.</p>
     </form>
   );
 }

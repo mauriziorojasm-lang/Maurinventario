@@ -25,9 +25,23 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
       : 0;
   const sinPermiso = sp.aviso === "sin-permiso" && (
     <Notice tone="warn" className="mb-4">
-      Esa sección es solo para administradores.
+      Tu rol no tiene acceso a esa sección.
     </Notice>
   );
+
+  if (user.role === "almacen") {
+    // Almacén: envíos y stock (sin importes ni costes)
+    return (
+      <>
+        {sinPermiso}
+        <PageHeader title={`Hola${user.fullName ? `, ${user.fullName.split(" ")[0]}` : ""}`} description="Lo que hay que preparar y enviar." />
+        <div className="flex flex-col gap-5">
+          <HomeTasks badges={badges} admin={false} notify={prefs0.notifications} lowStock={0} />
+          <QuickActions admin={false} warehouse />
+        </div>
+      </>
+    );
+  }
 
   if (user.role !== "admin") {
     const { data } = await supabase.rpc("my_dashboard");

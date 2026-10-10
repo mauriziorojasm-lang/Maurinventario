@@ -73,9 +73,11 @@ export function HomeTasks({ badges, admin, notify, lowStock }: { badges: Badges;
   );
 }
 
-export function QuickActions({ admin }: { admin: boolean }) {
+export function QuickActions({ admin, warehouse = false }: { admin: boolean; warehouse?: boolean }) {
   const items = [
-    { href: "/ventas/nueva", label: "Nueva venta", icon: CirclePlus, main: true },
+    ...(warehouse
+      ? [{ href: "/envios", label: "Preparar envíos", icon: Truck, main: true }]
+      : [{ href: "/ventas/nueva", label: "Nueva venta", icon: CirclePlus, main: true }]),
     ...(admin ? [{ href: "/anuncios", label: "Preparar anuncio", icon: Megaphone, main: false }] : []),
     { href: "/productos?only_in_stock=true", label: "Buscar stock", icon: PackageSearch, main: false },
     ...(admin ? [{ href: "/compras/nuevo", label: "Registrar compra", icon: ShoppingCart, main: false }] : []),

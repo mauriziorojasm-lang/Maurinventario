@@ -11,8 +11,8 @@ import { createClient } from "@/lib/supabase/server";
 
 async function admin() {
   const u = await getCurrentUser();
-  if (!u || u.role !== "admin" || !u.active) throw new Error("Solo los administradores pueden hacer esto.");
-  return u;
+  if (!u || u.role !== "admin" || !u.active || !u.orgId) throw new Error("Solo los administradores pueden hacer esto.");
+  return u as typeof u & { orgId: string };
 }
 
 function done(message?: string): ActionResult {
@@ -22,8 +22,8 @@ function done(message?: string): ActionResult {
 
 /** «Revisar ahora»: la misma sincronización que la automática. */
 export async function syncNow(): Promise<ActionResult> {
-  await admin();
-  const s = await runSync("manual");
+  const me = await admin();
+  const s = await runSync("manual", me.orgId);
   revalidatePath("/", "layout");
   if (s.skipped) return { ok: false, error: s.skipped };
   if (s.error) return { ok: false, error: s.error };
@@ -77,28 +77,28 @@ export async function resolveSale(emailId: string, variantId: string, remember: 
   });
   if (error) return { ok: false, error: friendlyError(error) };
   // Puede que una etiqueta estuviera esperando a esta venta
-  await runSync("manual").catch(() => undefined);
+  await runSync("manual", (await admin()).orgId).catch(() => undefined);
   return done(remember ? "Venta registrada. La próxima vez ese nombre se reconocerá solo." : "Venta registrada.");
 }
 
 /** El administrador indica a qué venta va una etiqueta de Vinted. */
 export async function linkLabel(emailId: string, saleId: string, force: boolean): Promise<ActionResult> {
-  await admin();
+  const { orgId } = await admin();
   if (!z.uuid().safeParse(emailId).success || !z.uuid().safeParse(saleId).success) return { ok: false, error: "Datos no válidos." };
   const db = createAdminClient();
-  const { data: e } = await db.from("email_messages").select("id, gmail_message_id, parsed, kind").eq("id", emailId).maybeSingle();
+  const { data: e } = await db.from("email_messages").select("id, gmail_message_id, parsed, kind").eq("organization_id", orgId).eq("id", emailId).maybeSingle();
   if (!e || e.kind !== "vinted_etiqueta") return { ok: false, error: "El correo no es una etiqueta de Vinted." };
   try {
-    const gmail = await gmailForServer(db);
-    const r = await attachLabel(db, gmail, e, saleId, { force, userClient: await createClient() });
+    const gmail = await gmailForServer(db, orgId);
+    const r = await attachLabel(db, orgId, gmail, e, saleId, { force, userClient: await createClient() });
     if (r === "review") {
-      const { data: again } = await db.from("email_messages").select("review_reason").eq("id", emailId).single();
+      const { data: again } = await db.from("email_messages").select("review_reason").eq("organization_id", orgId).eq("id", emailId).single();
       return { ok: false, error: again?.review_reason ?? "No se ha podido añadir la etiqueta." };
     }
     return done("Etiqueta añadida a la venta.");
   } catch (err) {
     if (err instanceof GmailAuthError) {
-      await markAuthError(db, err.message);
+      await markAuthError(db, orgId, err.message);
       revalidatePath("/correos");
     }
     return { ok: false, error: err instanceof Error ? err.message : "No se ha podido añadir la etiqueta." };
@@ -109,7 +109,7 @@ export async function linkLabel(emailId: string, saleId: string, force: boolean)
 export async function undoEmail(emailId: string): Promise<ActionResult> {
   const r = await callRpc("email_set_status", { p_email_id: emailId, p_status: "pendiente" });
   if (!r.ok) return r;
-  await runSync("manual").catch(() => undefined);
+  await runSync("manual", (await admin()).orgId).catch(() => undefined);
   revalidatePath("/", "layout");
   return { ok: true, message: "Ha vuelto a Ventas detectadas." };
 }
@@ -117,7 +117,7 @@ export async function undoEmail(emailId: string): Promise<ActionResult> {
 export async function retryEmail(emailId: string): Promise<ActionResult> {
   const r = await callRpc("email_set_status", { p_email_id: emailId, p_status: "pendiente" });
   if (!r.ok) return r;
-  const s = await runSync("manual");
+  const s = await runSync("manual", (await admin()).orgId);
   revalidatePath("/", "layout");
   if (s.error) return { ok: false, error: s.error };
   return { ok: true, message: "Reintentado. Mira el estado del correo en la lista." };

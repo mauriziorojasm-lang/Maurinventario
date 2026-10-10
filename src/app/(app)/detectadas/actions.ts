@@ -8,12 +8,13 @@ import { createClient } from "@/lib/supabase/server";
 
 async function admin() {
   const u = await getCurrentUser();
-  if (!u || u.role !== "admin" || !u.active) throw new Error("Solo los administradores pueden hacer esto.");
+  if (!u || u.role !== "admin" || !u.active || !u.orgId) throw new Error("Solo los administradores pueden hacer esto.");
+  return u as typeof u & { orgId: string };
 }
 
 /** Tras confirmar o marcar un duplicado, puede que una etiqueta de Vinted estuviera esperando. */
 async function afterChange() {
-  await runSync("manual").catch(() => undefined);
+  await runSync("manual", (await admin()).orgId).catch(() => undefined);
   revalidatePath("/", "layout");
 }
 

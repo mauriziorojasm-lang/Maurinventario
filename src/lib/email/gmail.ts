@@ -9,7 +9,11 @@ import { cleanText, htmlToText } from "./parse";
  */
 
 export const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
-export const CENTRAL_ACCOUNT = "maurinventario@gmail.com";
+/**
+ * Cuenta de Gmail obligatoria (opcional). En la versión para varias
+ * empresas cada organización conecta su propio Gmail, así que no se fija.
+ */
+export const CENTRAL_ACCOUNT = process.env.GMAIL_REQUIRED_ACCOUNT?.trim().toLowerCase() || null;
 
 // Direcciones de Google. Solo se cambian en las pruebas automáticas (Gmail simulado).
 const AUTH_URL = () => testOnlyEnv("GOOGLE_OAUTH_AUTH_URL") || "https://accounts.google.com/o/oauth2/v2/auth";
@@ -39,7 +43,7 @@ export function authorizationUrl(opts: { redirectUri: string; state: string }): 
     access_type: "offline",
     prompt: "consent",
     include_granted_scopes: "false",
-    login_hint: CENTRAL_ACCOUNT,
+    ...(CENTRAL_ACCOUNT ? { login_hint: CENTRAL_ACCOUNT } : {}),
     state: opts.state,
   }).toString();
   return u.toString();

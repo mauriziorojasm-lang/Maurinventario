@@ -251,6 +251,8 @@ async function callGemini(apiKey: string, model: string, system: string, prompt:
 export async function generateDescriptions(input: GenerateRequest): Promise<ActionResult<GeneratedItem[]>> {
   const user = await getCurrentUser();
   if (!user || !user.active) return { ok: false, error: "Tu sesión ha caducado. Vuelve a entrar." };
+  if (!user.orgId || user.role === "almacen") return { ok: false, error: "Tu rol no puede usar el generador." };
+  if (!user.hasAccess) return { ok: false, error: "Tu espacio está en solo lectura: activa la suscripción para usar el generador." };
 
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) {

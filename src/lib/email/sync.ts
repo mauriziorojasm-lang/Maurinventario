@@ -61,9 +61,36 @@ interface EmailRow {
 // Sincronización completa
 // ---------------------------------------------------------------------
 
-export async function runSync(trigger: "auto" | "manual"): Promise<SyncSummary> {
+/**
+ * Revisa el correo. Con una organización, solo la suya (botones de la app).
+ * Sin ella (aviso automático), recorre todas las organizaciones conectadas
+ * mientras quede tiempo. Cada consulta va filtrada por organización: este
+ * proceso usa la clave del servidor, que no pasa por las reglas de acceso.
+ */
+export async function runSync(trigger: "auto" | "manual", orgId?: string): Promise<SyncSummary> {
   const db = createAdminClient();
-  const summary: SyncSummary = {
+  const deadline = Date.now() + TIME_BUDGET_MS;
+  if (orgId) return syncOrg(db, orgId, trigger, deadline);
+  const total = emptySummary(trigger);
+  const { data: orgs } = await db
+    .from("email_integration")
+    .select("organization_id")
+    .not("refresh_token_enc", "is", null)
+    .neq("status", "error_autorizacion")
+    .order("last_sync_at", { ascending: true, nullsFirst: true })
+    .limit(200);
+  for (const o of orgs ?? []) {
+    if (Date.now() > deadline - 5_000) break;
+    const s = await syncOrg(db, o.organization_id as string, trigger, deadline);
+    for (const k of ["read", "new_emails", "sales", "detected", "labels", "review", "waiting", "errors", "ignored"] as const) total[k] += s[k];
+    if (s.error) total.errors++;
+  }
+  total.finished_at = new Date().toISOString();
+  return total;
+}
+
+function emptySummary(trigger: "auto" | "manual"): SyncSummary {
+  return {
     trigger,
     started_at: new Date().toISOString(),
     read: 0,
@@ -76,14 +103,20 @@ export async function runSync(trigger: "auto" | "manual"): Promise<SyncSummary> 
     errors: 0,
     ignored: 0,
   };
+}
 
-  const { data: integ } = await db.from("email_integration").select("email, refresh_token_enc, status, connected_at, last_success_at").eq("id", true).single<Integration>();
+async function syncOrg(db: Admin, org: string, trigger: "auto" | "manual", deadline: number): Promise<SyncSummary> {
+  const summary = emptySummary(trigger);
+  const { data: integ } = await db
+    .from("email_integration")
+    .select("email, refresh_token_enc, status, connected_at, last_success_at")
+    .eq("organization_id", org)
+    .maybeSingle<Integration>();
   if (!integ?.refresh_token_enc) return { ...summary, skipped: "Gmail no está conectado." };
 
-  const { data: locked } = await db.rpc("email_sync_try_lock", { p_seconds: 120 });
+  const { data: locked } = await db.rpc("email_sync_try_lock", { p_org: org, p_seconds: 120 });
   if (!locked) return { ...summary, skipped: "Ya hay una revisión en marcha." };
 
-  const deadline = Date.now() + TIME_BUDGET_MS;
   let gmail: Gmail | null = null;
   try {
     let refresh: string;
@@ -104,7 +137,7 @@ export async function runSync(trigger: "auto" | "manual"): Promise<SyncSummary> 
     const known = new Set<string>();
     for (let i = 0; i < listed.length; i += 200) {
       const ids = listed.slice(i, i + 200).map((m) => m.id);
-      const { data } = await db.from("email_messages").select("gmail_message_id").in("gmail_message_id", ids);
+      const { data } = await db.from("email_messages").select("gmail_message_id").eq("organization_id", org).in("gmail_message_id", ids);
       for (const r of data ?? []) known.add(r.gmail_message_id);
     }
     const connectedAt = Date.parse(integ.connected_at ?? summary.started_at);
@@ -114,13 +147,13 @@ export async function runSync(trigger: "auto" | "manual"): Promise<SyncSummary> 
       const mail = await gmail.message(m.id);
       // Solo correos llegados después de conectar Gmail: las ventas anteriores ya están en la app
       if (mail.receivedAt.getTime() < connectedAt - 60_000) continue;
-      const res = await storeEmail(db, mail);
+      const res = await storeEmail(db, org, mail);
       if (res === "new") summary.new_emails++;
       if (res === "ignored") summary.ignored++;
     }
 
     // 2) Procesar lo pendiente, del más antiguo al más nuevo
-    await processQueue(db, gmail, summary, deadline);
+    await processQueue(db, org, gmail, summary, deadline);
 
     summary.finished_at = new Date().toISOString();
     await db
@@ -133,7 +166,7 @@ export async function runSync(trigger: "auto" | "manual"): Promise<SyncSummary> 
         last_summary: summary,
         updated_at: summary.finished_at,
       })
-      .eq("id", true);
+      .eq("organization_id", org);
     return summary;
   } catch (e) {
     const auth = e instanceof GmailAuthError;
@@ -148,18 +181,19 @@ export async function runSync(trigger: "auto" | "manual"): Promise<SyncSummary> 
         last_summary: summary,
         updated_at: summary.finished_at,
       })
-      .eq("id", true);
+      .eq("organization_id", org);
     return summary;
   } finally {
-    await db.rpc("email_sync_unlock");
+    await db.rpc("email_sync_unlock", { p_org: org });
   }
 }
 
 /** Guarda un correo nuevo. Del cuerpo solo se guardan los datos que hacen falta. */
-async function storeEmail(db: Admin, mail: MailMessage): Promise<"new" | "ignored" | "dup"> {
+async function storeEmail(db: Admin, org: string, mail: MailMessage): Promise<"new" | "ignored" | "dup"> {
   const pdfs = pdfAttachments(mail);
   const { kind, platform } = classify({ from: mail.from, subject: mail.subject, text: mail.text, pdfNames: pdfs.map((p) => p.filename) });
   const base = {
+    organization_id: org,
     gmail_message_id: mail.id,
     gmail_thread_id: mail.threadId,
     received_at: mail.receivedAt.toISOString(),
@@ -192,7 +226,9 @@ async function storeEmail(db: Admin, mail: MailMessage): Promise<"new" | "ignore
   // Recordar la cuenta de la plataforma para poder asignarle responsable
   const p = row.parsed as Record<string, string | null> | undefined;
   if (platform && p?.account && p.account_norm) {
-    await db.from("email_accounts").upsert({ platform, handle: p.account, handle_norm: p.account_norm }, { onConflict: "platform,handle_norm", ignoreDuplicates: true });
+    await db
+      .from("email_accounts")
+      .upsert({ organization_id: org, platform, handle: p.account, handle_norm: p.account_norm }, { onConflict: "organization_id,platform,handle_norm", ignoreDuplicates: true });
   }
   return row.status === "ignorado" ? "ignored" : "new";
 }
@@ -215,20 +251,21 @@ function senderAddress(from: string): string {
 // Cola de procesamiento
 // ---------------------------------------------------------------------
 
-async function processQueue(db: Admin, gmail: Gmail, summary: SyncSummary, deadline: number) {
+async function processQueue(db: Admin, org: string, gmail: Gmail, summary: SyncSummary, deadline: number) {
   const { data: rows, error } = await db
     .from("email_messages")
     .select("id, gmail_message_id, received_at, platform, kind, status, parsed, attempts, sale_id")
+    .eq("organization_id", org)
     .in("status", ["pendiente", "esperando", "error"])
     .in("kind", ["vinted_venta", "wallapop_venta", "vinted_etiqueta"])
     .order("received_at")
     .limit(100);
   if (error) throw new Error(`No se ha podido leer la cola de correos: ${error.message}`);
-  const catalog = new Catalog(db);
+  const catalog = new Catalog(db, org);
   for (const e of (rows ?? []) as EmailRow[]) {
     if (Date.now() > deadline) break;
     try {
-      const r = e.kind === "vinted_etiqueta" ? await processLabel(db, gmail, e) : await processSale(db, catalog, e);
+      const r = e.kind === "vinted_etiqueta" ? await processLabel(db, org, gmail, e) : await processSale(db, org, catalog, e);
       if (r === "sale") summary.sales++;
       else if (r === "detected") summary.detected++;
       else if (r === "label") summary.labels++;
@@ -248,6 +285,7 @@ async function processQueue(db: Admin, gmail: Gmail, summary: SyncSummary, deadl
           review_reason: attempts >= MAX_ATTEMPTS ? `Ha fallado ${attempts} veces: ${msg}`.slice(0, 500) : null,
           updated_at: new Date().toISOString(),
         })
+        .eq("organization_id", org)
         .eq("id", e.id);
     }
   }
@@ -255,10 +293,11 @@ async function processQueue(db: Admin, gmail: Gmail, summary: SyncSummary, deadl
 
 type Outcome = "sale" | "detected" | "label" | "review" | "waiting" | "noop";
 
-async function toReview(db: Admin, id: string, reason: string, candidates: unknown = null): Promise<Outcome> {
+async function toReview(db: Admin, org: string, id: string, reason: string, candidates: unknown = null): Promise<Outcome> {
   await db
     .from("email_messages")
     .update({ status: "revision", review_reason: reason.slice(0, 500), candidates, last_error: null, updated_at: new Date().toISOString() })
+    .eq("organization_id", org)
     .eq("id", id);
   return "review";
 }
@@ -268,10 +307,10 @@ const NEEDS_PERSON = /No hay stock|Falta el responsable|no existe|plataforma|no 
 
 // --- Venta (Vinted primer correo / Wallapop confirmación) -------------
 
-async function processSale(db: Admin, catalog: Catalog, e: EmailRow): Promise<Outcome> {
+async function processSale(db: Admin, org: string, catalog: Catalog, e: EmailRow): Promise<Outcome> {
   if (e.sale_id) {
     // Ya tenía venta (confirmada o marcada como duplicado): no se crea otra
-    await db.from("email_messages").update({ status: "procesado", review_reason: null, last_error: null, updated_at: new Date().toISOString() }).eq("id", e.id);
+    await db.from("email_messages").update({ status: "procesado", review_reason: null, last_error: null, updated_at: new Date().toISOString() }).eq("organization_id", org).eq("id", e.id);
     return "noop";
   }
   // No se registra sola: queda en «Ventas detectadas» con el producto sugerido
@@ -288,6 +327,7 @@ async function processSale(db: Admin, catalog: Catalog, e: EmailRow): Promise<Ou
       last_error: null,
       updated_at: new Date().toISOString(),
     })
+    .eq("organization_id", org)
     .eq("id", e.id);
   return "detected";
 }
@@ -304,7 +344,10 @@ interface VariantInfo {
 export class Catalog {
   private variants: VariantInfo[] | null = null;
   private aliases: Map<string, string> | null = null;
-  constructor(private db: Admin) {}
+  constructor(
+    private db: Admin,
+    private org: string,
+  ) {}
 
   private async load() {
     if (this.variants) return;
@@ -313,6 +356,7 @@ export class Catalog {
       const { data, error } = await this.db
         .from("product_variants")
         .select("id, name, sku, products!inner(id, name, sku, deleted_at)")
+        .eq("organization_id", this.org)
         .is("deleted_at", null)
         .is("products.deleted_at", null)
         .range(from, from + 999);
@@ -336,7 +380,7 @@ export class Catalog {
         tokens: new Set(normalizeName(single ? v.products.name : full).split(" ").filter((t) => t.length > 1)),
       };
     });
-    const { data: al } = await this.db.from("product_aliases").select("alias_norm, variant_id");
+    const { data: al } = await this.db.from("product_aliases").select("alias_norm, variant_id").eq("organization_id", this.org);
     this.aliases = new Map((al ?? []).map((a) => [a.alias_norm as string, a.variant_id as string]));
   }
 
@@ -408,14 +452,15 @@ interface SaleLite {
   source_email_id: string | null;
 }
 
-async function vintedPlatformId(db: Admin): Promise<string | null> {
-  const { data } = await db.from("platforms").select("id, name");
+async function vintedPlatformId(db: Admin, org: string): Promise<string | null> {
+  const { data } = await db.from("platforms").select("id, name").eq("organization_id", org);
   return (data ?? []).find((p) => normalizeName(p.name) === "vinted")?.id ?? null;
 }
 
 /** Busca la venta de la etiqueta: nº de transacción y, si no, el artículo (solo si hay UNA posible). */
 export async function findLabelSale(
   db: Admin,
+  org: string,
   e: EmailRow,
 ): Promise<{ sale: SaleLite } | { sale: null; reason: string; candidates: Candidate[]; wait: boolean; saleUnconfirmed?: boolean }> {
   const trx = (e.parsed.transaction_id as string | null) ?? null;
@@ -424,7 +469,7 @@ export async function findLabelSale(
   const cols = "id, sale_number, sale_date, buyer_name, platform_transaction_id, shipping_label_path, source_email_id";
 
   if (trx) {
-    const { data } = await db.from("sales").select(cols).eq("platform_transaction_id", trx).eq("status", "activa");
+    const { data } = await db.from("sales").select(cols).eq("organization_id", org).eq("platform_transaction_id", trx).eq("status", "activa");
     if (data?.length === 1) return { sale: data[0] as SaleLite };
   }
 
@@ -432,6 +477,7 @@ export async function findLabelSale(
   const { data: sameName } = await db
     .from("email_messages")
     .select("id, sale_id, status, parsed, received_at")
+    .eq("organization_id", org)
     .eq("kind", "vinted_venta")
     .lte("received_at", e.received_at)
     .eq("parsed->>product_norm", productNorm ?? "__nada__");
@@ -439,8 +485,8 @@ export async function findLabelSale(
   const saleIds = sameAccount.filter((m) => m.sale_id).map((m) => m.sale_id as string);
   let free: SaleLite[] = [];
   if (saleIds.length) {
-    const { data: sales } = await db.from("sales").select(cols).in("id", saleIds).eq("status", "activa");
-    const { data: taken } = await db.from("email_messages").select("sale_id").eq("kind", "vinted_etiqueta").eq("status", "procesado").in("sale_id", saleIds);
+    const { data: sales } = await db.from("sales").select(cols).eq("organization_id", org).in("id", saleIds).eq("status", "activa");
+    const { data: taken } = await db.from("email_messages").select("sale_id").eq("organization_id", org).eq("kind", "vinted_etiqueta").eq("status", "procesado").in("sale_id", saleIds);
     const takenSet = new Set((taken ?? []).map((t) => t.sale_id));
     free = ((sales ?? []) as SaleLite[]).filter((s) => !takenSet.has(s.id) && (!trx || !s.platform_transaction_id || s.platform_transaction_id === trx));
   }
@@ -462,7 +508,7 @@ export async function findLabelSale(
     reason: pendingSale
       ? "La venta de este artículo está en «Ventas detectadas» sin confirmar. En cuanto la confirmes, se pondrá la etiqueta sola."
       : "Todavía no hay una venta de Vinted con este artículo. Se volverá a intentar automáticamente.",
-    candidates: await recentVintedSales(db),
+    candidates: await recentVintedSales(db, org),
   };
 }
 
@@ -472,13 +518,14 @@ function saleLabel(s: SaleLite): string {
 }
 
 /** Ventas de Vinted recientes, activas y sin etiqueta: para vincular a mano. */
-export async function recentVintedSales(db: Admin): Promise<Candidate[]> {
-  const vinted = await vintedPlatformId(db);
+export async function recentVintedSales(db: Admin, org: string): Promise<Candidate[]> {
+  const vinted = await vintedPlatformId(db, org);
   if (!vinted) return [];
   const since = new Date(Date.now() - 45 * 86400_000).toISOString().slice(0, 10);
   const { data } = await db
     .from("sales")
     .select("id, sale_number, sale_date, buyer_name, platform_transaction_id, shipping_label_path, source_email_id")
+    .eq("organization_id", org)
     .eq("platform_id", vinted)
     .eq("status", "activa")
     .is("shipping_label_path", null)
@@ -488,8 +535,8 @@ export async function recentVintedSales(db: Admin): Promise<Candidate[]> {
   return ((data ?? []) as SaleLite[]).map((s) => ({ sale_id: s.id, label: saleLabel(s) }));
 }
 
-async function processLabel(db: Admin, gmail: Gmail, e: EmailRow): Promise<Outcome> {
-  const found = await findLabelSale(db, e);
+async function processLabel(db: Admin, org: string, gmail: Gmail, e: EmailRow): Promise<Outcome> {
+  const found = await findLabelSale(db, org, e);
   if (!found.sale) {
     const age = Date.now() - Date.parse(e.received_at);
     // Si la venta está detectada pero sin confirmar, espera lo que haga falta
@@ -497,12 +544,13 @@ async function processLabel(db: Admin, gmail: Gmail, e: EmailRow): Promise<Outco
       await db
         .from("email_messages")
         .update({ status: "esperando", review_reason: found.reason, candidates: found.candidates, updated_at: new Date().toISOString() })
+        .eq("organization_id", org)
         .eq("id", e.id);
       return "waiting";
     }
-    return toReview(db, e.id, found.wait ? `Han pasado ${WAIT_LABEL_DAYS} días y no aparece la venta. Vincúlala a mano.` : found.reason, found.candidates);
+    return toReview(db, org, e.id, found.wait ? `Han pasado ${WAIT_LABEL_DAYS} días y no aparece la venta. Vincúlala a mano.` : found.reason, found.candidates);
   }
-  return attachLabel(db, gmail, e, found.sale.id, { force: false, userClient: null });
+  return attachLabel(db, org, gmail, e, found.sale.id, { force: false, userClient: null });
 }
 
 /**
@@ -512,6 +560,7 @@ async function processLabel(db: Admin, gmail: Gmail, e: EmailRow): Promise<Outco
  */
 export async function attachLabel(
   db: Admin,
+  org: string,
   gmail: Gmail,
   e: Pick<EmailRow, "id" | "gmail_message_id" | "parsed">,
   saleId: string,
@@ -519,17 +568,20 @@ export async function attachLabel(
 ): Promise<Outcome> {
   const mail = await gmail.message(e.gmail_message_id);
   const pdf = pdfAttachments(mail)[0];
-  if (!pdf) return toReview(db, e.id, "El correo no trae la etiqueta en PDF.", [{ sale_id: saleId, label: "Venta encontrada" }]);
-  if (pdf.size > 10 * 1024 * 1024) return toReview(db, e.id, "El PDF pesa más de 10 MB; no se ha guardado.");
+  if (!pdf) return toReview(db, org, e.id, "El correo no trae la etiqueta en PDF.", [{ sale_id: saleId, label: "Venta encontrada" }]);
+  if (pdf.size > 10 * 1024 * 1024) return toReview(db, org, e.id, "El PDF pesa más de 10 MB; no se ha guardado.");
   const buf = pdf.attachmentId ? await gmail.attachment(mail.id, pdf.attachmentId) : Buffer.from(pdf.inlineData ?? "", "base64url");
   const invalid = validatePdf(buf);
-  if (invalid) return toReview(db, e.id, `${invalid} No se ha guardado. Descárgala de Vinted y súbela a mano.`, [{ sale_id: saleId, label: "Venta encontrada" }]);
+  if (invalid) return toReview(db, org, e.id, `${invalid} No se ha guardado. Descárgala de Vinted y súbela a mano.`, [{ sale_id: saleId, label: "Venta encontrada" }]);
 
+  // La venta tiene que ser de esta organización (el archivo va en su carpeta)
+  const { data: owned } = await db.from("sales").select("id").eq("organization_id", org).eq("id", saleId).maybeSingle();
+  if (!owned) throw new Error("La venta no existe.");
   const path = `${saleId}/vinted-${mail.id.replace(/[^A-Za-z0-9_-]/g, "")}.pdf`;
   const up = await db.storage.from("shipping-labels").upload(path, buf, { contentType: "application/pdf", upsert: true });
   if (up.error) throw new Error(`No se ha podido guardar el PDF: ${up.error.message}`);
 
-  const carrierId = await carrierFromText(db, (e.parsed.carrier_text as string | null) ?? null);
+  const carrierId = await carrierFromText(db, org, (e.parsed.carrier_text as string | null) ?? null);
   const meta = {
     tracking_number: e.parsed.tracking_number ?? null,
     transaction_id: e.parsed.transaction_id ?? null,
@@ -541,21 +593,21 @@ export async function attachLabel(
   const { error } = await client.rpc("email_attach_label", { p_email_id: e.id, p_sale_id: saleId, p_path: path, p_meta: meta });
   if (error) {
     // No se ha vinculado: el PDF no se queda huérfano
-    const { data: s } = await db.from("sales").select("shipping_label_path").eq("id", saleId).maybeSingle();
+    const { data: s } = await db.from("sales").select("shipping_label_path").eq("organization_id", org).eq("id", saleId).maybeSingle();
     if (s?.shipping_label_path !== path) await db.storage.from("shipping-labels").remove([path]);
     if (opts.userClient) throw new Error(error.message);
     if (NEEDS_PERSON.test(error.message) || /etiqueta|envío|anulada|corresponde/i.test(error.message)) {
-      return toReview(db, e.id, error.message, [{ sale_id: saleId, label: "Venta encontrada" }]);
+      return toReview(db, org, e.id, error.message, [{ sale_id: saleId, label: "Venta encontrada" }]);
     }
     throw new Error(error.message);
   }
   return "label";
 }
 
-async function carrierFromText(db: Admin, text: string | null): Promise<string | null> {
+async function carrierFromText(db: Admin, org: string, text: string | null): Promise<string | null> {
   if (!text) return null;
   const t = ` ${normalizeName(text)} `;
-  const { data } = await db.from("carriers").select("id, name").eq("active", true);
+  const { data } = await db.from("carriers").select("id, name").eq("organization_id", org).eq("active", true);
   const hits = (data ?? []).filter((c) => t.includes(` ${normalizeName(c.name)} `));
   if (!hits.length) return null;
   // Si una coincidencia contiene a otra («Vinted Go» y «Go»), vale la más larga
@@ -569,8 +621,8 @@ async function carrierFromText(db: Admin, text: string | null): Promise<string |
 // Acceso a Gmail para las acciones manuales del administrador
 // ---------------------------------------------------------------------
 
-export async function gmailForServer(db: Admin = createAdminClient()): Promise<Gmail> {
-  const { data } = await db.from("email_integration").select("refresh_token_enc").eq("id", true).single();
+export async function gmailForServer(db: Admin, org: string): Promise<Gmail> {
+  const { data } = await db.from("email_integration").select("refresh_token_enc").eq("organization_id", org).maybeSingle();
   if (!data?.refresh_token_enc) throw new GmailAuthError("Gmail no está conectado.");
   let refresh: string;
   try {
@@ -581,6 +633,9 @@ export async function gmailForServer(db: Admin = createAdminClient()): Promise<G
   return new Gmail(await refreshAccessToken(refresh));
 }
 
-export async function markAuthError(db: Admin, message: string) {
-  await db.from("email_integration").update({ status: "error_autorizacion", last_error: message, updated_at: new Date().toISOString() }).eq("id", true);
+export async function markAuthError(db: Admin, org: string, message: string) {
+  await db
+    .from("email_integration")
+    .update({ status: "error_autorizacion", last_error: message, updated_at: new Date().toISOString() })
+    .eq("organization_id", org);
 }

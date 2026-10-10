@@ -26,12 +26,28 @@
 -- ---------------------------------------------------------------------
 do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'mi_definer') then
-    create role mi_definer nologin nobypassrls noinherit;
+    create role mi_definer nologin nobypassrls inherit;
   end if;
 end $$;
+alter role mi_definer nologin nobypassrls inherit;
 grant mi_definer to postgres;
-grant usage on schema public, private, auth, storage to mi_definer;
-grant execute on all functions in schema auth to mi_definer;
+grant usage on schema public, private to mi_definer;
+-- auth y storage son de Supabase: se intenta el permiso directo y, si el
+-- proyecto no lo deja, a través del rol «authenticated» (mismas reglas RLS).
+-- Al final de la migración se comprueba que funciona; si no, no se aplica nada.
+do $$ begin
+  begin
+    grant usage on schema auth, storage to mi_definer;
+    grant execute on all functions in schema auth to mi_definer;
+  exception when insufficient_privilege then
+    raise notice 'Permisos directos en auth/storage no disponibles; se usa el rol authenticated.';
+  end;
+  begin
+    grant authenticated to mi_definer;
+  exception when insufficient_privilege then
+    raise notice 'No se puede añadir mi_definer a authenticated.';
+  end;
+end $$;
 
 -- ---------------------------------------------------------------------
 -- 1. Organizaciones, miembros, invitaciones, suscripción y plataforma
@@ -244,13 +260,18 @@ end $$;
 
 -- ---------------------------------------------------------------------
 -- 5. Referencias siempre dentro de la misma organización
+--    Cada clave foránea simple entre tablas de negocio se sustituye por una
+--    compuesta (organization_id, columna) con el MISMO nombre y la misma
+--    acción al borrar. Así no se puede apuntar a una fila de otro cliente,
+--    y la API (PostgREST) sigue viendo una sola relación entre las tablas.
 -- ---------------------------------------------------------------------
 do $$
 declare
   r record;
+  v_del text;
 begin
   for r in
-    select con.conname, cl.relname as child, a.attname as col, pcl.relname as parent, pa.attname as pcol
+    select con.conname, con.confdeltype, con.condeferrable, con.condeferred, cl.relname as child, a.attname as col, pcl.relname as parent
       from pg_constraint con
       join pg_class cl on cl.oid = con.conrelid
       join pg_class pcl on pcl.oid = con.confrelid
@@ -262,9 +283,16 @@ begin
        and pcl.relname in (select private.org_tables())
        and pa.attname = 'id'
   loop
+    v_del := case r.confdeltype
+      when 'c' then 'on delete cascade'
+      when 'n' then format('on delete set null (%I)', r.col)
+      when 'r' then 'on delete restrict'
+      else 'on delete no action' end;
+    execute format('alter table public.%I drop constraint %I', r.child, r.conname);
     execute format(
-      'alter table public.%I add constraint %I foreign key (organization_id, %I) references public.%I (organization_id, id)',
-      r.child, left(r.conname, 55) || '_org', r.col, r.parent
+      'alter table public.%I add constraint %I foreign key (organization_id, %I) references public.%I (organization_id, id) %s%s',
+      r.child, r.conname, r.col, r.parent, v_del,
+      case when r.condeferrable then ' deferrable' || case when r.condeferred then ' initially deferred' else '' end else '' end
     );
   end loop;
 end $$;
@@ -502,6 +530,16 @@ begin
       t || '_org_isolation', t);
     execute format('drop policy if exists %I on public.%I', t || '_definer', t);
     execute format('create policy %I on public.%I for all to mi_definer using (true) with check (true)', t || '_definer', t);
+    -- Sin prueba en vigor ni suscripción al día: solo lectura (también por la API directa).
+    -- El historial (audit_log) queda fuera: lo escriben los propios cambios permitidos.
+    if t <> 'audit_log' then
+      execute format('drop policy if exists %I on public.%I', t || '_write_ins', t);
+      execute format('drop policy if exists %I on public.%I', t || '_write_upd', t);
+      execute format('drop policy if exists %I on public.%I', t || '_write_del', t);
+      execute format('create policy %I on public.%I as restrictive for insert to public with check ((select public.org_has_access(public.current_org_id())))', t || '_write_ins', t);
+      execute format('create policy %I on public.%I as restrictive for update to public using ((select public.org_has_access(public.current_org_id()))) with check ((select public.org_has_access(public.current_org_id())))', t || '_write_upd', t);
+      execute format('create policy %I on public.%I as restrictive for delete to public using ((select public.org_has_access(public.current_org_id())))', t || '_write_del', t);
+    end if;
   end loop;
 end $$;
 grant select, insert, update, delete on all tables in schema public to mi_definer;
@@ -2221,3 +2259,13 @@ grant execute on function public.current_org_id() to authenticated, mi_definer;
 
 -- Las funciones de negocio pueden llamar a las demás (incluidas las creadas arriba)
 grant execute on all functions in schema public, private to mi_definer;
+grant execute on function public.current_responsible_id(), public.current_org_info(), public.is_platform_admin() to authenticated;
+
+-- Comprobación final: las funciones de negocio pueden leer quién es el
+-- usuario y los archivos. Si no, se cancela TODA la migración.
+do $$ begin
+  if not has_schema_privilege('mi_definer', 'auth', 'usage') or not has_function_privilege('mi_definer', 'auth.uid()', 'execute')
+     or not has_schema_privilege('mi_definer', 'storage', 'usage') then
+    raise exception 'El rol mi_definer no tiene acceso a auth/storage. No se ha aplicado nada. Avisa al desarrollador.';
+  end if;
+end $$;

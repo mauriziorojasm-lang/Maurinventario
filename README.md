@@ -4,6 +4,8 @@ Mini ERP de inventario, ventas, compras y rentabilidad, preparado para sustituir
 
 > 📱 **¿Lo instalas desde un iPad, sin ordenador?** Sigue [docs/INSTALAR-DESDE-IPAD.md](docs/INSTALAR-DESDE-IPAD.md): todo se hace en Safari y la base de datos se crea pegando un solo archivo (`supabase/instalar-todo.sql`). Este README es la guía completa con ordenador.
 
+> 🏢 **Versión para varias empresas (SaaS, rama `saas`)**: espacios separados, equipo con roles, prueba de 7 días y suscripción con Stripe. Puesta en marcha en [docs/SAAS.md](docs/SAAS.md).
+
 Esta guía te lleva desde el código en tu ordenador hasta la aplicación funcionando en internet:
 
 ```

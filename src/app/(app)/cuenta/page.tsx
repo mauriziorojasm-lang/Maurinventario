@@ -18,7 +18,7 @@ export default async function AccountPage() {
             <dt className="text-muted">Nombre</dt>
             <dd>{user.fullName ?? "—"}</dd>
             <dt className="text-muted">Rol</dt>
-            <dd>{user.role === "admin" ? "Administrador" : "Vendedor"}</dd>
+            <dd>{user.role === "admin" ? "Administrador" : user.role === "almacen" ? "Almacén" : "Vendedor"}</dd>
             <dt className="text-muted">Responsable</dt>
             <dd>{user.responsibleName ?? "Sin vincular"}</dd>
           </dl>

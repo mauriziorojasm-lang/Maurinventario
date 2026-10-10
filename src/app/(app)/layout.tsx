@@ -1,6 +1,9 @@
 import { cookies } from "next/headers";
 import { AppearanceSync } from "@/components/appearance-sync";
+import { OrgSwitcher } from "@/components/org-switcher";
 import { Shell } from "@/components/shell";
+import { SubscriptionBanner } from "@/components/subscription-banner";
+import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { loadBadges } from "@/lib/badges";
 import { APPEARANCE_COOKIE, appearanceCookieValue } from "@/lib/preferences";
@@ -10,7 +13,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const [badges, prefs, jar] = await Promise.all([loadBadges(), loadPrefs(), cookies()]);
+  const supabase = await createClient();
+  const [badges, prefs, jar, orgs] = await Promise.all([loadBadges(), loadPrefs(), cookies(), supabase.rpc("my_organizations")]);
+  const myOrgs = ((orgs.data ?? []) as { id: string; name: string }[]).map((o) => ({ id: o.id, name: o.name }));
   const a = prefs.appearance;
   // Los contadores del menú respetan los avisos activados en Ajustes → Avisos
   const nf = prefs.notifications;
@@ -23,7 +28,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   };
   const wanted = appearanceCookieValue(a);
   return (
-    <Shell role={user.role} userLabel={user.fullName ?? user.responsibleName ?? user.email} badges={shown}>
+    <Shell
+      role={user.role}
+      userLabel={user.fullName ?? user.responsibleName ?? user.email}
+      badges={shown}
+      orgName={user.orgName}
+      orgSwitcher={myOrgs.length > 1 ? <OrgSwitcher current={user.orgId} orgs={myOrgs} /> : undefined}
+      banner={<SubscriptionBanner user={user} />}
+      isPlatformAdmin={user.isPlatformAdmin}
+    >
       {jar.get(APPEARANCE_COOKIE)?.value !== wanted && (
         <AppearanceSync mode={a.mode} palette={a.palette} reduceMotion={a.reduceMotion} cookieName={APPEARANCE_COOKIE} cookieValue={wanted} />
       )}
