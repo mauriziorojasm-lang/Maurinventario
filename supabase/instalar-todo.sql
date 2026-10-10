@@ -5127,6 +5127,22 @@ $$;
 revoke execute on function public.ai_usage_take(integer, integer) from public, anon;
 grant execute on function public.ai_usage_take(integer, integer) to authenticated;
 
+-- Devuelve cupo cuando la IA no ha podido generar (fallo del servicio).
+-- Solo la usa el servidor (clave de servicio): si la pudiera llamar el
+-- usuario, se saltaría el límite. Nunca baja de 0.
+create or replace function public.ai_usage_refund(p_user uuid, p_units integer)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.ai_usage
+     set uses = greatest(uses - p_units, 0)
+   where user_id = p_user and day = (now() at time zone 'Europe/Madrid')::date and coalesce(p_units, 0) > 0
+$$;
+revoke execute on function public.ai_usage_refund(uuid, integer) from public, anon, authenticated;
+grant execute on function public.ai_usage_refund(uuid, integer) to service_role;
+
 -- Registro de migraciones aplicadas (para que la CLI de Supabase sepa que ya están)
 create schema if not exists supabase_migrations;
 create table if not exists supabase_migrations.schema_migrations (version text primary key, statements text[], name text);

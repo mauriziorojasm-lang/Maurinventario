@@ -3,7 +3,7 @@
  * vendedor y límite diario del generador de descripciones.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { TEST_DATABASE_URL, TestDb, createTestDatabase, createUser, rpc, selectAs } from "./helpers";
+import { TEST_DATABASE_URL, TestDb, asService, createTestDatabase, createUser, rpc, selectAs } from "./helpers";
 
 const run = TEST_DATABASE_URL ? describe : describe.skip;
 
@@ -72,6 +72,27 @@ run("Seguridad", () => {
     expect(await rpc<boolean>(db, admin, "ai_usage_take", 11, 60)).toBe(false);
     expect(await rpc<boolean>(db, admin, "ai_usage_take", 10, 60)).toBe(true);
     expect(await rpc<boolean>(db, seller, "ai_usage_take", 60, 60)).toBe(true);
+  });
+
+  it("generador: si la IA falla se devuelve el cupo (sin bajar de 0) y no se toca el de otros", async () => {
+    await db.client.query("delete from ai_usage");
+    expect(await rpc<boolean>(db, admin, "ai_usage_take", 60, 60)).toBe(true);
+    await asService(db, (q) => q("select ai_usage_refund($1, 5)", [admin]));
+    expect(await rpc<boolean>(db, admin, "ai_usage_take", 5, 60)).toBe(true);
+    expect(await rpc<boolean>(db, admin, "ai_usage_take", 1, 60)).toBe(false);
+    await asService(db, (q) => q("select ai_usage_refund($1, 100)", [seller]));
+    // El usuario no puede devolverse cupo a sí mismo (se saltaría el límite)
+    await expect(rpc(db, admin, "ai_usage_refund", admin, 5)).rejects.toThrow();
+    const rows = await db.client.query("select user_id, uses from ai_usage order by uses");
+    expect(rows.rows.every((r: { uses: number }) => r.uses >= 0)).toBe(true);
+    expect(rows.rows.find((r: { user_id: string }) => r.user_id === admin).uses).toBe(60);
+  });
+
+  it("generador: la tabla del contador no se puede leer ni escribir directamente", async () => {
+    await expect(selectAs(db, admin, "select * from ai_usage")).rejects.toThrow();
+    await expect(selectAs(db, seller, "insert into ai_usage (user_id, day, uses) values ($1, current_date, 0)", [seller])).rejects.toThrow();
+    expect(await rpc<boolean>(db, seller, "ai_usage_take", 0, 60)).toBe(false);
+    expect(await rpc<boolean>(db, seller, "ai_usage_take", 61, 60)).toBe(false);
   });
 
   it("generador: el día es el de Madrid", async () => {

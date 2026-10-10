@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { REPORT_FILTER_KEYS } from "@/lib/filters";
-import { csvCell } from "@/lib/csv";
+import { toCsv } from "@/lib/csv";
 import { REPORTS, type Column, type ReportType } from "@/lib/reports";
 import { createClient } from "@/lib/supabase/server";
 
@@ -92,25 +92,3 @@ function cellValue(c: Column, r: Record<string, unknown>) {
   return String(v);
 }
 
-/** CSV con «;» y coma decimal, para que Excel en español lo abra bien. */
-function toCsv(columns: Column[], rows: Record<string, unknown>[]) {
-  const esc = csvCell;
-  const lines = [columns.map((c) => esc(c.label)).join(";")];
-  for (const r of rows) {
-    lines.push(
-      columns
-        .map((c) => {
-          const v = c.value(r);
-          if (v === null || v === undefined) return "";
-          if (c.kind === "date") {
-            const [y, m, d] = String(v).slice(0, 10).split("-");
-            return `${d}/${m}/${y}`;
-          }
-          if (c.kind === "money" || c.kind === "money4" || c.kind === "pct") return String(Number(v)).replace(".", ",");
-          return esc(String(v));
-        })
-        .join(";"),
-    );
-  }
-  return lines.join("\r\n");
-}

@@ -13,6 +13,7 @@
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import type { ActionResult } from "@/lib/errors";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { testOnlyEnv } from "@/lib/test-env";
 import { LENGTHS, MAX_FIELD, MAX_LONG_FIELD, MAX_PRODUCTS, PLATFORMS, TONES, type ProductDetails } from "./options";
@@ -275,10 +276,6 @@ export async function generateDescriptions(input: GenerateRequest): Promise<Acti
   const byId = new Map(((products ?? []) as unknown as DbProduct[]).map((p) => [p.id, p]));
   if (ids.some((id) => !byId.has(id))) return { ok: false, error: "Alguno de los productos no existe o no tienes acceso a él." };
 
-  // Límite diario por usuario (lo cuenta la base de datos, día de Madrid)
-  const { data: allowed, error: limitError } = await supabase.rpc("ai_usage_take", { p_units: req.items.length, p_limit: DAILY_LIMIT });
-  if (limitError) return { ok: false, error: "No se ha podido comprobar el límite diario. Inténtalo de nuevo." };
-  if (!allowed) return { ok: false, error: `Has llegado al límite de ${DAILY_LIMIT} descripciones de hoy. Mañana podrás generar más.` };
 
   const variantIds = req.items.map((i) => i.variantId).filter((v): v is string => !!v);
   const variants = new Map<string, { name: string; sku: string | null; product_id: string }>();
@@ -294,6 +291,11 @@ export async function generateDescriptions(input: GenerateRequest): Promise<Acti
   const models = custom ? [custom] : DEFAULT_MODELS;
   // Margen amplio: algunos modelos «piensan» antes de escribir y eso también cuenta
   const maxTokens = { corta: 1500, media: 2000, detallada: 3000 }[req.length];
+
+  // Límite diario por usuario (lo cuenta la base de datos, día de Madrid)
+  const { data: allowed, error: limitError } = await supabase.rpc("ai_usage_take", { p_units: req.items.length, p_limit: DAILY_LIMIT });
+  if (limitError) return { ok: false, error: "No se ha podido comprobar el límite diario. Inténtalo de nuevo." };
+  if (!allowed) return { ok: false, error: `Has llegado al límite de ${DAILY_LIMIT} descripciones de hoy. Mañana podrás generar más.` };
 
   const results = await Promise.all(
     req.items.map(async (it): Promise<GeneratedItem> => {
@@ -331,5 +333,8 @@ export async function generateDescriptions(input: GenerateRequest): Promise<Acti
       };
     }),
   );
+  // Lo que no se ha podido generar no cuenta para el límite
+  const failed = results.filter((r) => r.error).length;
+  if (failed) await createAdminClient().rpc("ai_usage_refund", { p_user: user.id, p_units: failed });
   return { ok: true, data: results };
 }
