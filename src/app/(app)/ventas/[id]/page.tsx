@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Badge, LinkButton, LotTag, Notice, PageHeader, Panel, Table, Td, Th, Tr } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { RETURN_TYPES, date, dateTime, money } from "@/lib/format";
 import { must } from "@/lib/db";
 import { signLabels } from "@/lib/storage";
@@ -15,7 +16,9 @@ export const metadata: Metadata = { title: "Venta" };
 
 export default async function SaleDetail({ params, searchParams }: PageProps<"/ventas/[id]">) {
   const user = await requireUser();
-  const isAdmin = user.role === "admin";
+  const isAdmin = can(user, "costes"); // ver costes y beneficio
+  const canEdit = can(user, "ventas_editar");
+  const canListing = can(user, "anuncios");
   const { id } = await params;
   const sp = await searchParams;
   // Si se llega desde «Pendientes de envío», el enlace de volver lleva allí
@@ -36,7 +39,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
       .select("id, line_number, quantity, unit_price, notes, lot_id, variant_id, product_variants(name, product_id, products(name))")
       .eq("sale_id", id)
       .order("line_number"),
-    isAdmin
+    canEdit
       ? supabase
           .from("v_returns")
           .select("id, return_date, return_type, reason, product_name, variant_name, quantity, refund_amount, restocked, lost_cost")
@@ -58,7 +61,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
   ]);
   const lotMap = new Map(lots.map((l) => [l.lot_id as string, l]));
   const refundTotal = returns.reduce((a, r) => a + Number(r.refund_amount), 0);
-  const netProfit = isAdmin && returns.length ? (profitRes.data ?? []).reduce((a, r) => a + Number(r.profit), 0) : null;
+  const netProfit = isAdmin && canEdit && returns.length ? (profitRes.data ?? []).reduce((a, r) => a + Number(r.profit), 0) : null;
   const labelUrl = sale.shipping_label_path ? (labels.get(sale.shipping_label_path) ?? null) : null;
   const s = sale as unknown as {
     id: string;
@@ -103,7 +106,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
   // Anuncios que siguen publicados de productos que se han quedado sin stock
   const productIds = [...new Set((items ?? []).map((i) => (i.product_variants as unknown as { product_id: string } | null)?.product_id).filter((x): x is string => !!x))];
   const toRemove =
-    isAdmin && active && productIds.length
+    canListing && active && productIds.length
       ? (((await supabase.from("v_listings_to_remove").select("product_id, platform, product_name").in("product_id", productIds)).data ?? []) as {
           product_id: string;
           platform: "vinted" | "wallapop";
@@ -123,7 +126,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
         }
         description={`${date(s.sale_date)}, ${s.responsibles?.name ?? ""}, ${s.platforms?.name ?? ""}`}
         actions={
-          isAdmin &&
+          canEdit &&
           active && (
             <>
               <SaleHeaderEditor
@@ -180,7 +183,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
                   <Th num>Importe</Th>
                   {isAdmin && <Th num>Coste lote</Th>}
                   {isAdmin && <Th num>Beneficio</Th>}
-                  {isAdmin && active && <Th />}
+                  {canEdit && active && <Th />}
                 </tr>
               </thead>
               <tbody>
@@ -200,7 +203,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
                       <Td num>{money(amount)}</Td>
                       {isAdmin && <Td num>{money(lot?.unit_cost, { precise: true })}</Td>}
                       {isAdmin && <Td num>{money(amount - lineCost)}</Td>}
-                      {isAdmin && active && (
+                      {canEdit && active && (
                         <Td>
                           <LinePriceEditor itemId={l.id} price={Number(l.unit_price)} notes={l.notes} />
                         </Td>
@@ -215,11 +218,11 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
                   <Td num>{money(gross)}</Td>
                   {isAdmin && <Td num>{money(cost)}</Td>}
                   {isAdmin && <Td num>{money(gross - cost)}</Td>}
-                  {isAdmin && active && <Td />}
+                  {canEdit && active && <Td />}
                 </tr>
               </tfoot>
             </Table>
-            {isAdmin && returns.length > 0 && (
+            {isAdmin && canEdit && returns.length > 0 && (
               <p className="border-t border-line px-3 py-2.5 text-[13px] text-muted">
                 Reembolsado: <span className="num font-semibold text-ink">{money(refundTotal)}</span>. Beneficio después de devoluciones:{" "}
                 <span className={`num font-semibold ${Number(netProfit) < 0 ? "text-danger" : "text-ink"}`}>{money(netProfit)}</span>. Los informes ya usan esta
@@ -228,7 +231,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
             )}
           </Panel>
 
-          {isAdmin && returns.length > 0 && (
+          {canEdit && returns.length > 0 && (
             <Panel title="Devoluciones" padded={false}>
               <Table>
                 <thead>
@@ -238,7 +241,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
                     <Th>Tipo</Th>
                     <Th num>Uds.</Th>
                     <Th num>Reembolso</Th>
-                    <Th num>Pérdida</Th>
+                    {isAdmin && <Th num>Pérdida</Th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -252,7 +255,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
                       <Td>{RETURN_TYPES[r.return_type]}</Td>
                       <Td num>{r.quantity}</Td>
                       <Td num>{money(r.refund_amount)}</Td>
-                      <Td num>{money(r.lost_cost)}</Td>
+                      {isAdmin && <Td num>{money(r.lost_cost)}</Td>}
                     </Tr>
                   ))}
                 </tbody>
@@ -264,7 +267,11 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
         <div className="flex flex-col gap-5">
           {s.platforms?.requires_shipping && active && (
             <Panel title="Envío">
-              <ShippingEditor sale={{ ...s, requires_shipping: true }} carriers={opts.carriers} labelUrl={labelUrl} />
+              {can(user, "envios") || canEdit ? (
+                <ShippingEditor sale={{ ...s, requires_shipping: true }} carriers={opts.carriers} labelUrl={labelUrl} />
+              ) : (
+                <p className="text-sm">{s.shipping_status === "enviado" ? "Enviado" : "Pendiente de envío"}</p>
+              )}
             </Panel>
           )}
           <Panel title="Datos">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Notice, PageHeader } from "@/components/ui";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { isGeneratorConfigured } from "./actions";
 import { DescriptionGenerator } from "./generator";
 
@@ -9,7 +10,7 @@ export const metadata: Metadata = { title: "Generador de descripciones" };
 
 export default async function DescriptionsPage() {
   const user = await requireUser();
-  if (user.role === "almacen") redirect("/?aviso=sin-permiso");
+  if (!can(user, "generador")) redirect("/?aviso=sin-permiso");
   // Solo se comprueba si existe la clave; no se llama a la IA al abrir la pantalla
   const configured = await isGeneratorConfigured();
   return (

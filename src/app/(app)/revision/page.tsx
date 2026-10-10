@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Empty, PageHeader, Panel, Tabs } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { first, type SearchParams } from "@/lib/filters";
 import { dateTime } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +20,7 @@ const KINDS: Record<string, { label: string; tone: "warn" | "bad" | "info" | "ne
 };
 
 export default async function ReviewPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  await requireAdmin();
+  await requirePerm("importar");
   const sp = await searchParams;
   const status = (first(sp.estado) ?? "pendiente") as "pendiente" | "resuelto" | "descartado";
   const supabase = await createClient();

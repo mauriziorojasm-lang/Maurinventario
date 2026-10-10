@@ -4,6 +4,7 @@ import { Megaphone } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Badge, Empty, LinkButton, Figures, LotTag, Notice, PageHeader, Panel, StockBadge, Table, Td, Th, Tr } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { EXIT_REASONS, MOVEMENT_TYPES, date, money, units } from "@/lib/format";
 import { loadCatalogOptions } from "@/lib/options";
 import { PhotoGallery } from "@/components/photo-gallery";
@@ -33,11 +34,14 @@ type VariantInv = {
 
 export default async function ProductDetail({ params, searchParams }: PageProps<"/productos/[id]">) {
   const user = await requireUser();
-  const isAdmin = user.role === "admin";
+  // Vista completa (lotes, costes, movimientos) con «costes»; editar con «productos»
+  const isAdmin = can(user, "costes");
+  const canEdit = can(user, "catalogo");
+  const canListing = can(user, "anuncios");
   const { id } = await params;
   const supabase = await createClient();
   // Todo a la vez: ficha, fotos y, según el rol, variantes, lotes y movimientos
-  const [productRes, photos, sp, sellerVariants, adminData] = await Promise.all([
+  const [productRes, photos, sp, sellerVariants, sellerOpts, adminData] = await Promise.all([
     supabase
       .from("products")
       .select("id, name, sku, description, photo_path, normal_sale_price, legacy_code, notes, source_ref, deleted_at, brands(name), categories(name)")
@@ -46,6 +50,7 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
     loadProductPhotos(id),
     searchParams,
     isAdmin ? null : supabase.rpc("search_sellable_variants", { p_query: null, p_only_in_stock: false, p_limit: 200, p_product_id: id }),
+    !isAdmin && canEdit ? loadCatalogOptions() : null,
     isAdmin
       ? Promise.all([
           supabase.from("v_variant_inventory").select("*").eq("product_id", id).order("is_default", { ascending: false }).order("variant_name"),
@@ -72,6 +77,29 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
     categories: { name: string } | null;
   };
 
+  const editButton = (brands: { id: string; name: string }[], categories: { id: string; name: string }[]) => (
+    <EditProductButton
+      brands={brands}
+      categories={categories}
+      initial={{
+        id: p.id,
+        name: p.name,
+        brand_name: p.brands?.name ?? "",
+        category_name: p.categories?.name ?? "",
+        sku: p.sku ?? "",
+        description: p.description ?? "",
+        normal_sale_price: p.normal_sale_price !== null ? String(p.normal_sale_price) : "",
+        notes: p.notes ?? "",
+      }}
+    />
+  );
+  const listingButton = canListing && (
+    <LinkButton href={`/productos/${p.id}/anuncio`} variant="primary">
+      <Megaphone size={17} strokeWidth={2.5} />
+      Preparar anuncio
+    </LinkButton>
+  );
+
   const info = (
     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
       <dt className="text-muted">Marca</dt>
@@ -96,7 +124,7 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
       {sp.fotos === "error" && (
         <Notice tone="warn">El producto se ha creado, pero alguna foto no se ha podido subir. Vuelve a intentarlo aquí abajo.</Notice>
       )}
-      <PhotoGallery productId={p.id} name={p.name} photos={photos} editable={isAdmin} />
+      <PhotoGallery productId={p.id} name={p.name} photos={photos} editable={canEdit} />
     </>
   );
 
@@ -104,7 +132,18 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
     const vs = (sellerVariants ? must(sellerVariants, "las variantes") ?? [] : []) as SellableVariant[];
     return (
       <>
-        <PageHeader title={p.name} back={{ href: "/productos", label: "Productos" }} />
+        <PageHeader
+          title={p.name}
+          back={{ href: "/productos", label: "Productos" }}
+          actions={
+            (listingButton || (canEdit && sellerOpts)) && (
+              <>
+                {listingButton}
+                {canEdit && sellerOpts && editButton(sellerOpts.brands, sellerOpts.categories)}
+              </>
+            )
+          }
+        />
         <div className="grid gap-5 lg:grid-cols-[minmax(300px,380px)_1fr]">
           <div className="flex flex-col gap-4">
             {photoBlock}
@@ -168,25 +207,9 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
         description={p.source_ref ? `Importado del Excel (${p.source_ref}).` : undefined}
         actions={
           <>
-            <LinkButton href={`/productos/${p.id}/anuncio`} variant="primary">
-              <Megaphone size={17} strokeWidth={2.5} />
-              Preparar anuncio
-            </LinkButton>
-            <EditProductButton
-              brands={opts.brands}
-              categories={opts.categories}
-              initial={{
-                id: p.id,
-                name: p.name,
-                brand_name: p.brands?.name ?? "",
-                category_name: p.categories?.name ?? "",
-                sku: p.sku ?? "",
-                description: p.description ?? "",
-                normal_sale_price: p.normal_sale_price !== null ? String(p.normal_sale_price) : "",
-                notes: p.notes ?? "",
-              }}
-            />
-            {totals.stock === 0 && <DeleteProductButton id={p.id} name={p.name} />}
+            {listingButton}
+            {canEdit && editButton(opts.brands, opts.categories)}
+            {canEdit && totals.stock === 0 && <DeleteProductButton id={p.id} name={p.name} />}
           </>
         }
       />
@@ -218,7 +241,7 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
           )}
         </div>
         <div className="flex min-w-0 flex-col gap-5">
-          <Panel title="Variantes" padded={false} actions={<VariantEditor productId={p.id} />}>
+          <Panel title="Variantes" padded={false} actions={canEdit ? <VariantEditor productId={p.id} /> : undefined}>
             <Table>
               <thead>
                 <tr>
@@ -245,10 +268,12 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
                     <Td num>{units(v.units_sold)}</Td>
                     <Td num>{money(v.stock_value)}</Td>
                     <Td>
-                      <VariantEditor
-                        productId={p.id}
-                        variant={{ id: v.variant_id, name: v.variant_name, sku: v.sku, normal_sale_price: v.normal_sale_price, stock: v.stock, canDelete: !single && v.stock === 0 }}
-                      />
+                      {canEdit && (
+                        <VariantEditor
+                          productId={p.id}
+                          variant={{ id: v.variant_id, name: v.variant_name, sku: v.sku, normal_sale_price: v.normal_sale_price, stock: v.stock, canDelete: !single && v.stock === 0 }}
+                        />
+                      )}
                     </Td>
                   </Tr>
                 ))}

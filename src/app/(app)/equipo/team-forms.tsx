@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { Button, Field, Input, Notice, Select } from "@/components/ui";
 import { ActionMessages, ConfirmAction, Modal, useServerAction } from "@/components/ui-client";
-import { changeRoleAction, inviteMemberAction, removeMemberAction, revokeInvitationAction } from "./actions";
+import { PERMISSIONS, ROLE_DEFAULTS, type Perm } from "@/lib/permissions";
+import { changeRoleAction, inviteMemberAction, removeMemberAction, revokeInvitationAction, setPermissionsAction } from "./actions";
 
 type Role = "admin" | "vendedor" | "almacen";
 
@@ -81,7 +82,13 @@ export function InviteButton({ mail }: { mail: boolean }) {
   );
 }
 
-export function MemberActions({ member, lastAdmin }: { member: { user_id: string; email: string; role: Role; is_me: boolean }; lastAdmin: boolean }) {
+export function MemberActions({
+  member,
+  lastAdmin,
+}: {
+  member: { user_id: string; email: string; full_name?: string | null; role: Role; is_me: boolean; permissions: string[]; custom: boolean };
+  lastAdmin: boolean;
+}) {
   const [role, setRole] = useState<Role>(member.role);
   const { run, pending, error } = useServerAction(changeRoleAction);
   return (
@@ -104,6 +111,7 @@ export function MemberActions({ member, lastAdmin }: { member: { user_id: string
         <option value="vendedor">Vendedor</option>
         <option value="almacen">Almacén</option>
       </Select>
+      {member.role !== "admin" && <PermissionsButton member={member} />}
       {!member.is_me && !lastAdmin && (
         <ConfirmAction
           label="Quitar"
@@ -129,5 +137,85 @@ export function RevokeButton({ id, email }: { id: string; email: string }) {
       confirmLabel="Revocar"
       action={() => revokeInvitationAction(id)}
     />
+  );
+}
+
+const GROUPS = ["Ventas", "Productos y almacén", "Negocio"] as const;
+
+/** Qué ve y qué puede hacer un miembro. Lo aplica la base de datos. */
+export function PermissionsButton({
+  member,
+}: {
+  member: { user_id: string; email: string; full_name?: string | null; role: Role; permissions: string[]; custom: boolean };
+}) {
+  const [open, setOpen] = useState(false);
+  const [sel, setSel] = useState<Set<string>>(new Set(member.permissions));
+  const { run, pending, error, message } = useServerAction(setPermissionsAction);
+  const defaults = member.role === "admin" ? [] : ROLE_DEFAULTS[member.role];
+  const toggle = (k: Perm) =>
+    setSel((s) => {
+      const n = new Set(s);
+      if (n.has(k)) n.delete(k);
+      else n.add(k);
+      return n;
+    });
+  return (
+    <>
+      <Button
+        size="sm"
+        onClick={() => {
+          setSel(new Set(member.permissions));
+          setOpen(true);
+        }}
+      >
+        Permisos{member.custom ? " ·" : ""}
+      </Button>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={`Permisos de ${member.full_name || member.email}`}
+        footer={
+          <>
+            <Button
+              disabled={pending}
+              onClick={async () => {
+                const r = await run(member.user_id, null);
+                if (r.ok) setSel(new Set(defaults));
+              }}
+            >
+              Los de su rol
+            </Button>
+            <Button variant="primary" disabled={pending} onClick={() => run(member.user_id, [...sel])}>
+              {pending ? "Guardando…" : "Guardar permisos"}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-ink-soft">
+          Marca lo que puede ver y hacer. Lo comprueba la base de datos, no solo la pantalla. El equipo, la suscripción, el historial de cambios y las copias de
+          seguridad son siempre solo del administrador.
+        </p>
+        {GROUPS.map((g) => (
+          <fieldset key={g} className="mt-4">
+            <legend className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">{g}</legend>
+            <div className="grid gap-1.5">
+              {PERMISSIONS.filter((p) => p.group === g).map((p) => (
+                <label key={p.key} className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-sm)] border border-line px-3 py-2.5 hover:border-ink/30">
+                  <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--color-brand)]" checked={sel.has(p.key)} onChange={() => toggle(p.key)} />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">
+                      {p.label}
+                      {(defaults as string[]).includes(p.key) && <span className="ml-1.5 text-xs font-normal text-muted">(de su rol)</span>}
+                    </span>
+                    <span className="block text-xs text-muted">{p.hint}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ))}
+        <ActionMessages error={error} message={message} />
+      </Modal>
+    </>
   );
 }

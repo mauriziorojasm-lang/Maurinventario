@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { loadSaleOptions } from "@/lib/options";
 import { loadPrefs } from "@/lib/user-prefs";
 import { DashboardEditor } from "./dashboard-editor";
@@ -8,7 +8,7 @@ import { DashboardEditor } from "./dashboard-editor";
 export const metadata: Metadata = { title: "Personalizar panel" };
 
 export default async function DashboardSettings() {
-  await requireAdmin();
+  await requirePerm("costes");
   const [prefs, opts] = await Promise.all([loadPrefs(), loadSaleOptions()]);
   return (
     <>

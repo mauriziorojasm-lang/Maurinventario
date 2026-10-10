@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { todayIso } from "@/lib/format";
 import { loadSuppliers } from "@/lib/options";
 import { PurchaseOrderForm } from "../po-form";
@@ -8,7 +8,7 @@ import { PurchaseOrderForm } from "../po-form";
 export const metadata: Metadata = { title: "Nuevo pedido de compra" };
 
 export default async function NewPO() {
-  await requireAdmin();
+  await requirePerm("compras");
   const suppliers = await loadSuppliers();
   return (
     <>

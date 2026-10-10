@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { POStatus } from "@/components/badges";
 import { Badge, Figures, LinkButton, LotTag, Notice, PageHeader, Panel, Table, Td, Th, Tr } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { COST_TYPES, date, money, todayIso, units } from "@/lib/format";
 import { loadSuppliers } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
@@ -14,7 +14,7 @@ import { must } from "@/lib/db";
 export const metadata: Metadata = { title: "Pedido de compra" };
 
 export default async function PODetail({ params }: PageProps<"/compras/[id]">) {
-  await requireAdmin();
+  await requirePerm("compras");
   const { id } = await params;
   const supabase = await createClient();
   const po = must(await supabase.from("v_purchase_orders").select("*").eq("id", id).maybeSingle(), "el pedido");

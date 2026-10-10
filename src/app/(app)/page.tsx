@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { CountUp } from "@/components/count-up";
 import { LinkButton, Notice, PageHeader, buttonClass, clsx } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { money, units } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { BusinessDashboard, DashboardSkeleton } from "./business-dashboard";
@@ -20,7 +21,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
   const [supabase, badges, prefs0] = await Promise.all([createClient(), loadBadges(), loadPrefs()]);
   // Aviso opcional de stock bajo (solo si el usuario lo ha activado)
   const lowStock =
-    user.role === "admin" && prefs0.notifications.lowStock
+    can(user, "catalogo") && prefs0.notifications.lowStock
       ? Number((await supabase.rpc("low_stock_count", { p_threshold: prefs0.notifications.lowStockThreshold })).data ?? 0)
       : 0;
   const sinPermiso = sp.aviso === "sin-permiso" && (
@@ -29,21 +30,21 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
     </Notice>
   );
 
-  if (user.role === "almacen") {
+  if (!can(user, "costes") && !can(user, "ventas_crear")) {
     // Almacén: envíos y stock (sin importes ni costes)
     return (
       <>
         {sinPermiso}
         <PageHeader title={`Hola${user.fullName ? `, ${user.fullName.split(" ")[0]}` : ""}`} description="Lo que hay que preparar y enviar." />
         <div className="flex flex-col gap-5">
-          <HomeTasks badges={badges} admin={false} notify={prefs0.notifications} lowStock={0} />
-          <QuickActions admin={false} warehouse />
+          <HomeTasks badges={badges} perms={user.permissions} notify={prefs0.notifications} lowStock={lowStock} />
+          <QuickActions perms={user.permissions} />
         </div>
       </>
     );
   }
 
-  if (user.role !== "admin") {
+  if (!can(user, "costes")) {
     const { data } = await supabase.rpc("my_dashboard");
     const d = data as {
       linked: boolean;
@@ -74,8 +75,8 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
           month={{ revenue: d?.month.revenue ?? 0, orders: d?.month.orders ?? 0, units: d?.month.units ?? 0 }}
         />
         <div className="mt-5 flex flex-col gap-5">
-          <HomeTasks badges={badges} admin={false} notify={prefs0.notifications} lowStock={0} />
-          <QuickActions admin={false} />
+          <HomeTasks badges={badges} perms={user.permissions} notify={prefs0.notifications} lowStock={lowStock} />
+          <QuickActions perms={user.permissions} />
         </div>
       </>
     );
@@ -113,8 +114,8 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
         }
       />
       <div className="flex flex-col gap-5">
-        <HomeTasks badges={badges} admin notify={prefs.notifications} lowStock={lowStock} />
-        <QuickActions admin />
+        <HomeTasks badges={badges} perms={user.permissions} notify={prefs.notifications} lowStock={lowStock} />
+        <QuickActions perms={user.permissions} />
         <div className="flex flex-wrap items-center gap-2">
           <nav aria-label="Periodo" className="no-scrollbar flex max-w-full overflow-x-auto rounded-full border border-line-strong bg-surface p-1 text-[13px] font-semibold">
             {(Object.keys(PERIODS) as PeriodKey[]).map((k) => (

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { todayIso } from "@/lib/format";
 import { loadSuppliers } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +12,7 @@ import { must } from "@/lib/db";
 export const metadata: Metadata = { title: "Editar pedido" };
 
 export default async function EditPO({ params }: PageProps<"/compras/[id]/editar">) {
-  await requireAdmin();
+  await requirePerm("compras");
   const { id } = await params;
   const supabase = await createClient();
   const po = must(await supabase.from("purchase_orders").select("id, order_number, supplier_id, order_date, notes, status").eq("id", id).maybeSingle(), "el pedido");

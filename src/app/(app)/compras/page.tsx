@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ExportLinks, FilterBar } from "@/components/filter-bar";
 import { POStatus } from "@/components/badges";
 import { Badge, Empty, LinkButton, LotTag, Notice, PageHeader, Pagination, Panel, Table, Td, Th, Tr } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { filtersFrom, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
 import { PO_STATUS, date, money, units } from "@/lib/format";
 import { loadSuppliers } from "@/lib/options";
@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "Compras" };
 
 export default async function PurchasesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  await requireAdmin();
+  await requirePerm("compras");
   const sp = await searchParams;
   const filters = filtersFrom(sp);
   const { page, from, to, size } = pageFrom(sp, 50);

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { PageHeader, Panel } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { loadCatalogOptions } from "@/lib/options";
 import { ProductForm } from "../product-form";
 
 export const metadata: Metadata = { title: "Nuevo producto" };
 
 export default async function NewProduct() {
-  await requireAdmin();
+  await requirePerm("catalogo");
   const { brands, categories } = await loadCatalogOptions();
   return (
     <>

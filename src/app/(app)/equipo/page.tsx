@@ -12,7 +12,16 @@ const ROLE = { admin: "Administrador", vendedor: "Vendedor", almacen: "Almacén"
 const ROLE_TONE = { admin: "info", vendedor: "neutral", almacen: "warn" } as const;
 const STATE_TONE = { pendiente: "warn", aceptada: "good", revocada: "neutral", caducada: "neutral" } as const;
 
-type Member = { user_id: string; email: string; full_name: string | null; role: keyof typeof ROLE; joined_at: string; is_me: boolean };
+type Member = {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  role: keyof typeof ROLE;
+  joined_at: string;
+  is_me: boolean;
+  permissions: string[];
+  custom: boolean;
+};
 type Invitation = { id: string; email: string; role: keyof typeof ROLE; created_at: string; expires_at: string; state: keyof typeof STATE_TONE };
 
 export default async function TeamPage() {
@@ -54,6 +63,7 @@ export default async function TeamPage() {
                 </Td>
                 <Td>
                   <Badge tone={ROLE_TONE[m.role]}>{ROLE[m.role]}</Badge>
+                  {m.custom && <span className="ml-1.5 text-xs text-muted">permisos a medida</span>}
                 </Td>
                 <Td>{dateTime(m.joined_at)}</Td>
                 <Td className="text-right">
@@ -66,8 +76,8 @@ export default async function TeamPage() {
       </Panel>
       <div className="mt-4 grid gap-2 text-[13px] text-muted sm:grid-cols-3">
         <p><strong className="text-ink">Administrador:</strong> todo, incluidos costes, beneficios, equipo y suscripción.</p>
-        <p><strong className="text-ink">Vendedor:</strong> registra y consulta sus ventas; no ve costes ni las ventas de otros.</p>
-        <p><strong className="text-ink">Almacén:</strong> ve stock y envíos y marca los envíos; no ve costes ni crea ventas.</p>
+        <p><strong className="text-ink">Vendedor:</strong> registra y consulta sus ventas; no ve costes ni las ventas de otros. Ajustable con «Permisos».</p>
+        <p><strong className="text-ink">Almacén:</strong> ve stock y envíos y marca los envíos; no ve costes ni crea ventas. Ajustable con «Permisos».</p>
       </div>
 
       {invites.length > 0 && (

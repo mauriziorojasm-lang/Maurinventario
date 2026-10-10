@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ExportLinks, FilterBar } from "@/components/filter-bar";
 import { Badge, Empty, LotTag, Notice, PageHeader, Pagination, Panel, Table, Td, Th, Tr } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { filtersFrom, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
 import { date, money, percent, units } from "@/lib/format";
 import { loadCatalogOptions } from "@/lib/options";
@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Responsables" };
 type Perf = { responsible_id: string; responsible_name: string; active: boolean; units: number; orders: number; revenue: number; avg_ticket: number; revenue_pct: number; profit: number; ranking: number };
 
 export default async function ResponsiblesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  await requireAdmin();
+  await requirePerm("configuracion");
   const sp = await searchParams;
   const filters = filtersFrom(sp);
   const { page, from, to, size } = pageFrom(sp, 50);

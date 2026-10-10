@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import type { ImportExisting } from "@/lib/import/plan";
 import { createClient } from "@/lib/supabase/server";
 import { ImportWizard } from "./import-wizard";
@@ -18,7 +18,7 @@ async function fetchAll<T>(build: (from: number, to: number) => PromiseLike<{ da
 }
 
 export default async function ImportPage() {
-  await requireAdmin();
+  await requirePerm("importar");
   const supabase = await createClient();
   const [products, pos, sales, exits, resp, mobiles, platforms, carriers, batches] = await Promise.all([
     fetchAll<{ name: string }>((a, b) => supabase.from("products").select("name").is("deleted_at", null).range(a, b)),

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ExportLinks, FilterBar } from "@/components/filter-bar";
 import { Badge, Empty, Figures, LinkButton, LotTag, Notice, PageHeader, Pagination, Panel, Table, Td, Th, Tr } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { filtersFrom, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
 import { date, money, units } from "@/lib/format";
 import { loadSaleOptions } from "@/lib/options";
@@ -34,8 +35,8 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const supabase = await createClient();
   const hrefFor = (p: number) => `/ventas${toQuery({ ...filters, page: p })}`;
 
-  if (user.role !== "admin") {
-    // Vendedor: solo sus ventas (lo garantiza la base de datos)
+  if (!can(user, "costes")) {
+    // Sin «costes»: las ventas que puede ver (las suyas o, con «ver todas», todas), sin beneficios
     let q = supabase
       .from("sales")
       .select(
@@ -105,7 +106,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           />
           <Panel padded={false} className={rows.length ? "max-lg:mt-3 max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none" : undefined}>
             {rows.length === 0 ? (
-              <Empty title="Aún no hay ventas con estos filtros" action={<LinkButton href="/ventas/nueva">Registrar una venta</LinkButton>} />
+              <Empty title="Aún no hay ventas con estos filtros" action={can(user, "ventas_crear") ? <LinkButton href="/ventas/nueva">Registrar una venta</LinkButton> : undefined} />
             ) : (
               <Table className="max-lg:hidden">
                 <thead>
@@ -254,7 +255,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
         <SaleCards sales={groupLines(rows)} />
         <Panel padded={false} className={rows.length ? "max-lg:mt-3 max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none" : undefined}>
           {rows.length === 0 ? (
-            <Empty title="No hay ventas con estos filtros" action={<LinkButton href="/ventas/nueva">Registrar una venta</LinkButton>} />
+            <Empty title="No hay ventas con estos filtros" action={can(user, "ventas_crear") ? <LinkButton href="/ventas/nueva">Registrar una venta</LinkButton> : undefined} />
           ) : (
             <Table className="max-lg:hidden">
               <thead>

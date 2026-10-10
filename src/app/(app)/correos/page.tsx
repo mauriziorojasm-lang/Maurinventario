@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { Badge, Empty, Notice, PageHeader, Panel, Tabs, clsx } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { CENTRAL_ACCOUNT, googleCredentials } from "@/lib/email/gmail";
 import { first, type SearchParams } from "@/lib/filters";
 import { dateTime, money } from "@/lib/format";
@@ -59,7 +59,7 @@ const STATUS: Record<string, { label: string; tone: "good" | "warn" | "bad" | "i
 };
 
 export default async function EmailSalesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  await requireAdmin();
+  await requirePerm("correo");
   const sp = await searchParams;
   const view = first(sp.ver) === "historial" ? "historial" : first(sp.ver) === "cuentas" ? "cuentas" : "incidencias";
   const supabase = await createClient();

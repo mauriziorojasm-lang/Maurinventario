@@ -74,6 +74,7 @@ export function Shell({
   orgSwitcher,
   banner,
   isPlatformAdmin = false,
+  permissions = [],
 }: {
   children: ReactNode;
   role: "admin" | "vendedor" | "almacen";
@@ -85,12 +86,14 @@ export function Shell({
   /** Aviso fijo (prueba, pago pendiente, suscripción inactiva…). */
   banner?: ReactNode;
   isPlatformAdmin?: boolean;
+  /** Permisos efectivos (qué apartados ve). */
+  permissions?: string[];
 }) {
   const pathname = usePathname();
   const [more, setMore] = useState(false);
   const visible = (i: NavItem) =>
-    (!i.adminOnly || role === "admin") && (!i.platformOnly || isPlatformAdmin) && !(role !== "admin" && i.hideFor?.includes(role));
-  const canSell = role !== "almacen";
+    (!i.adminOnly || role === "admin") && (!i.platformOnly || isPlatformAdmin) && (!i.perm || role === "admin" || permissions.includes(i.perm));
+  const canSell = role === "admin" || permissions.includes("ventas_crear");
   const badgeOf = (i: NavItem) => (i.badgeKey ? badges[i.badgeKey] : 0);
 
   // Cerrar la hoja «Más» al cambiar de página
@@ -240,7 +243,7 @@ export function Shell({
           <button type="button" onClick={() => setMore(true)} className={tabClass(!inTabs || more)} aria-expanded={more} aria-controls="menu-mas">
             <span className="relative">
               <LayoutGrid size={23} strokeWidth={2.25} />
-              {badges.reviews + badges.emails + badges.detected + badges.listings > 0 && role === "admin" && <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-tag ring-2 ring-chrome" />}
+              {badges.reviews + badges.emails + badges.detected + badges.listings > 0 && <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-tag ring-2 ring-chrome" />}
             </span>
             Más
           </button>

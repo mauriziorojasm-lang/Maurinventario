@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { POStatus } from "@/components/badges";
 import { Empty, Figures, LotTag, Notice, PageHeader, Panel, Table, Td, Th, Tr } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { date, money, units } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { SupplierButton } from "../supplier-form";
@@ -12,7 +12,7 @@ import { must } from "@/lib/db";
 export const metadata: Metadata = { title: "Proveedor" };
 
 export default async function SupplierDetail({ params }: PageProps<"/proveedores/[id]">) {
-  await requireAdmin();
+  await requirePerm("compras");
   const { id } = await params;
   const supabase = await createClient();
   const s = must(await supabase.from("suppliers").select("*").eq("id", id).maybeSingle(), "el proveedor");

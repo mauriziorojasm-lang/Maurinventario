@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Notice, PageHeader, Panel } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { todayIso } from "@/lib/format";
 import { first, type SearchParams } from "@/lib/filters";
 import { createClient } from "@/lib/supabase/server";
@@ -11,7 +11,7 @@ import { must } from "@/lib/db";
 export const metadata: Metadata = { title: "Nueva devolución" };
 
 export default async function NewReturn({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  await requireAdmin();
+  await requirePerm("ventas_editar");
   const sp = await searchParams;
   const supabase = await createClient();
   let saleId = first(sp.venta);
