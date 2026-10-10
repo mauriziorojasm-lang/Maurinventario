@@ -1,0 +1,163 @@
+/* ==========================================================================
+   video-saas-premium — kinetic-type motion graphics + Figma/macOS UI pieces.
+   Load AFTER the fonts. Every element the timeline reveals starts hidden here.
+   Tokens can be overridden on :root by the project.
+   ========================================================================== */
+:root {
+  --mk-paper: #f6f7f9;   /* light canvas */
+  --mk-ink: #17191d;     /* text / dark canvas */
+  --mk-muted: #686d77;
+  --mk-line: #e0e4eb;
+  --mk-accent: #ff6a3d;  /* one accent colour per piece (ref: orange dot) */
+  --mk-figma: #0d99ff;   /* Figma selection blue */
+  --mk-figma-dark: #0870d4; /* label bg (AA contrast) */
+  --mk-display: "RM Display", "Manrope", Arial, sans-serif;
+  --mk-body: "RM Body", "DM Sans", Arial, sans-serif;
+}
+
+/* ---------- kinetic type ---------- */
+.mk-type .k { display: none; white-space: pre-wrap; }
+.mk-caret { display: inline-block; width: 0.07em; min-width: 5px; height: 0.92em; margin-left: 0.06em; vertical-align: -0.1em; background: currentColor; }
+.mk-swap { position: relative; display: inline-block; vertical-align: bottom; overflow: hidden; height: 1.12em; text-align: left; }
+.mk-swap > span { position: absolute; left: 0; right: 0; top: 0; white-space: nowrap; opacity: 0; text-align: var(--mk-swap-align, center); }
+.mk-underline { position: relative; }
+.mk-underline::after { content: ""; position: absolute; left: 0; right: 0; bottom: -0.08em; height: 0.06em; border-radius: 1em; background: currentColor; transform-origin: left; transform: scaleX(var(--mk-u, 0)); }
+
+/* ---------- design guides (crosshair lines like a design tool) ---------- */
+.mk-guide { position: absolute; background: rgba(23, 25, 29, 0.14); pointer-events: none; opacity: 0; }
+.mk-guide.h { left: 0; right: 0; height: 2px; transform-origin: left center; }
+.mk-guide.v { top: 0; bottom: 0; width: 2px; transform-origin: center top; }
+.mk-dark .mk-guide, .dark .mk-guide { background: rgba(255, 255, 255, 0.28); }
+
+/* ---------- Figma selection (wrap any element: <span class="mk-sel" data-label="Texto · Hola">) ---------- */
+.mk-sel { position: relative; display: inline-block; }
+.mk-sel > .mk-frame { position: absolute; top: -8px; right: -16px; bottom: -4px; left: -16px; border: 3px solid var(--mk-figma); background: rgba(13, 153, 255, 0.09); opacity: 0; visibility: hidden; pointer-events: none; }
+.mk-frame b { position: absolute; width: 16px; height: 16px; background: #fff; border: 3px solid var(--mk-figma); }
+.mk-frame b:nth-of-type(1) { left: -10px; top: -10px; } .mk-frame b:nth-of-type(2) { right: -10px; top: -10px; }
+.mk-frame b:nth-of-type(3) { left: -10px; bottom: -10px; } .mk-frame b:nth-of-type(4) { right: -10px; bottom: -10px; }
+.mk-frame .mk-tag { position: absolute; left: -3px; top: -44px; padding: 7px 12px; border-radius: 6px; background: var(--mk-figma-dark); color: #fff; font: 600 22px/1 var(--mk-body); letter-spacing: 0; white-space: nowrap; }
+.mk-frame .mk-dim { position: absolute; left: 0; right: 0; bottom: -46px; margin: 0 auto; width: max-content; padding: 6px 10px; border-radius: 6px; background: var(--mk-figma-dark); color: #fff; font: 600 20px/1 var(--mk-body); }
+
+/* ---------- Figma multiplayer cursor ---------- */
+.mk-cursor { position: absolute; left: 0; top: 0; z-index: 60; display: flex; align-items: flex-start; opacity: 0; visibility: hidden; pointer-events: none; }
+.mk-cursor svg { width: 46px; height: 46px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25)); }
+.mk-cursor span { margin: 34px 0 0 -6px; padding: 8px 14px; border-radius: 14px; background: #0a84e8; color: #fff; font: 600 24px/1 var(--mk-body); white-space: nowrap; }
+.mk-cursor.alt span { background: #9747ff; }
+
+/* ---------- macOS window ---------- */
+.mk-win { position: relative; background: #fff; border-radius: 28px; overflow: hidden; box-shadow: 0 40px 90px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.06); color: var(--mk-ink); }
+.mk-win > .mk-bar { position: relative; height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 26px; background: #f6f6f7; border-bottom: 2px solid #eceef2; }
+.mk-bar i { width: 20px; height: 20px; border-radius: 50%; display: block; }
+.mk-bar i:nth-child(1) { background: #ff5f57; box-shadow: inset 0 0 0 1px #e0443e; }
+.mk-bar i:nth-child(2) { background: #febc2e; box-shadow: inset 0 0 0 1px #dea123; }
+.mk-bar i:nth-child(3) { background: #28c840; box-shadow: inset 0 0 0 1px #1aab29; }
+.mk-bar span { position: absolute; left: 0; right: 0; text-align: center; font: 600 24px/1 var(--mk-body); color: var(--mk-muted); }
+.mk-win > .mk-body { padding: 56px 54px; }
+.mk-win.dark { background: #1e1f22; color: #fff; }
+.mk-win.dark > .mk-bar { background: #2a2b2f; border-bottom-color: #34353a; }
+
+/* ---------- mac menubar / dock chips (optional dressing) ---------- */
+.mk-menubar { position: absolute; left: 0; right: 0; top: 0; height: 44px; display: flex; align-items: center; gap: 26px; padding: 0 26px; background: rgba(255, 255, 255, 0.72); font: 600 22px/1 var(--mk-body); color: var(--mk-ink); backdrop-filter: blur(20px); }
+
+/* ---------- mask transitions (iris / eye) ---------- */
+.mk-mask { position: absolute; inset: 0; overflow: hidden; }
+
+/* ---------- end card ---------- */
+.mk-end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; background: #000; color: #fff; opacity: 0; visibility: hidden; }
+.mk-end svg { width: 150px; height: 150px; }
+.mk-end b { font: 800 40px/1 var(--mk-display); letter-spacing: 1px; }
+
+/* ==========================================================================
+   PREMIUM / SaaS-LAUNCH LAYER — everything reads the theme vars set by MK.theme(brand)
+   ========================================================================== */
+/* soft animated aurora background built from the brand accents */
+.mk-aurora { position: absolute; inset: -20%; background:
+  radial-gradient(38% 30% at var(--mk-a1x, 25%) var(--mk-a1y, 20%), color-mix(in srgb, var(--mk-accent) 38%, transparent), transparent 70%),
+  radial-gradient(34% 28% at var(--mk-a2x, 80%) var(--mk-a2y, 70%), color-mix(in srgb, var(--mk-accent2) 34%, transparent), transparent 70%),
+  radial-gradient(50% 40% at 50% 110%, color-mix(in srgb, var(--mk-accent) 18%, transparent), transparent 70%);
+  filter: blur(40px); pointer-events: none; }
+/* film grain (very subtle) — premium texture */
+.mk-grain { position: absolute; inset: 0; pointer-events: none; opacity: .06; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+.mk-dotgrid { position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image: radial-gradient(color-mix(in srgb, var(--mk-ink) 14%, transparent) 1.5px, transparent 1.6px); background-size: 34px 34px;
+  -webkit-mask-image: radial-gradient(70% 55% at 50% 45%, #000, transparent); mask-image: radial-gradient(70% 55% at 50% 45%, #000, transparent); }
+
+/* premium headline reveal (per word: blur → sharp, rise) */
+.mk-reveal .w { display: inline-block; opacity: 0; white-space: pre; }
+.mk-grad-text { background: linear-gradient(100deg, var(--mk-accent), var(--mk-accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* light sweep over an element (logo, headline, card) */
+.mk-sweepwrap { position: relative; overflow: hidden; display: inline-block; }
+.mk-sweep { position: absolute; top: -20%; bottom: -20%; width: 35%; left: -45%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent); transform: skewX(-18deg); mix-blend-mode: soft-light; opacity: 0; }
+
+/* glass + elevated surfaces */
+.mk-glass { background: color-mix(in srgb, #fff 62%, transparent); backdrop-filter: blur(18px) saturate(1.3); border: 1px solid color-mix(in srgb, #fff 70%, transparent);
+  box-shadow: 0 30px 80px color-mix(in srgb, var(--mk-ink) 16%, transparent), inset 0 1px 0 rgba(255,255,255,.8); border-radius: 32px; }
+.mk-elev { box-shadow: 0 2px 4px color-mix(in srgb, var(--mk-ink) 6%, transparent), 0 40px 100px color-mix(in srgb, var(--mk-ink) 18%, transparent); }
+.mk-3d { perspective: 1800px; perspective-origin: 50% 30%; }
+
+/* chat (WhatsApp-like) */
+.mk-chat { display: flex; flex-direction: column; gap: 16px; }
+.mk-bubble { max-width: 78%; padding: 20px 24px; border-radius: 26px; font: 500 32px/1.3 var(--mk-body); opacity: 0; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+.mk-bubble.out { align-self: flex-end; background: #d9fdd3; color: #111b21; border-bottom-right-radius: 8px; }
+.mk-bubble.in { align-self: flex-start; background: #fff; color: #111b21; border-bottom-left-radius: 8px; }
+.mk-typing { align-self: flex-start; display: flex; gap: 8px; padding: 22px 26px; background: #fff; border-radius: 26px; opacity: 0; }
+.mk-typing i { width: 12px; height: 12px; border-radius: 50%; background: #8696a0; display: block; }
+
+/* pill CTA in the brand accent */
+.mk-cta { display: inline-flex; align-items: center; gap: 18px; padding: 28px 46px; border-radius: 100px; background: var(--mk-cta, var(--mk-accent2)); color: #fff;
+  font: 700 46px/1 var(--mk-body); box-shadow: 0 20px 50px color-mix(in srgb, var(--mk-cta, var(--mk-accent2)) 45%, transparent), inset 0 1px 0 rgba(255,255,255,.35); }
+.mk-chip { display: inline-flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 60px; background: #fff; color: var(--mk-ink); font: 600 26px/1 var(--mk-body);
+  box-shadow: 0 14px 40px color-mix(in srgb, var(--mk-ink) 14%, transparent); }
+.mk-chip b { width: 14px; height: 14px; border-radius: 50%; background: var(--mk-accent); display: block; }
+/* gradient text survives the per-word split: each word paints the gradient itself */
+.mk-grad-text .w, .mk-grad-text .k { background-image: linear-gradient(100deg, var(--mk-accent), var(--mk-accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+
+/* ==========================================================================
+   PREMIUM v2 — learned from the user's premium references (Kreatively, invideo,
+   Spotify/Qasim, Loom/Eyeson, Codex x AE): minimal, small type, recreated vector UI,
+   continuous morphs, motion blur, depth of field, brand-coloured light.
+   ========================================================================== */
+.pm-stage-dark { background: radial-gradient(60% 60% at 50% 115%, color-mix(in srgb, var(--mk-accent) 55%, transparent), transparent 70%), #050607; color: #f5f7fa; }
+.pm-stage-light { background: radial-gradient(70% 55% at 50% 120%, color-mix(in srgb, var(--mk-accent2) 35%, transparent), transparent 72%), #eef1f5; color: #0b0d10; }
+.pm-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(75% 75% at 50% 50%, transparent 55%, rgba(0,0,0,.35)); }
+.pm-flash { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(40% 40% at 50% 50%, #fff, color-mix(in srgb, #fff 60%, transparent) 40%, transparent 70%); opacity: 0; }
+
+/* small, tight, confident type (60–96px at 1920 wide) */
+.pm-title { font: 600 84px/1.04 var(--mk-display); letter-spacing: -0.035em; }
+.pm-title.sm { font-size: 60px; }
+.pm-title .lite { font-weight: 400; opacity: .55; }
+.pm-title .acc { color: var(--mk-accent); }
+.pm-glow { text-shadow: 0 0 18px color-mix(in srgb, currentColor 55%, transparent), 0 0 60px color-mix(in srgb, var(--mk-accent) 55%, transparent); }
+.pm-body { font: 500 30px/1.4 var(--mk-body); opacity: .7; }
+
+/* recreated UI — crisp vector components in the brand's colours */
+.pm-input { display: flex; align-items: center; gap: 18px; width: 760px; height: 96px; padding: 0 16px 0 34px; border-radius: 60px; background: #fff; color: #0b0d10;
+  box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 20px 60px rgba(10,20,40,.14), 0 0 0 1px rgba(10,20,40,.06); font: 500 32px/1 var(--mk-body); }
+.pm-input .ph { flex: 1; white-space: nowrap; overflow: hidden; }
+.pm-input .send { width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; background: var(--mk-accent); color: #fff; }
+.pm-input .send svg { width: 30px; height: 30px; }
+.pm-dark .pm-input { background: rgba(255,255,255,.06); color: #f5f7fa; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px rgba(255,255,255,.1); backdrop-filter: blur(20px); }
+.pm-btn { display: inline-flex; align-items: center; gap: 14px; padding: 22px 36px; border-radius: 60px; background: #fff; color: var(--mk-accent2); font: 600 32px/1 var(--mk-body);
+  box-shadow: 0 14px 40px rgba(10,20,40,.14), 0 0 0 1px rgba(10,20,40,.06); }
+.pm-btn.solid { background: var(--mk-accent); color: #fff; }
+.pm-chip { display: inline-flex; align-items: center; gap: 12px; padding: 16px 26px; border-radius: 40px; background: rgba(10,20,40,.06); color: inherit; font: 600 26px/1 var(--mk-body); }
+.pm-chip.on { background: var(--mk-accent); color: #fff; }
+.pm-dark .pm-chip { background: rgba(255,255,255,.08); }
+.pm-card { border-radius: 34px; background: #fff; color: #0b0d10; box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 40px 100px rgba(10,20,40,.18), 0 0 0 1px rgba(10,20,40,.05); }
+.pm-card.glass { background: rgba(255,255,255,.62); backdrop-filter: blur(24px) saturate(1.4); }
+.pm-dark .pm-card, .pm-card.dark { background: rgba(20,22,26,.72); color: #f5f7fa; box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 1px rgba(255,255,255,.08), 0 40px 100px rgba(0,0,0,.5); backdrop-filter: blur(24px); }
+.pm-row { display: flex; align-items: center; gap: 22px; padding: 22px 0; border-bottom: 1px solid rgba(10,20,40,.08); font: 500 28px/1.2 var(--mk-body); }
+.pm-row:last-child { border-bottom: 0; }
+.pm-row small { display: block; font-size: 22px; opacity: .55; margin-top: 4px; }
+.pm-row .v { margin-left: auto; font-weight: 700; }
+.pm-icon { width: 76px; height: 76px; border-radius: 22px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--mk-accent) 80%, #fff), var(--mk-accent)); box-shadow: inset 0 2px 0 rgba(255,255,255,.45), inset 0 -6px 12px rgba(0,0,0,.18), 0 16px 30px color-mix(in srgb, var(--mk-accent) 40%, transparent); }
+.pm-icon svg { width: 38px; height: 38px; }
+.pm-icon.alt { background: linear-gradient(160deg, color-mix(in srgb, var(--mk-accent2) 80%, #fff), var(--mk-accent2)); box-shadow: inset 0 2px 0 rgba(255,255,255,.45), inset 0 -6px 12px rgba(0,0,0,.18), 0 16px 30px color-mix(in srgb, var(--mk-accent2) 40%, transparent); }
+.pm-check { width: 120px; height: 120px; }
+.pm-check circle { fill: none; stroke: var(--mk-accent); stroke-width: 6; }
+.pm-check path { fill: none; stroke: var(--mk-accent); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+.pm-num { font: 600 150px/1 var(--mk-display); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }

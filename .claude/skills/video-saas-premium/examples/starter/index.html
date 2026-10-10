@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<!-- Starter de video-saas-premium: copia este archivo y la carpeta kit/ a un proyecto de HyperFrames
+     (npx hyperframes init motion --non-interactive --example=blank) y reemplaza la marca ficticia "Acme". -->
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script type="importmap">
+      { "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/"
+      } }
+    </script>
+    <style>
+      :root { --ink: #0b0d0c; --brand: #4f46e5; --font: "Inter", -apple-system, "Helvetica Neue", sans-serif; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0a0a12; }
+      #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: var(--font); -webkit-font-smoothing: antialiased; }
+      #bg { position: absolute; inset: 0; background: #0a0a12; }
+      .full { position: absolute; inset: 0; }
+      #dark { background: radial-gradient(60% 50% at 50% 120%, rgba(79,70,229,.45), transparent 75%), #07070d; }
+      #wall { opacity: 0; background: radial-gradient(60% 55% at 15% 85%, #c7c2ff, transparent 70%), radial-gradient(55% 55% at 88% 18%, #dbeafe, transparent 70%), radial-gradient(50% 45% at 55% 50%, #fff, transparent 72%), #eceaf7; }
+      #cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+      /* Reemplaza esta ventana por la UI REAL del producto, recreada desde capturas (references/capturas-ui.md) */
+      #app { position: absolute; left: 460px; top: 190px; width: 1000px; height: 640px; border-radius: 14px; background: #fff; opacity: 0; overflow: hidden;
+        box-shadow: 0 40px 100px rgba(30,20,90,.25), 0 0 0 1px rgba(0,0,0,.08); }
+      #app .bar { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: #f3f3f5; border-bottom: 1px solid #e6e6ea; }
+      #app .bar i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; } #app .bar i:nth-child(2) { background: #febc2e; } #app .bar i:nth-child(3) { background: #28c840; }
+      #btn { position: absolute; left: 400px; top: 300px; padding: 16px 26px; border-radius: 12px; background: var(--brand); color: #fff; font: 600 22px/1 var(--font); }
+      .t { position: absolute; left: 0; right: 0; text-align: center; white-space: nowrap; font: 600 68px/1.1 var(--font); letter-spacing: -0.035em; color: #f5f5ff; }
+      .t .w { display: inline-block; opacity: 0; } .t .acc { color: #a5b4fc; } .t.ink { color: var(--ink); } .t.ink .acc { color: var(--brand); }
+      #h1 { top: 140px; } #h2 { top: 60px; font-size: 52px; }
+      #gl { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    </style>
+  </head>
+  <body>
+    <div id="stage" data-composition-id="main" data-start="0" data-duration="9" data-width="1920" data-height="1080">
+      <div id="bg" class="clip" data-start="0" data-duration="9" data-track-index="0"></div>
+      <div id="dark" class="full"></div>
+      <div id="wall" class="full"></div>
+      <div id="cam"><div id="app" data-layout-allow-occlusion><div class="bar"><i></i><i></i><i></i></div><div id="btn">Enviar</div></div></div>
+      <canvas id="gl" width="3840" height="2160" data-layout-allow-occlusion></canvas>
+      <div class="full">
+        <div class="t" id="h1" data-w="Tu producto, *en una frase.*"></div>
+        <div class="t ink" id="h2" data-w="Una acción, *un resultado.*"></div>
+      </div>
+    </div>
+
+    <script src="kit/premium.js"></script>
+    <script>
+      const root = gsap.timeline({ paused: true }), tl = root;
+      MKP.use(root); MKP.words();
+      const cam = (t, [wx, wy], s, d = 0.9) => tl.to("#cam", { x: 960 - wx * s, y: 540 - wy * s, scale: s, duration: d, ease: "expo.inOut" }, t);
+      // Acto 1 (oscuro): titular palabra por palabra (con voz: MKP.sayIn("#h1 .w", tiemposDeLaVoz))
+      MKP.smearIn("#h1 .w", 0.3, { stagger: 0.09 });
+      MKP.whip("#h1", 2.6, { dx: -520 });
+      // Acto 2 (claro): corte en movimiento + la UI con cámara
+      MKP.cut("#wall", 2.95);
+      tl.fromTo("#app", { opacity: 0, y: 200, rotationX: 18, transformPerspective: 1600 }, { opacity: 1, y: 0, rotationX: 0, duration: 0.9, ease: "expo.out" }, 3.0);
+      MKP.smearIn("#h2 .w", 3.3, { stagger: 0.08 });
+      cam(4.2, [460 + 400 + 70, 190 + 300 + 25], 1.9);       // zoom in a la acción
+      MKP.press("#btn", 5.2);
+      cam(5.5, [960, 540], 1.0);                              // zoom out
+      tl.set({}, {}, 9);
+      window.__timelines = window.__timelines || {}; window.__timelines.main = root; root.seek(0);
+    </script>
+    <script type="module">
+      import { THREE, createStage, makePhone, chatUI, bindTimeline, put } from "./kit/three-stage.js";
+      const st = createStage({ canvas: document.getElementById("gl"), rimColor: 0xc7c2ff });
+      const ph = makePhone(st); const ui = chatUI(ph.ctx, ph.SW, ph.SH, { accent: "#4f46e5" });
+      const S = { ph: { x: 13, y: -0.3, z: 0, rx: 0.15, ry: -1.2, rz: 0, s: 0.8, v: 0 } };
+      const t3 = new gsap.core.Timeline({ paused: true });
+      t3.set(S.ph, { v: 1 }, 5.6);
+      t3.fromTo(S.ph, { x: 13, ry: -1.2 }, { x: 6.2, ry: -0.3, rx: 0.05, duration: 1.0, ease: "expo.out" }, 5.6);
+      t3.to(S.ph, { ry: -0.12, duration: 2.4, ease: "sine.inOut" }, 6.6);
+      t3.set({}, {}, 9);
+      bindTimeline(t3, (t) => {
+        put(S.ph, ph.group);
+        if (ph.group.visible) { ui.begin(); ui.header({ name: "Acme", sub: "en línea" }); ui.compose();
+          ui.bubble("¡Listo! Tu pedido salió 🚀", "in", ui.composeY - 12, (t - 6.3) / 0.4, "9:41"); ph.texture.needsUpdate = true; }
+        st.render();
+      });
+    </script>
+  </body>
+</html>

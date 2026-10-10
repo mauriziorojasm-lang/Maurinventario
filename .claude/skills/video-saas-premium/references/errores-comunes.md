@@ -1,0 +1,35 @@
+# Errores comunes (y cómo se arreglaron)
+
+- **El timeline entero no corre y solo se ve el 3D** → un helper recibió un array de selectores sin resolver y lanzó un error. `MKP` ya los resuelve; si escribes helpers propios, convierte strings a elementos.
+- **Un botón salta encima del texto** → un `transform` en un contenedor lo vuelve el bloque contenedor de sus hijos `position:absolute`. Dale al contenedor animado `position:absolute; inset:0`.
+- **`filter:url(#…)` aplana el 3D** del elemento → pon la perspectiva en el propio elemento (`transformPerspective`), no en el padre.
+- **"GSAP timeline is not registered"** → los timelines hijos y el del 3D se crean con `new gsap.core.Timeline()`, no con `gsap.timeline()`.
+- **Dos composiciones raíz** → la plantilla con `data-composition-id` no puede estar en la raíz del proyecto; muévela a `src/`.
+- **Al reacomodar un acto** mueve también: tiempos de la pantalla del teléfono, el timeline 3D y los `data-start` del audio. (Una vez unos whooshes quedaron 10 s antes.)
+- **Pantalla del teléfono ilegible** → dibuja la UI con zoom (`VW ≈ 330–360` pt) y deja el cristal aditivo con `opacity ≈ 0.12–0.18`.
+- **Texto claro sobre fondo claro** → si el escenario cambia, revisa el orden de capas (un wallpaper encima de otro tapa el `cut`).
+- **"text_occluded" en `check`** con un canvas 3D transparente encima → falso positivo; márcalo con `data-layout-allow-occlusion`.
+- **El render pide otra versión** → usa el script del proyecto (`npm run render -- …`), que fija la versión de HyperFrames.
+- **ffmpeg**: reutilizar una entrada en un filtergraph requiere `asplit`; algunos builds no traen `drawtext` (usa matplotlib/PIL para hojas con etiquetas); usa `LC_ALL=C` en scripts (locales con coma decimal rompen el parseo).
+- **ElevenLabs**: 403 por formato 192 kbps en el plan básico; 429 con más de 2 peticiones a la vez; los prompts de música con nombres de marca son rechazados.
+- **Contadores al hacer seek hacia atrás** no se reinician si usas `onUpdate` sobre un objeto: el render (hacia adelante) está bien, pero revisa los snapshots en orden.
+- **Rive sale en blanco en el render** → el runtime no pudo bajar su `.wasm` de un CDN. El kit trae Rive en `kit/vendor/rive/`; si moviste el kit, define `MKL.riveBase`.
+- **"Failed to construct 'URL': Invalid base URL"** → HyperFrames puede insertar los scripts en línea (sin `src`). `capas.js` ya cae a `./kit/`; si tu kit está en otra carpeta, usa `MKL.riveBase`.
+- **`MKL.rive` falla con "no existe en …"** → el nombre de la animación o state machine no está en el archivo; el error lista los que sí hay.
+- **La state machine de Rive cambia según el orden de los snapshots** → algo la mueve fuera del tiempo (clics, eventos de puntero, `play()`). Solo `inputs` con tiempos.
+- **Solo se mueve una capa (el 3D o Rive)** → algún código reemplazó `onUpdate` del timeline principal. Usa `MKL.onTime` y `bindTimeline`, que encadenan.
+- **`MKL.spring` lanza "necesita motion"** → falta `<script src="kit/vendor/motion.js">` antes de usarlo.
+- **"No module named numpy"** → ese `python3` no tiene numpy/Pillow (pasa con un Python de Homebrew nuevo, o al correr con `-I`/`-s`, que ocultan los paquetes del usuario). `preflight.py` dice qué Python usar.
+- **`npx` no existe aunque Node esté instalado** → Node vive en nvm y el agente usa una shell sin perfil. `preflight.py` imprime el `export PATH=…` exacto.
+- **El concepto se parece al del video anterior** → no leíste `~/.video-saas-premium/historial.md` antes de proponer.
+- **El zoom "a través" de un texto apunta mal** → mediste su posición después de que un tween ya movió algo, o con elementos que luego desaparecen (un "escribiendo…" que se colapsa). Mide con `getBoundingClientRect()` al principio, dentro de `document.fonts.ready`, con el layout en su estado final, y recién después crea los tweens. Registra `window.__timelines.main` al final de ese callback.
+- **Las letras de un logo SVG se amontonan** al animarlas → GSAP reemplaza el `transform` del `<g>` que ya tenía uno. Envuelve cada letra en un `<g>` sin transform y anima ese.
+- **Un elemento se ve desde el segundo 0** → un `fromTo` con `autoAlpha` > 0 en el "from" se aplica al construir. Usa `immediateRender: false`.
+- **Líneas verticales en un fondo repetido** (el patrón de WhatsApp, una textura) → el recorte de la captura toca un borde o una barra de scroll. Recorta más adentro y revisa los bordes del tile.
+- **Doble exposición turbia en un corte** → el fundido dura demasiado mientras la cámara se mueve. En un corte escondido en movimiento: 0.08–0.1 s.
+- **Se ven los bordes de una escena en un zoom** → una escena con fondo propio entró desde una escala menor que 1. Las escenas a pantalla completa entran desde ≥1.18× (`MKA.zoomThrough(..., { full: true })`).
+- **Una franja negra o un estilo raro en otra parte de la UI** → un selector genérico (`.hd`, `.card`) del chat pisó a la UI recreada. Acota los estilos (`.wa .hd`, `#chat .hd`).
+- **El confeti o un emoji se ve desde el segundo 0** → `fromTo` con opacidad > 0 en el "from" se aplica al construir. `immediateRender: false` (los helpers de `apple.js` ya lo hacen).
+- **El cursor no parpadea en el render** → una animación CSS (`@keyframes`) no se puede saltar en el tiempo. Usa `MKA.caret`.
+- **Al volver a la escena 3D se ve un cuadro viejo** (la cámara aún pegada a la pantalla) → fija la cámara y el estado medio segundo antes de mostrarla.
+- **`music` repite la intro de una pista larga** → su detector busca el groove en muestras cortas. Para pistas con intro y drop usa `music-fit`.
