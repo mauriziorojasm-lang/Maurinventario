@@ -1,5 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
+import { safeNext } from "@/lib/safe-redirect";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { error: string | null; email: string };
@@ -37,5 +38,5 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     await supabase.auth.signOut();
     return { error: "Tu usuario está desactivado. Habla con el administrador.", email };
   }
-  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/");
+  redirect(safeNext(next));
 }
