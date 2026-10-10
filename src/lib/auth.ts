@@ -32,6 +32,8 @@ export type CurrentUser = {
   isPlatformAdmin: boolean;
   responsibleId: string | null;
   responsibleName: string | null;
+  /** Espacios a los que pertenece (para cambiar de uno a otro). */
+  organizations: { id: string; name: string }[];
 };
 
 type OrgInfo = {
@@ -54,21 +56,24 @@ type OrgInfo = {
 /**
  * Usuario actual: perfil, organización activa (la decide la base de datos
  * según sus membresías, nunca el navegador), su rol en ella, el estado de
- * la suscripción y su ficha de responsable.
+ * la suscripción y su ficha de responsable. Todo en una sola consulta.
  */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const sub = data?.claims?.sub;
   if (!sub) return null;
-  const [{ data: profile, error }, org, resp, platform] = await Promise.all([
-    supabase.from("profiles").select("id, email, full_name, active").eq("id", sub).maybeSingle(),
-    supabase.rpc("current_org_info"),
-    supabase.rpc("current_responsible_id"),
-    supabase.rpc("is_platform_admin"),
-  ]);
+  const { data: ctx, error } = await supabase.rpc("session_context");
   // Si la base de datos falla, se muestra el error (no se echa al usuario)
-  if (error || org.error) throw new Error("No se ha podido cargar tu usuario. Revisa la conexión y vuelve a intentarlo.");
+  if (error) throw new Error("No se ha podido cargar tu usuario. Revisa la conexión y vuelve a intentarlo.");
+  const c = (ctx ?? {}) as {
+    profile: { id: string; email: string; full_name: string | null; active: boolean } | null;
+    org: OrgInfo | null;
+    responsible: { id: string; name: string } | null;
+    platform_admin: boolean | null;
+    orgs: { id: string; name: string }[] | null;
+  };
+  const profile = c.profile;
   // Sesión válida pero sin perfil (usuario borrado): se trata como desactivado
   if (!profile) {
     return {
@@ -86,15 +91,10 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
       isPlatformAdmin: false,
       responsibleId: null,
       responsibleName: null,
+      organizations: [],
     };
   }
-  const o = (org.data as OrgInfo | null) ?? null;
-  const responsibleId = (resp.data as string | null) ?? null;
-  let responsibleName: string | null = null;
-  if (responsibleId) {
-    const { data: r } = await supabase.from("responsibles").select("name").eq("id", responsibleId).maybeSingle();
-    responsibleName = r?.name ?? null;
-  }
+  const o = c.org ?? null;
   return {
     id: profile.id,
     email: profile.email,
@@ -116,9 +116,10 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
           hasCustomer: !!o.subscription.has_customer,
         }
       : null,
-    isPlatformAdmin: platform.data === true,
-    responsibleId,
-    responsibleName,
+    isPlatformAdmin: c.platform_admin === true,
+    responsibleId: c.responsible?.id ?? null,
+    responsibleName: c.responsible?.name ?? null,
+    organizations: c.orgs ?? [],
   };
 });
 

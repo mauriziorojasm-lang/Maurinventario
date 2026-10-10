@@ -3,7 +3,6 @@ import { AppearanceSync } from "@/components/appearance-sync";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { Shell } from "@/components/shell";
 import { SubscriptionBanner } from "@/components/subscription-banner";
-import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { loadBadges } from "@/lib/badges";
 import { APPEARANCE_COOKIE, appearanceCookieValue } from "@/lib/preferences";
@@ -12,10 +11,9 @@ import { loadPrefs } from "@/lib/user-prefs";
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireUser();
-  const supabase = await createClient();
-  const [badges, prefs, jar, orgs] = await Promise.all([loadBadges(), loadPrefs(), cookies(), supabase.rpc("my_organizations")]);
-  const myOrgs = ((orgs.data ?? []) as { id: string; name: string }[]).map((o) => ({ id: o.id, name: o.name }));
+  // Todo a la vez: usuario, contadores del menú y preferencias
+  const [user, badges, prefs, jar] = await Promise.all([requireUser(), loadBadges(), loadPrefs(), cookies()]);
+  const myOrgs = user.organizations;
   const a = prefs.appearance;
   // Los contadores del menú respetan los avisos activados en Ajustes → Avisos
   const nf = prefs.notifications;

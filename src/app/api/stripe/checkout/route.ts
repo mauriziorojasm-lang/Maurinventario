@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
         { idempotencyKey: `customer-${user.orgId}` },
       );
       customer = c.id;
-      await db.rpc("billing_set_customer", { p_org: user.orgId, p_customer: customer });
+      const { error: saveError } = await db.rpc("billing_set_customer", { p_org: user.orgId, p_customer: customer });
+      if (saveError) throw new Error("No se ha podido guardar el cliente de Stripe.");
     }
     // Lo que quede de prueba se respeta (Stripe exige al menos 48 h)
     const trialEnd = sub.trial_ends_at ? Math.floor(Date.parse(sub.trial_ends_at) / 1000) : 0;
