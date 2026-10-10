@@ -27,9 +27,16 @@ export function percent(v: number | string | null | undefined): string {
   return `${pct.format(Number(v))} %`;
 }
 
+const madridDay = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" });
+
+/**
+ * dd/mm/aaaa. Las fechas sin hora («2026-10-09») se muestran tal cual; los
+ * instantes (con hora) se pasan a la hora de Madrid, para que una venta de
+ * las 00:30 no aparezca en el día anterior.
+ */
 export function date(v: string | Date | null | undefined): string {
   if (!v) return "—";
-  const s = typeof v === "string" ? v : v.toISOString();
+  const s = typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : madridDay.format(typeof v === "string" ? new Date(v) : v);
   const [y, m, d] = s.slice(0, 10).split("-");
   return `${d}/${m}/${y}`;
 }

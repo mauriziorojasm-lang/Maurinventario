@@ -1,4 +1,5 @@
 import { SlidersHorizontal } from "lucide-react";
+import Form from "next/form";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { buttonClass } from "./ui";
@@ -43,9 +44,10 @@ export function FilterBar({
         </span>
         <span className="text-[12.5px] font-medium text-muted">{active ? "Cambiar" : "Mostrar"}</span>
       </label>
-      <form
-        method="get"
+      {/* Form de Next: cambia de página sin recargar (más rápido) */}
+      <Form
         action={basePath}
+        scroll={false}
         className="flex flex-wrap items-end gap-2.5 rounded-[var(--radius-md)] border border-line bg-surface p-3 shadow-[var(--shadow-card)] max-md:hidden max-md:rounded-t-none max-md:border-t-0 max-md:peer-checked:flex max-md:[&>div]:w-full max-md:[&_input:not([type=checkbox])]:w-full max-md:[&_select]:w-full"
       >
         {fields.map((f) => {
@@ -54,8 +56,8 @@ export function FilterBar({
             "h-11 rounded-[var(--radius-sm)] border border-line-strong bg-surface px-2.5 text-base focus:border-brand focus:outline-none md:h-9 md:text-[13.5px]";
           if (f.type === "checkbox") {
             return (
-              <label key={f.name} className="flex h-9 items-center gap-2 text-[13.5px] font-medium">
-                <input type="checkbox" name={f.name} value="true" defaultChecked={values[f.name] === "true"} className="h-4 w-4 accent-[var(--color-brand)]" />
+              <label key={f.name} className="flex h-11 items-center gap-2 text-[15px] font-medium md:h-9 md:text-[13.5px]">
+                <input type="checkbox" name={f.name} value="true" defaultChecked={values[f.name] === "true"} className="h-5 w-5 accent-[var(--color-brand)] md:h-4 md:w-4" />
                 {f.label}
               </label>
             );
@@ -96,7 +98,7 @@ export function FilterBar({
           )}
         </div>
         {extra && <div className="ml-auto flex gap-2 max-md:ml-0">{extra}</div>}
-      </form>
+      </Form>
     </div>
   );
 }
@@ -106,10 +108,10 @@ export function ExportLinks({ type, filters }: { type: string; filters: Record<s
   const q = new URLSearchParams({ ...filters, tipo: type });
   return (
     <>
-      <a target="_blank" rel="noopener" className={buttonClass("secondary", "sm", "h-9")} href={`/api/exportar?${q.toString()}&formato=xlsx`}>
+      <a target="_blank" rel="noopener" className={buttonClass("secondary", "sm", "h-11 md:h-9")} href={`/api/exportar?${q.toString()}&formato=xlsx`}>
         Exportar Excel
       </a>
-      <a target="_blank" rel="noopener" className={buttonClass("secondary", "sm", "h-9")} href={`/api/exportar?${q.toString()}&formato=csv`}>
+      <a target="_blank" rel="noopener" className={buttonClass("secondary", "sm", "h-11 md:h-9")} href={`/api/exportar?${q.toString()}&formato=csv`}>
         CSV
       </a>
     </>

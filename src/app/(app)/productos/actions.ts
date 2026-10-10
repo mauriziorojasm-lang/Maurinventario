@@ -23,10 +23,6 @@ export async function updateProduct(p: ProductInput & { id: string }): Promise<A
   return callRpc("update_product", { p }, ["/productos", "/inventario"], "Producto actualizado.");
 }
 
-export async function setProductPhoto(id: string, photo_path: string | null): Promise<ActionResult> {
-  return callRpc("update_product", { p: { id, photo_path } }, ["/productos"], "Foto actualizada.");
-}
-
 export async function saveVariant(v: { id?: string; product_id: string; name: string; sku?: string | null; normal_sale_price?: string | null }): Promise<ActionResult<string>> {
   return callRpc<string>("save_variant", { p: v }, ["/productos", "/inventario"], "Variante guardada.");
 }

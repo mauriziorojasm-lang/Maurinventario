@@ -21,14 +21,16 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const { data } = await supabase.auth.getClaims();
   const sub = data?.claims?.sub;
   if (!sub) return null;
-  const { data: profile } = await supabase.from("profiles").select("id, email, full_name, role, active").eq("id", sub).maybeSingle();
-  if (!profile) return null;
-  const { data: resp } = await supabase
-    .from("responsibles")
-    .select("id, name")
-    .eq("profile_id", sub)
-    .is("deleted_at", null)
-    .maybeSingle();
+  const [{ data: profile, error }, { data: resp }] = await Promise.all([
+    supabase.from("profiles").select("id, email, full_name, role, active").eq("id", sub).maybeSingle(),
+    supabase.from("responsibles").select("id, name").eq("profile_id", sub).is("deleted_at", null).maybeSingle(),
+  ]);
+  // Si la base de datos falla, se muestra el error (no se echa al usuario)
+  if (error) throw new Error("No se ha podido cargar tu usuario. Revisa la conexión y vuelve a intentarlo.");
+  // Sesión válida pero sin perfil (usuario borrado): se trata como desactivado
+  if (!profile) {
+    return { id: sub, email: "", fullName: null, role: "vendedor", active: false, responsibleId: null, responsibleName: null };
+  }
   return {
     id: profile.id,
     email: profile.email,
@@ -43,7 +45,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (!user.active) redirect("/login?error=inactivo");
+  // Hay que cerrar la sesión: con ella abierta, /login devolvería al inicio
+  if (!user.active) redirect("/auth/salir?motivo=inactivo");
   return user;
 }
 

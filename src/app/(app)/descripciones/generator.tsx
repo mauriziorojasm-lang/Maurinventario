@@ -11,7 +11,7 @@ import { ProductPicker } from "@/components/product-picker";
 import { Button, Field, Input, Notice, Select, Textarea, clsx } from "@/components/ui";
 import { Modal } from "@/components/ui-client";
 import { ProductThumb } from "@/app/(app)/productos/product-cards";
-import { money } from "@/lib/format";
+import { dateTime, money } from "@/lib/format";
 import { type SellableVariant, variantDisplay } from "@/lib/types";
 import { generateDescriptions, type GenerateRequest, type GeneratedItem } from "./actions";
 import { CONDITIONS, LENGTHS, MAX_PRODUCTS, PLATFORMS, TONES, type Length, type PlatformKey, type ProductDetails, type Tone } from "./options";
@@ -234,7 +234,7 @@ export function DescriptionGenerator({ configured }: { configured: boolean }) {
                   <button
                     type="button"
                     onClick={() => remove(s.key)}
-                    className="press flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-ink/6 hover:text-danger"
+                    className="press flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-ink/6 hover:text-danger"
                     aria-label={`Quitar ${s.variant.product_name}`}
                   >
                     <X size={18} strokeWidth={2.5} />
@@ -487,7 +487,7 @@ export function DescriptionGenerator({ configured }: { configured: boolean }) {
                     <button type="button" onClick={() => setShowHistory(h)} className="press flex w-full flex-col items-start gap-0.5 py-2.5 text-left">
                       <span className="text-sm font-semibold">{h.title}</span>
                       <span className="text-[12px] text-muted">
-                        {new Date(h.at).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })} · {h.platform} · {h.tone}
+                        {dateTime(h.at)} · {h.platform} · {h.tone}
                       </span>
                     </button>
                   </li>
@@ -550,7 +550,7 @@ export function DescriptionGenerator({ configured }: { configured: boolean }) {
         {showHistory && (
           <>
             <p className="mb-2 text-[12px] text-muted">
-              {new Date(showHistory.at).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })} · {showHistory.platform} · {showHistory.tone}
+              {dateTime(showHistory.at)} · {showHistory.platform} · {showHistory.tone}
             </p>
             <p className="whitespace-pre-wrap text-sm leading-relaxed">{showHistory.text}</p>
           </>

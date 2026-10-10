@@ -8,16 +8,11 @@ import {
   ArrowDownRight,
   ArrowLeftRight,
   ArrowUpRight,
-  Boxes,
-  ChevronRight,
-  CirclePlus,
   Minus,
   PackageMinus,
   PackagePlus,
   Receipt,
   RotateCcw,
-  ShoppingCart,
-  Tag,
   Undo2,
 } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +21,9 @@ import { MonthlyBars } from "@/components/charts/monthly-bars";
 import { CountUp } from "@/components/count-up";
 import { Notice, Panel, clsx } from "@/components/ui";
 import { MOVEMENT_TYPES, date, money, units } from "@/lib/format";
+import type { Badges } from "@/lib/badges";
 import { createClient } from "@/lib/supabase/server";
+import { HomeTasks, QuickActions } from "./home-tasks";
 import { variantDisplay } from "@/lib/types";
 
 type Totals = { revenue: number; cost: number; profit: number; orders: number; units: number };
@@ -207,7 +204,7 @@ function movementTitle(m: Movement): string {
 // ---------------------------------------------------------------------
 // Panel
 // ---------------------------------------------------------------------
-export async function BusinessDashboard({ months }: { months: number }) {
+export async function BusinessDashboard({ months, badges }: { months: number; badges: Badges }) {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("business_dashboard", { p_months: months });
   if (error || !data) {
@@ -304,60 +301,12 @@ export async function BusinessDashboard({ months }: { months: number }) {
         />
       </section>
 
-      {/* Avisos */}
-      {(b.pending_shipments > 0 || b.pending_reviews > 0) && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {b.pending_shipments > 0 && (
-            <Link
-              href="/envios"
-              className="press flex items-center gap-3 rounded-[var(--radius-md)] border border-brand/40 bg-brand-soft p-3.5 shadow-[var(--shadow-card)] hover:border-brand"
-            >
-              <span className="display num flex h-10 min-w-10 items-center justify-center rounded-[12px] bg-brand px-2 text-[22px] text-on-brand">
-                {b.pending_shipments}
-              </span>
-              <span className="flex-1 text-sm font-semibold">{b.pending_shipments === 1 ? "Paquete por enviar" : "Paquetes por enviar"}</span>
-              <ChevronRight size={20} className="text-muted" />
-            </Link>
-          )}
-          {b.pending_reviews > 0 && (
-            <Link
-              href="/revision"
-              className="press flex items-center gap-3 rounded-[var(--radius-md)] border border-line bg-surface p-3.5 shadow-[var(--shadow-card)] hover:border-ink/30"
-            >
-              <span className="display num flex h-10 min-w-10 items-center justify-center rounded-[12px] bg-tag px-2 text-[22px] text-tag-ink">
-                {b.pending_reviews}
-              </span>
-              <span className="flex-1 text-sm font-semibold">Pendientes de revisar</span>
-              <ChevronRight size={20} className="text-muted" />
-            </Link>
-          )}
-        </div>
-      )}
-
-      {/* E · Accesos rápidos */}
-      <nav aria-label="Accesos rápidos" className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        {[
-          { href: "/ventas/nueva", label: "Registrar venta", icon: CirclePlus, main: true },
-          { href: "/compras/nuevo", label: "Registrar compra", icon: ShoppingCart },
-          { href: "/inventario", label: "Inventario", icon: Boxes },
-          { href: "/productos", label: "Productos", icon: Tag },
-        ].map((q) => (
-          <Link
-            key={q.href}
-            href={q.href}
-            className={clsx(
-              "press flex items-center gap-2.5 rounded-[var(--radius-md)] border px-3.5 py-3 text-sm font-semibold shadow-[var(--shadow-card)]",
-              q.main ? "border-brand bg-brand text-on-brand hover:bg-brand-strong" : "border-line bg-surface hover:border-ink/30",
-            )}
-          >
-            <q.icon size={19} strokeWidth={2.25} className={q.main ? undefined : "text-brand"} />
-            {q.label}
-          </Link>
-        ))}
-      </nav>
+      {/* Tareas pendientes y accesos rápidos */}
+      <HomeTasks badges={badges} admin />
+      <QuickActions admin />
 
       {/* B · Evolución */}
-      <Panel title="Evolución del negocio" description={`${periodLabel}: ventas (naranja) y beneficio bruto (oscuro). Toca un mes para ver los importes.`}>
+      <Panel title="Evolución del negocio" description={`${periodLabel}: ventas (verde) y beneficio bruto (oscuro). Toca un mes para ver los importes.`}>
         {hasSales ? (
           <MonthlyBars data={b.series.map((s) => ({ ...s, revenue: n(s.revenue), profit: n(s.profit), orders: n(s.orders), units: n(s.units) }))} />
         ) : (

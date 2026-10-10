@@ -1,6 +1,6 @@
 "use client";
 import { addProductPhotos } from "@/app/(app)/productos/photo-actions";
-import { prepareImage } from "@/lib/image";
+import { THUMB_SIDE, prepareImage } from "@/lib/image";
 import { createClient } from "@/lib/supabase/client";
 
 export type UploadProgress = { done: number; total: number; failed: string[] };
@@ -32,9 +32,17 @@ export async function uploadProductPhotos(
     for (let item = queue.shift(); item; item = queue.shift()) {
       try {
         const img = await prepareImage(item.f);
-        const path = `${productId}/${newId()}.jpg`;
+        const name = `${newId()}.jpg`;
+        const path = `${productId}/${name}`;
         const { error } = await supabase.storage.from("product-photos").upload(path, img.blob, { contentType: "image/jpeg", cacheControl: "31536000" });
         if (error) throw new Error(error.message);
+        // Miniatura ligera para listas y cuadrículas (si falla, se usa la foto completa)
+        try {
+          const small = await prepareImage(img.blob, THUMB_SIDE);
+          await supabase.storage.from("product-photos").upload(`${productId}/thumb/${name}`, small.blob, { contentType: "image/jpeg", cacheControl: "31536000" });
+        } catch {
+          /* no es imprescindible */
+        }
         order.set(path, item.i);
         saved.push({ path, width: img.width, height: img.height });
       } catch (e) {
@@ -52,9 +60,19 @@ export async function uploadProductPhotos(
     const r = await addProductPhotos({ productId, photos: saved });
     if (!r.ok) {
       errors.push(r.error);
-      await supabase.storage.from("product-photos").remove(saved.map((s) => s.path));
+      await supabase.storage.from("product-photos").remove(saved.flatMap((s) => [s.path, thumbOf(s.path)]));
       return { saved: 0, errors };
     }
   }
   return { saved: saved.length, errors };
+}
+
+const thumbOf = (path: string) => path.replace(/\/([^/]+)$/, "/thumb/$1");
+
+/** Crea la miniatura de una foto antigua que no la tiene (solo administradores). */
+export async function createMissingThumb(url: string, path: string): Promise<void> {
+  const res = await fetch(url);
+  if (!res.ok) return;
+  const small = await prepareImage(await res.blob(), THUMB_SIDE);
+  await createClient().storage.from("product-photos").upload(thumbOf(path), small.blob, { contentType: "image/jpeg", cacheControl: "31536000", upsert: true });
 }

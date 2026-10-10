@@ -6,7 +6,8 @@ import { requireUser } from "@/lib/auth";
 import { filtersFrom, first, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
 import { money, units } from "@/lib/format";
 import { loadCatalogOptions } from "@/lib/options";
-import { signedPhotoUrls } from "@/lib/photos";
+import { must } from "@/lib/db";
+import { signPhotos } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { type SellableVariant, variantDisplay } from "@/lib/types";
 import { ProductCards, ProductThumb } from "./product-cards";
@@ -38,9 +39,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
 
   if (!isAdmin) {
     const q = first(sp.search) ?? "";
-    const { data } = await supabase.rpc("search_sellable_variants", { p_query: q || null, p_only_in_stock: first(sp.only_in_stock) === "true", p_limit: 200 });
+    const data = must(await supabase.rpc("search_sellable_variants", { p_query: q || null, p_only_in_stock: first(sp.only_in_stock) === "true", p_limit: 200 }), "los productos");
     const rows = (data ?? []) as SellableVariant[];
-    const sellerPhotos = await signedPhotoUrls(rows.map((r) => r.photo_path));
+    const sellerPhotos = await signPhotos(rows.map((r) => r.photo_path), { thumbs: true });
     return (
       <>
         <PageHeader title="Productos" description="Stock disponible y precio normal de cada producto." />
@@ -63,7 +64,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             price: v.normal_sale_price,
           }))}
         />
-        <Panel padded={false} className={rows.length ? "max-md:hidden" : undefined}>
+        <Panel padded={false} className={rows.length ? "max-lg:hidden" : undefined}>
           {rows.length === 0 ? (
             <Empty title="No hay productos con esa búsqueda" />
           ) : (
@@ -107,16 +108,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const filters = filtersFrom(sp);
   const missing = first(sp.missing) === "true";
   const { page, from, to, size } = pageFrom(sp, 50);
-  const opts = await loadCatalogOptions();
   let q = supabase.from("v_product_inventory").select("*", { count: "exact" });
   if (filters.search) q = q.or(`product_name.ilike.%${filters.search.replace(/[%,()]/g, " ")}%,sku.ilike.%${filters.search.replace(/[%,()]/g, " ")}%`);
   if (filters.category_id) q = q.eq("category_id", filters.category_id);
   if (filters.brand_id) q = q.eq("brand_id", filters.brand_id);
   if (filters.only_in_stock === "true") q = q.gt("stock", 0);
   if (missing) q = q.eq("has_missing_data", true);
-  const { data, count, error } = await q.order("stock", { ascending: false }).order("product_name").range(from, to);
+  const [{ data, count, error }, opts] = await Promise.all([q.order("stock", { ascending: false }).order("product_name").range(from, to), loadCatalogOptions()]);
   const rows = (data ?? []) as ProductRow[];
-  const photos = await signedPhotoUrls(rows.map((r) => r.photo_path));
+  const photos = await signPhotos(rows.map((r) => r.photo_path), { thumbs: true });
   const hrefFor = (p: number) => `/productos${toQuery({ ...filters, missing: missing ? "true" : undefined, page: p })}`;
 
   return (
@@ -161,11 +161,11 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           warn: r.has_missing_data ? "Datos pendientes" : null,
         }))}
       />
-      <Panel padded={false} className={rows.length ? "max-md:mt-3 max-md:border-0 max-md:bg-transparent max-md:shadow-none" : undefined}>
+      <Panel padded={false} className={rows.length ? "max-lg:mt-3 max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none" : undefined}>
         {rows.length === 0 ? (
           <Empty title="No hay productos con estos filtros" action={<LinkButton href="/productos/nuevo">Crear producto</LinkButton>} />
         ) : (
-          <Table className="max-md:hidden">
+          <Table className="max-lg:hidden">
             <thead>
               <tr>
                 <Th>Producto</Th>

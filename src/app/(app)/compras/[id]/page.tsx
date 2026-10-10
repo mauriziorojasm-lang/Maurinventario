@@ -9,6 +9,7 @@ import { loadSuppliers } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import { variantDisplay } from "@/lib/types";
 import { CancelPOButton, CostsButton, HeaderEditButton, ReceiveButton } from "./po-actions";
+import { must } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Pedido de compra" };
 
@@ -16,7 +17,7 @@ export default async function PODetail({ params }: PageProps<"/compras/[id]">) {
   await requireAdmin();
   const { id } = await params;
   const supabase = await createClient();
-  const { data: po } = await supabase.from("v_purchase_orders").select("*").eq("id", id).maybeSingle();
+  const po = must(await supabase.from("v_purchase_orders").select("*").eq("id", id).maybeSingle(), "el pedido");
   if (!po) notFound();
   const [{ data: lines }, { data: costs }, { data: raw }, suppliers] = await Promise.all([
     supabase.from("v_purchase_lines").select("*").eq("purchase_order_id", id).order("line_number"),

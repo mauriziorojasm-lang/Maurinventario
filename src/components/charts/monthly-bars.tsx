@@ -5,7 +5,7 @@ import { money, monthLabel, units } from "@/lib/format";
 type Point = { month: string; revenue: number; profit: number; orders: number; units: number };
 
 /**
- * Ventas por mes: barra naranja gruesa = facturación; dentro, barra negra
+ * Ventas por mes: barra verde gruesa = facturación; dentro, barra negra
  * más estrecha = beneficio. Cifra solo en el último mes y en el máximo, y el
  * detalle de cada mes al pasar el ratón o tocar.
  */

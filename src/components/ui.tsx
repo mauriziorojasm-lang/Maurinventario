@@ -24,7 +24,7 @@ const buttonVariants: Record<Variant, string> = {
   danger: "bg-surface text-danger border border-danger/40 hover:bg-danger-soft",
 };
 const buttonSizes: Record<Size, string> = {
-  sm: "h-9 px-3 text-[13px] sm:h-8 sm:px-2.5",
+  sm: "h-11 px-3.5 text-[14px] sm:h-8 sm:px-2.5 sm:text-[13px]",
   md: "h-11 px-4 text-sm sm:h-10 sm:px-3.5",
 };
 

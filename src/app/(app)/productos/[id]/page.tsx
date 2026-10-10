@@ -8,6 +8,7 @@ import { EXIT_REASONS, MOVEMENT_TYPES, date, money, units } from "@/lib/format";
 import { loadCatalogOptions } from "@/lib/options";
 import { PhotoGallery } from "@/components/photo-gallery";
 import { loadProductPhotos } from "@/lib/product-photos";
+import { must } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 import type { SellableVariant } from "@/lib/types";
 import { DeleteProductButton, EditProductButton, VariantEditor } from "./product-editors";
@@ -35,11 +36,27 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
   const isAdmin = user.role === "admin";
   const { id } = await params;
   const supabase = await createClient();
-  const { data: product } = await supabase
-    .from("products")
-    .select("id, name, sku, description, photo_path, normal_sale_price, legacy_code, notes, source_ref, deleted_at, brands(name), categories(name)")
-    .eq("id", id)
-    .maybeSingle();
+  // Todo a la vez: ficha, fotos y, según el rol, variantes, lotes y movimientos
+  const [productRes, photos, sp, sellerVariants, adminData] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, name, sku, description, photo_path, normal_sale_price, legacy_code, notes, source_ref, deleted_at, brands(name), categories(name)")
+      .eq("id", id)
+      .maybeSingle(),
+    loadProductPhotos(id),
+    searchParams,
+    isAdmin ? null : supabase.rpc("search_sellable_variants", { p_query: null, p_only_in_stock: false, p_limit: 200, p_product_id: id }),
+    isAdmin
+      ? Promise.all([
+          supabase.from("v_variant_inventory").select("*").eq("product_id", id).order("is_default", { ascending: false }).order("variant_name"),
+          supabase.from("v_lots").select("*").eq("product_id", id).order("received_at", { ascending: false }),
+          supabase.from("v_movements").select("*").eq("product_id", id).order("occurred_at", { ascending: false }).order("id", { ascending: false }).limit(200),
+          loadCatalogOptions(),
+          supabase.from("v_product_inventory").select("avg_sale_price, weighted_avg_cost, potential_is_estimated").eq("product_id", id).maybeSingle(),
+        ])
+      : null,
+  ]);
+  const product = must(productRes, "el producto");
   if (!product || product.deleted_at) notFound();
   const p = product as unknown as {
     id: string;
@@ -54,7 +71,6 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
     brands: { name: string } | null;
     categories: { name: string } | null;
   };
-  const [photos, sp] = await Promise.all([loadProductPhotos(p.id), searchParams]);
 
   const info = (
     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
@@ -84,9 +100,8 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
     </>
   );
 
-  if (!isAdmin) {
-    const { data } = await supabase.rpc("search_sellable_variants", { p_query: null, p_only_in_stock: false, p_limit: 200, p_product_id: id });
-    const vs = (data ?? []) as SellableVariant[];
+  if (!isAdmin || !adminData) {
+    const vs = (sellerVariants ? must(sellerVariants, "las variantes") ?? [] : []) as SellableVariant[];
     return (
       <>
         <PageHeader title={p.name} back={{ href: "/productos", label: "Productos" }} />
@@ -127,12 +142,11 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
     );
   }
 
-  const [{ data: variants }, { data: lots }, { data: movements }, opts] = await Promise.all([
-    supabase.from("v_variant_inventory").select("*").eq("product_id", id).order("is_default", { ascending: false }).order("variant_name"),
-    supabase.from("v_lots").select("*").eq("product_id", id).order("received_at", { ascending: false }),
-    supabase.from("v_movements").select("*").eq("product_id", id).order("occurred_at", { ascending: false }).order("id", { ascending: false }).limit(200),
-    loadCatalogOptions(),
-  ]);
+  const [variantsRes, lotsRes, movementsRes, opts, invRes] = adminData;
+  const variants = must(variantsRes, "las variantes");
+  const lots = must(lotsRes, "los lotes");
+  const movements = must(movementsRes, "los movimientos");
+  const inv = invRes.data;
   const vs = (variants ?? []) as VariantInv[];
   const totals = vs.reduce(
     (a, v) => ({
@@ -144,7 +158,6 @@ export default async function ProductDetail({ params, searchParams }: PageProps<
     }),
     { stock: 0, value: 0, sold: 0, potential: 0, profit: 0 },
   );
-  const { data: inv } = await supabase.from("v_product_inventory").select("avg_sale_price, weighted_avg_cost, potential_is_estimated").eq("product_id", id).maybeSingle();
   const single = vs.length === 1;
 
   return (

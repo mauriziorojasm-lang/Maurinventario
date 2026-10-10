@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { friendlyError, type ActionResult } from "@/lib/errors";
+import { thumbPath } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -67,7 +68,7 @@ export async function deleteProductPhoto(photoId: string): Promise<ActionResult>
   if (!ph) return { ok: true };
   const { error } = await supabase.from("product_photos").delete().eq("id", photoId);
   if (error) return { ok: false, error: friendlyError(error) };
-  await supabase.storage.from("product-photos").remove([ph.path]);
+  await supabase.storage.from("product-photos").remove([ph.path, thumbPath(ph.path)]);
   await syncCover(ph.product_id);
   refresh(ph.product_id);
   return { ok: true, message: "Foto borrada." };
@@ -79,11 +80,9 @@ export async function reorderProductPhotos(productId: string, ids: string[]): Pr
   const v = z.object({ productId: z.uuid(), ids: z.array(z.uuid()).min(1).max(60) }).safeParse({ productId, ids });
   if (!v.success) return { ok: false, error: "Orden no válido." };
   const supabase = await createClient();
-  for (let i = 0; i < ids.length; i++) {
-    const { error } = await supabase.from("product_photos").update({ position: i }).eq("id", ids[i]).eq("product_id", productId);
-    if (error) return { ok: false, error: friendlyError(error) };
-  }
-  await syncCover(productId);
+  // Todo el orden de una vez (y la portada) en la base de datos
+  const { error } = await supabase.rpc("reorder_product_photos", { p_product_id: productId, p_ids: ids });
+  if (error) return { ok: false, error: friendlyError(error) };
   refresh(productId);
   return { ok: true };
 }

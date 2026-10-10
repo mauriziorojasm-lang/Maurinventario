@@ -6,6 +6,7 @@ import { first, type SearchParams } from "@/lib/filters";
 import { createClient } from "@/lib/supabase/server";
 import { variantDisplay } from "@/lib/types";
 import { ReturnForm } from "./return-form";
+import { must } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Nueva devolución" };
 
@@ -25,7 +26,7 @@ export default async function NewReturn({ searchParams }: { searchParams: Promis
         <PageHeader title="Nueva devolución" back={{ href: "/devoluciones", label: "Devoluciones" }} />
         <Panel className="max-w-lg" title="¿De qué venta?">
           <form method="get" className="flex gap-2">
-            <input name="numero" placeholder="Nº de venta, por ejemplo V-000072" defaultValue={number} className="h-10 flex-1 rounded-[var(--radius-sm)] border border-line-strong px-3 text-sm" />
+            <input name="numero" placeholder="Nº de venta, por ejemplo V-000072" defaultValue={number} className="h-11 flex-1 rounded-[var(--radius-sm)] border border-line-strong bg-surface px-3 text-base sm:h-10 sm:text-sm" />
             <button className="h-10 rounded-[var(--radius-sm)] bg-brand px-4 text-sm font-semibold text-on-brand">Buscar</button>
           </form>
           {number && <Notice tone="warn" className="mt-3">No hay ninguna venta activa con el número {number}.</Notice>}
@@ -34,8 +35,12 @@ export default async function NewReturn({ searchParams }: { searchParams: Promis
       </>
     );
   }
-  const { data: sale } = await supabase.from("sales").select("id, sale_number, status, platforms(name)").eq("id", saleId).maybeSingle();
-  const { data: lines } = await supabase.from("v_sale_lines").select("sale_item_id, product_name, variant_name, quantity, returned_qty, unit_price, refunded_amount").eq("sale_id", saleId).order("line_number");
+  const [saleRes, linesRes] = await Promise.all([
+    supabase.from("sales").select("id, sale_number, status, platforms(name)").eq("id", saleId).maybeSingle(),
+    supabase.from("v_sale_lines").select("sale_item_id, product_name, variant_name, quantity, returned_qty, unit_price, refunded_amount").eq("sale_id", saleId).order("line_number"),
+  ]);
+  const sale = must(saleRes, "la venta");
+  const lines = must(linesRes, "las líneas de la venta");
   if (!sale || sale.status !== "activa" || !lines?.length) {
     return (
       <>

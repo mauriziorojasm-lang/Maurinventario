@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { LabelButton } from "@/components/label-viewer";
 import { Badge, LinkButton, Notice, PageHeader } from "@/components/ui";
 import { date } from "@/lib/format";
-import { signLabels } from "@/lib/labels";
+import { signLabels } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { BulkShippingBar, SaleCheckbox, SelectAllCheckbox, ShippingSelection } from "../../ventas/bulk-shipping";
 import { NO_CARRIER, loadPendingShipments } from "../data";

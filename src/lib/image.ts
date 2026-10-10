@@ -10,6 +10,8 @@
  */
 
 export const MAX_SIDE = 2000;
+/** Miniaturas para listas: ~20 KB. */
+export const THUMB_SIDE = 320;
 const QUALITY = 0.86;
 
 export type PreparedImage = { blob: Blob; width: number; height: number };
@@ -64,7 +66,7 @@ export async function prepareImage(file: Blob, maxSide = MAX_SIDE): Promise<Prep
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(d.source, 0, 0, w, h);
   d.close();
-  const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", QUALITY));
+  const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", maxSide <= THUMB_SIDE ? 0.78 : QUALITY));
   canvas.width = canvas.height = 0; // libera memoria en el iPhone
   if (!blob) throw new Error("No se ha podido preparar la foto.");
   return { blob, width: w, height: h };

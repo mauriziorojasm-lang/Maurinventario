@@ -27,7 +27,6 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const filters = filtersFrom(sp);
   const { page, from, to, size } = pageFrom(sp, 50);
   const supabase = await createClient();
-  const opts = await loadSaleOptions();
   const hrefFor = (p: number) => `/ventas${toQuery({ ...filters, page: p })}`;
 
   if (user.role !== "admin") {
@@ -99,11 +98,11 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
               })),
             }))}
           />
-          <Panel padded={false} className={rows.length ? "max-md:mt-3 max-md:border-0 max-md:bg-transparent max-md:shadow-none" : undefined}>
+          <Panel padded={false} className={rows.length ? "max-lg:mt-3 max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none" : undefined}>
             {rows.length === 0 ? (
               <Empty title="Aún no hay ventas con estos filtros" action={<LinkButton href="/ventas/nueva">Registrar una venta</LinkButton>} />
             ) : (
-              <Table className="max-md:hidden">
+              <Table className="max-lg:hidden">
                 <thead>
                   <tr>
                     <Th className="w-8">
@@ -158,9 +157,10 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     );
   }
 
-  const [{ data, count, error }, { data: summary }] = await Promise.all([
+  const [{ data, count, error }, { data: summary }, opts] = await Promise.all([
     supabase.rpc("report_sale_lines", { p_filters: filters }, { count: "exact" }).range(from, to),
     supabase.rpc("report_sales_summary", { p_filters: filters }),
+    loadSaleOptions(),
   ]);
   const rows = (data ?? []) as SaleLine[];
   const sum = summary as {
@@ -247,11 +247,11 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
       <ShippingSelection>
         <BulkShippingBar />
         <SaleCards sales={groupLines(rows)} />
-        <Panel padded={false} className={rows.length ? "max-md:mt-3 max-md:border-0 max-md:bg-transparent max-md:shadow-none" : undefined}>
+        <Panel padded={false} className={rows.length ? "max-lg:mt-3 max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none" : undefined}>
           {rows.length === 0 ? (
             <Empty title="No hay ventas con estos filtros" action={<LinkButton href="/ventas/nueva">Registrar una venta</LinkButton>} />
           ) : (
-            <Table className="max-md:hidden">
+            <Table className="max-lg:hidden">
               <thead>
                 <tr>
                   <Th className="w-8">

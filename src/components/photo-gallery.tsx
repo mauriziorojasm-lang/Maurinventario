@@ -8,10 +8,19 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, GalleryHorizontal, ImagePlus, LayoutGrid, Star, Trash2, X } from "lucide-react";
 import { deleteProductPhoto, reorderProductPhotos } from "@/app/(app)/productos/photo-actions";
-import { uploadProductPhotos, type UploadProgress } from "./photo-upload";
+import { createMissingThumb, uploadProductPhotos, type UploadProgress } from "./photo-upload";
 import { Notice, clsx } from "./ui";
 
-export type GalleryPhotoView = { id: string; url: string; width: number | null; height: number | null; usedOn: ("vinted" | "wallapop")[] };
+export type GalleryPhotoView = {
+  id: string;
+  url: string;
+  thumb: string;
+  path: string;
+  needsThumb: boolean;
+  width: number | null;
+  height: number | null;
+  usedOn: ("vinted" | "wallapop")[];
+};
 
 type View = "carrusel" | "cuadricula";
 const VIEW_KEY = "mi:galeria:vista";
@@ -84,6 +93,23 @@ export function PhotoGallery({
       /* sin almacenamiento */
     }
   }, []);
+  // Fotos antiguas sin miniatura: el administrador se la crea al verlas (una vez)
+  useEffect(() => {
+    if (!editable) return;
+    const missing = photos.filter((p) => p.needsThumb);
+    if (!missing.length) return;
+    let cancelled = false;
+    (async () => {
+      for (const p of missing) {
+        if (cancelled) return;
+        await createMissingThumb(p.url, p.path).catch(() => {});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editable, photos]);
+
   function changeView(v: View) {
     setView(v);
     try {
@@ -117,8 +143,10 @@ export function PhotoGallery({
     setOrder(next);
     startTransition(async () => {
       const r = await reorderProductPhotos(productId, next.map((p) => p.id));
-      if (!r.ok) setErrors([r.error]);
-      router.refresh();
+      if (!r.ok) {
+        setErrors([r.error]);
+        router.refresh();
+      }
     });
   }
 
@@ -126,8 +154,10 @@ export function PhotoGallery({
     setOrder((o) => o.filter((p) => p.id !== id));
     startTransition(async () => {
       const r = await deleteProductPhoto(id);
-      if (!r.ok) setErrors([r.error]);
-      router.refresh();
+      if (!r.ok) {
+        setErrors([r.error]);
+        router.refresh();
+      }
     });
   }
 
@@ -319,7 +349,7 @@ function Carousel({ photos, name, onOpen, showUsed }: { photos: GalleryPhotoView
                 i === index ? "border-brand opacity-100" : "border-transparent opacity-60 hover:opacity-100",
               )}
             >
-              <FadeImg src={p.url} alt="" className="h-full w-full object-cover" />
+              <FadeImg src={p.thumb} alt="" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>
@@ -353,7 +383,7 @@ function Grid({
       {photos.map((p, i) => (
         <li key={p.id} className="group relative aspect-square animate-fade overflow-hidden rounded-[10px] border border-line bg-surface-2">
           <button type="button" onClick={() => onOpen(i)} className="block h-full w-full" aria-label={`Ver foto ${i + 1} en grande`}>
-            <FadeImg src={p.url} alt={`${name} · foto ${i + 1}`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+            <FadeImg src={p.thumb} alt={`${name} · foto ${i + 1}`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
           </button>
           {showUsed && <UsedBadges on={p.usedOn} />}
           {i === 0 && (
@@ -393,7 +423,7 @@ function TileButton({ label, onClick, disabled, children }: { label: string; onC
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className="press flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-white/20 disabled:opacity-30"
+      className="press relative flex h-8 w-8 items-center justify-center rounded-full text-white after:absolute after:-inset-1.5 after:content-[''] hover:bg-white/20 disabled:opacity-30"
     >
       {children}
     </button>
@@ -432,6 +462,14 @@ function Lightbox({ photos, start, name, onClose }: { photos: GalleryPhotoView[]
   const ref = useRef<HTMLDialogElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(start);
+  const [closing, setClosing] = useState(false);
+  // Se cierra con un fundido corto (sin movimiento si el sistema lo pide)
+  function close() {
+    if (closing) return;
+    setClosing(true);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setTimeout(onClose, reduce ? 0 : 180);
+  }
 
   useEffect(() => {
     const d = ref.current;
@@ -453,7 +491,7 @@ function Lightbox({ photos, start, name, onClose }: { photos: GalleryPhotoView[]
       onClose={onClose}
       onCancel={(e) => {
         e.preventDefault();
-        onClose();
+        close();
       }}
       onKeyDown={(e) => {
         if (e.key === "ArrowRight") go(index + 1);
@@ -462,7 +500,7 @@ function Lightbox({ photos, start, name, onClose }: { photos: GalleryPhotoView[]
       className="mi-lightbox m-0 h-[100dvh] max-h-none w-screen max-w-none bg-black p-0 text-white"
       aria-label={`Fotos de ${name}`}
     >
-      <div className="relative flex h-full w-full flex-col animate-fade">
+      <div className={clsx("relative flex h-full w-full flex-col transition-[opacity,transform] duration-200 ease-out", closing ? "scale-[0.98] opacity-0" : "animate-fade")}>
         <div
           ref={track}
           onScroll={() => {
@@ -472,7 +510,7 @@ function Lightbox({ photos, start, name, onClose }: { photos: GalleryPhotoView[]
           className="no-scrollbar flex h-full snap-x snap-mandatory overflow-x-auto overscroll-contain"
         >
           {photos.map((p, i) => (
-            <div key={p.id} className="flex h-full w-full shrink-0 snap-center snap-always items-center justify-center p-2 sm:p-8" onClick={(e) => e.target === e.currentTarget && onClose()}>
+            <div key={p.id} className="flex h-full w-full shrink-0 snap-center snap-always items-center justify-center p-2 sm:p-8" onClick={(e) => e.target === e.currentTarget && close()}>
               <FadeImg src={p.url} alt={`${name} · foto ${i + 1}`} eager={Math.abs(i - start) < 2} className="max-h-full max-w-full select-none object-contain" />
             </div>
           ))}
@@ -483,9 +521,9 @@ function Lightbox({ photos, start, name, onClose }: { photos: GalleryPhotoView[]
           </span>
           <button
             type="button"
-            onClick={onClose}
+            onClick={close}
             aria-label="Cerrar"
-            className="press pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur hover:bg-white/20"
+            className="press pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur hover:bg-white/20"
           >
             <X size={22} />
           </button>

@@ -24,11 +24,18 @@ export function Modal({
   wide?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // El contenido sigue visible mientras la ventana se cierra con su animación
+  const [mounted, setMounted] = useState(open);
+  if (open && !mounted) setMounted(true);
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
     if (open && !d.open) d.showModal();
-    if (!open && d.open) d.close();
+    if (!open && d.open) {
+      d.close();
+      const t = setTimeout(() => setMounted(false), 300);
+      return () => clearTimeout(t);
+    }
   }, [open]);
   return (
     <dialog
@@ -43,7 +50,7 @@ export function Modal({
         wide ? "max-w-3xl" : "max-w-lg",
       )}
     >
-      {open && (
+      {mounted && (
         <div className="flex max-h-[88dvh] flex-col">
           <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-line-strong sm:hidden" aria-hidden />
           <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-3.5">
@@ -51,7 +58,7 @@ export function Modal({
             <button
               type="button"
               onClick={onClose}
-              className="press -mr-2 flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none text-muted hover:bg-ink/6 hover:text-ink"
+              className="press -mr-2 flex h-11 w-11 items-center justify-center rounded-full text-xl leading-none text-muted hover:bg-ink/6 hover:text-ink"
               aria-label="Cerrar"
             >
               ×
@@ -84,8 +91,11 @@ export function useServerAction<A extends unknown[], T>(action: (...args: A) => 
           const res = await action(...args);
           if (!res.ok) setError(res.error);
           else {
-            if (res.message) setMessage(res.message);
-            router.refresh();
+            // El aviso aparece a la vez que los datos nuevos (no antes)
+            startTransition(() => {
+              if (res.message) setMessage(res.message);
+              router.refresh();
+            });
           }
           resolve(res);
         } catch (e) {

@@ -28,7 +28,7 @@ function ShipBadge({ s }: { s: CardSale["shipping"] }) {
 export function SaleCards({ sales }: { sales: CardSale[] }) {
   const selectable = sales.filter((s) => s.shipping).map((s) => ({ id: s.id, status: s.shipping }));
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       {selectable.length > 0 && (
         <label className="mb-2 flex items-center gap-2.5 px-1 text-[13px] text-muted">
           <SelectAllCheckbox sales={selectable} />

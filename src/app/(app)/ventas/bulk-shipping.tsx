@@ -101,7 +101,7 @@ export function BulkShippingBar() {
     ) : null;
 
   return (
-    <div className="sticky top-14 z-10 mb-3 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-brand/60 bg-surface px-4 py-2.5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)] lg:top-2">
+    <div className="sticky top-14 z-10 mb-3 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-brand/60 bg-surface px-4 py-2.5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.5)] md:top-2">
       <span className="text-[14px] font-semibold">
         {n} {n === 1 ? "venta seleccionada" : "ventas seleccionadas"}
       </span>

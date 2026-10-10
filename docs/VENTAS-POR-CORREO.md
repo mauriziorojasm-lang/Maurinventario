@@ -103,14 +103,14 @@ Usa la cuenta **maurinventario@gmail.com** en todo este paso.
 
 ## 4. El día a día
 
-- **Ventas detectadas** (menú, con número naranja): las ventas que han llegado al correo.
+- **Ventas detectadas** (menú, con número verde): las ventas que han llegado al correo.
   - **Sí, es una venta**: la registra (si el producto está reconocido y no hay dudas, de un toque). Con «Confirmar las N sin dudas» confirmas varias a la vez.
   - **Revisar y confirmar / Cambiar producto o precio**: eliges otro producto o corriges el precio antes de registrarla.
   - **Ya estaba apuntada**: eliges la venta que ya tenías; no se crea otra ni se toca el stock.
   - **No es una venta**: la descarta.
   - ¿Te equivocaste con «Ya estaba apuntada» o «No es una venta»? En **Ventas por correo → Historial**, «Volver a detectadas».
 
-- **Ventas por correo → Revisar**: lo que necesita que decidas. El número naranja del menú te avisa.
+- **Ventas por correo → Revisar**: lo que necesita que decidas. El número del menú te avisa.
   - **Elegir producto**: el producto no se reconoció. Toca uno de los sugeridos o búscalo. Deja «Recordar» marcado.
   - **Elegir la venta**: hay varias ventas posibles para una etiqueta. Elige la buena (número · fecha · comprador).
   - **Registrar a mano**: los importes del correo de Wallapop no cuadran. Regístrala tú y luego pulsa **Descartar** en el correo.

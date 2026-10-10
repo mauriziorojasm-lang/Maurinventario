@@ -7,6 +7,7 @@ import { filtersFrom, type SearchParams } from "@/lib/filters";
 import { date, money, units } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { variantDisplay } from "@/lib/types";
+import { must } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Devoluciones" };
 
@@ -17,7 +18,7 @@ export default async function ReturnsPage({ searchParams }: { searchParams: Prom
   let q = supabase.from("v_returns").select("*");
   if (filters.from) q = q.gte("return_date", filters.from);
   if (filters.to) q = q.lte("return_date", filters.to);
-  const { data } = await q.order("return_date", { ascending: false }).limit(500);
+  const data = must(await q.order("return_date", { ascending: false }).limit(500), "las devoluciones");
   const rows = data ?? [];
   const refunded = rows.reduce((a, r) => a + Number(r.refund_amount), 0);
   const lost = rows.reduce((a, r) => a + Number(r.lost_cost), 0);

@@ -2,7 +2,7 @@
 
 /*
  * MaurInventario · sistema visual «tienda de calle»
- * Negro + naranja intenso. Claro u oscuro según el dispositivo.
+ * Negro + verde Vinted. Claro u oscuro según el dispositivo.
  * Títulos y cifras en letra estrecha (Barlow Condensed), texto en Public Sans.
  * La pegatina amarilla de los lotes se mantiene como sello de la casa.
  */
@@ -19,19 +19,21 @@
   --line: #e8e3dc;
   --line-strong: #d4cdc4;
 
-  --brand: #ff5a1f;
-  --brand-strong: #ec4a10;
-  --brand-ink: #c2410c;
-  --brand-soft: #ffeadf;
-  --on-brand: #160b06;
+  --brand: #007782;
+  --brand-strong: #00626b;
+  --brand-ink: #005a62;
+  --brand-soft: #dff1f2;
+  --on-brand: #ffffff;
+  /* Verde claro para textos e iconos sobre las barras negras (contraste ≥ 7:1) */
+  --brand-bright: #2bb3bd;
 
   --chrome: #121110;
   --chrome-2: #1f1c1a;
   --chrome-ink: #f4f1ec;
 
-  --good: #15803d;
-  --good-soft: #e3f4ea;
-  --good-ink: #0f5c2e;
+  --good: #2f7d32;
+  --good-soft: #e6f3e4;
+  --good-ink: #1f5a22;
   --on-good: #ffffff;
   --danger: #c62a1c;
   --danger-soft: #fce8e6;
@@ -61,19 +63,20 @@
     --line: #2d2926;
     --line-strong: #403a36;
 
-    --brand: #ff6a33;
-    --brand-strong: #ff7f50;
-    --brand-ink: #ff8f61;
-    --brand-soft: #3a1d10;
-    --on-brand: #160b06;
+    --brand: #2bb3bd;
+    --brand-strong: #4cc4cd;
+    --brand-ink: #7dd6dc;
+    --brand-soft: #0d2a2d;
+    --on-brand: #04191b;
+    --brand-bright: #2bb3bd;
 
     --chrome: #0b0a09;
     --chrome-2: #1a1816;
     --chrome-ink: #f4f1ec;
 
-    --good: #3cc47f;
-    --good-soft: #13301f;
-    --good-ink: #74e0a6;
+    --good: #6cc070;
+    --good-soft: #15291a;
+    --good-ink: #9ad89c;
     --on-good: #07140c;
     --danger: #ff6b5e;
     --danger-soft: #3a1714;
@@ -110,6 +113,7 @@
   --color-brand-ink: var(--brand-ink);
   --color-brand-soft: var(--brand-soft);
   --color-on-brand: var(--on-brand);
+  --color-brand-bright: var(--brand-bright);
 
   --color-chrome: var(--chrome);
   --color-chrome-2: var(--chrome-2);
@@ -281,13 +285,62 @@ main .grid > * {
   background: var(--tag-adjust);
 }
 
-/* Diálogo: ventana centrada en pantallas grandes, hoja desde abajo en el móvil */
-dialog.mi-dialog[open] {
-  animation: rise 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+/* Diálogo: ventana centrada en pantallas grandes, hoja desde abajo en el
+   móvil. Entra y sale con una transición suave (también al cerrar). */
+dialog.mi-dialog,
+dialog.mi-sheet {
+  transition:
+    opacity 0.22s ease,
+    transform 0.3s cubic-bezier(0.2, 0.9, 0.25, 1),
+    overlay 0.3s allow-discrete,
+    display 0.3s allow-discrete;
 }
-dialog.mi-dialog::backdrop {
+dialog.mi-dialog {
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+}
+dialog.mi-dialog[open] {
+  opacity: 1;
+  transform: none;
+}
+@starting-style {
+  dialog.mi-dialog[open] {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+dialog.mi-dialog::backdrop,
+dialog.mi-sheet::backdrop {
+  background: rgb(0 0 0 / 0);
+  transition:
+    background-color 0.25s ease,
+    overlay 0.3s allow-discrete,
+    display 0.3s allow-discrete;
+}
+dialog.mi-dialog[open]::backdrop,
+dialog.mi-sheet[open]::backdrop {
   background: rgb(0 0 0 / 0.55);
-  animation: fade 0.2s ease-out both;
+}
+@starting-style {
+  dialog.mi-dialog[open]::backdrop,
+  dialog.mi-sheet[open]::backdrop {
+    background: rgb(0 0 0 / 0);
+  }
+}
+/* Hoja desde abajo: el menú «Más» y las ventanas en el móvil */
+dialog.mi-sheet {
+  margin: auto 0 0 0;
+  width: 100%;
+  max-width: 100%;
+  transform: translateY(100%);
+}
+dialog.mi-sheet[open] {
+  transform: none;
+}
+@starting-style {
+  dialog.mi-sheet[open] {
+    transform: translateY(100%);
+  }
 }
 @media (max-width: 639px) {
   dialog.mi-dialog {
@@ -296,9 +349,17 @@ dialog.mi-dialog::backdrop {
     max-width: 100%;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+    opacity: 1;
+    transform: translateY(100%);
   }
   dialog.mi-dialog[open] {
-    animation: sheet 0.34s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+    transform: none;
+  }
+  @starting-style {
+    dialog.mi-dialog[open] {
+      opacity: 1;
+      transform: translateY(100%);
+    }
   }
 }
 
@@ -338,5 +399,46 @@ dialog.mi-lightbox {
 @media print {
   .no-print {
     display: none !important;
+  }
+}
+
+/* Barra de carga entre pantallas */
+.nav-progress {
+  width: 0;
+  opacity: 0;
+  transform-origin: left;
+}
+.nav-progress[data-state="loading"] {
+  opacity: 1;
+  animation: nav-progress 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+}
+.nav-progress[data-state="done"] {
+  width: 100%;
+  opacity: 0;
+  transition:
+    width 0.2s ease-out,
+    opacity 0.3s ease 0.15s;
+}
+@keyframes nav-progress {
+  from {
+    width: 0;
+  }
+  to {
+    width: 88%;
+  }
+}
+
+/* Esqueletos de carga: un brillo suave que recorre la forma */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--line) 50%, var(--surface-2) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
   }
 }

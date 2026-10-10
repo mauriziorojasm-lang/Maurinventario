@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ProductPicker } from "@/components/product-picker";
 import { Button, Field, Input, LotTag, Notice, Select, Textarea, clsx } from "@/components/ui";
 import { money } from "@/lib/format";
@@ -50,6 +50,8 @@ export function SaleForm({
   const [lines, setLines] = useState<Line[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // Un identificador por venta: si se reintenta tras un corte, no se duplica
+  const requestId = useRef<string>(newUuid());
   // Paso actual (solo en el móvil: 1 producto, 2 datos, 3 confirmar)
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const goTo = (n: 1 | 2 | 3) => {
@@ -116,43 +118,53 @@ export function SaleForm({
   const stepHidden = (n: number) => (step === n ? "" : "max-md:hidden");
 
   async function save() {
+    if (pending) return;
     setError(null);
     setPending(true);
-    const res = await createSale({
-      sale_date: date,
-      responsible_id: isAdmin ? responsible : null,
-      platform_id: platformId,
-      carrier_id: needsShipping ? carrierId || null : null,
-      mobile_device_id: mobileId || null,
-      shipping_status: needsShipping ? shipping : null,
-      external_reference: reference.trim() || null,
-      notes: notes.trim() || null,
-      items: lines.map((l) => ({
-        variant_id: l.variant.variant_id,
-        lot_id: l.lotId,
-        quantity: Number(l.quantity),
-        unit_price: Number(l.price.replace(",", ".")),
-        notes: l.notes.trim() || null,
-      })),
-    });
-    if (!res.ok || !res.data) {
-      setPending(false);
-      setError(res.ok ? "No se ha podido registrar la venta." : res.error);
-      return;
-    }
-    const saleId = res.data;
-    if (needsShipping && label) {
-      const supabase = createClient();
-      const path = `${saleId}/${Date.now()}-${label.name.replace(/[^\w.\-]+/g, "_")}`;
-      const up = await supabase.storage.from("shipping-labels").upload(path, label, { upsert: false, contentType: label.type });
-      if (up.error) {
-        setPending(false);
-        router.push(`/ventas/${saleId}?aviso=etiqueta`);
+    let goingAway = false;
+    try {
+      const res = await createSale({
+        client_request_id: requestId.current,
+        sale_date: date,
+        responsible_id: isAdmin ? responsible : null,
+        platform_id: platformId,
+        carrier_id: needsShipping ? carrierId || null : null,
+        mobile_device_id: mobileId || null,
+        shipping_status: needsShipping ? shipping : null,
+        external_reference: reference.trim() || null,
+        notes: notes.trim() || null,
+        items: lines.map((l) => ({
+          variant_id: l.variant.variant_id,
+          lot_id: l.lotId,
+          quantity: Number(l.quantity),
+          unit_price: Number(l.price.replace(",", ".")),
+          notes: l.notes.trim() || null,
+        })),
+      });
+      if (!res.ok || !res.data) {
+        setError(res.ok ? "No se ha podido registrar la venta." : res.error);
         return;
       }
-      await updateSale({ id: saleId, shipping_label_path: path });
+      const saleId = res.data;
+      goingAway = true;
+      if (needsShipping && label) {
+        const supabase = createClient();
+        const path = `${saleId}/${Date.now()}-${label.name.replace(/[^\w.\-]+/g, "_")}`;
+        const up = await supabase.storage.from("shipping-labels").upload(path, label, { upsert: false, contentType: label.type });
+        if (up.error) {
+          router.push(`/ventas/${saleId}?aviso=etiqueta`);
+          return;
+        }
+        await updateSale({ id: saleId, shipping_label_path: path });
+      }
+      router.push(`/ventas/${saleId}?aviso=creada`);
+    } catch {
+      // Sin conexión o corte: se puede volver a pulsar sin miedo (no se duplica)
+      setError("No se ha podido conectar. Comprueba la conexión y vuelve a pulsar «Registrar venta»: no se registrará dos veces.");
+    } finally {
+      // Si se va a la venta, el botón sigue en «Guardando…» hasta cambiar de pantalla
+      if (!goingAway) setPending(false);
     }
-    router.push(`/ventas/${saleId}?aviso=creada`);
   }
 
   const steps = ["Producto", "Datos", "Confirmar"];
@@ -450,4 +462,13 @@ export function SaleForm({
       </div>
     </div>
   );
+}
+
+function newUuid(): string {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }

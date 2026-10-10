@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <Logo className="relative" />
         <div className="relative max-w-lg animate-rise">
           <p className="display text-[44px] uppercase leading-[0.95] lg:text-[64px]">
-            Cada unidad sabe <span className="text-brand">de qué pedido vino</span>, cuánto costó y quién la vendió.
+            Cada unidad sabe <span className="text-brand-bright">de qué pedido vino</span>, cuánto costó y quién la vendió.
           </p>
           <div className="mt-7 flex flex-wrap gap-2">
             <span className="lot-tag">Pedido #3</span>

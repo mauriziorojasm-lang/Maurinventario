@@ -5,13 +5,25 @@
  * compras o ajustes autorizados).
  */
 import { useEffect, useId, useRef, useState } from "react";
-import { quickCreateProduct, searchVariants } from "@/app/(app)/ventas/actions";
+import { quickCreateProduct } from "@/app/(app)/ventas/actions";
 import type { SellableVariant } from "@/lib/types";
 import { variantDisplay } from "@/lib/types";
 import { money } from "@/lib/format";
 import { Button, Field, Input, Notice, clsx } from "./ui";
 import { Modal } from "./ui-client";
 import { ProductThumb } from "@/app/(app)/productos/product-cards";
+
+/** Busca productos en el servidor (se puede cancelar si el usuario sigue escribiendo). */
+async function searchVariants(term: string, onlyInStock: boolean, signal?: AbortSignal): Promise<{ ok: true; data: SellableVariant[] } | { ok: false; error: string }> {
+  try {
+    const res = await fetch(`/api/buscar?q=${encodeURIComponent(term)}${onlyInStock ? "&stock=1" : ""}`, { signal });
+    const j = await res.json();
+    return res.ok ? { ok: true, data: j.data ?? [] } : { ok: false, error: j.error ?? "No se ha podido buscar." };
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") throw e;
+    return { ok: false, error: "No se puede conectar. Revisa tu conexión." };
+  }
+}
 
 export function ProductPicker({
   onSelect,
@@ -46,8 +58,14 @@ export function ProductPicker({
     const term = q.trim();
     if (term.length < 2) return;
     const id = ++reqId.current;
+    const ctrl = new AbortController();
     const t = setTimeout(async () => {
-      const res = await searchVariants(term, onlyInStock);
+      let res;
+      try {
+        res = await searchVariants(term, onlyInStock, ctrl.signal);
+      } catch {
+        return; // búsqueda cancelada: ya hay otra en marcha
+      }
       if (id !== reqId.current) return;
       setLoading(false);
       if (res.ok) {
@@ -55,8 +73,11 @@ export function ProductPicker({
         setError(null);
       } else setError(res.error);
       setActive(0);
-    }, 220);
-    return () => clearTimeout(t);
+    }, 180);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
   }, [q, onlyInStock]);
 
   function choose(v: SellableVariant) {

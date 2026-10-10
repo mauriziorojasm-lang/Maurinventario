@@ -1,23 +1,8 @@
 "use server";
 import { callRpc } from "@/lib/rpc";
 import { friendlyError, type ActionResult } from "@/lib/errors";
-import { signedPhotoUrls } from "@/lib/photos";
 import { createClient } from "@/lib/supabase/server";
-import type { AvailableLot, SellableVariant } from "@/lib/types";
-
-export async function searchVariants(query: string, onlyInStock = false): Promise<ActionResult<SellableVariant[]>> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("search_sellable_variants", {
-    p_query: query,
-    p_only_in_stock: onlyInStock,
-    p_limit: 25,
-  });
-  if (error) return { ok: false, error: friendlyError(error) };
-  const rows = (data ?? []) as SellableVariant[];
-  // Miniaturas: enlaces temporales de las fotos (una sola petición)
-  const photos = await signedPhotoUrls(rows.map((r) => r.photo_path));
-  return { ok: true, data: rows.map((r) => ({ ...r, photo_url: r.photo_path ? (photos.get(r.photo_path) ?? null) : null })) };
-}
+import type { AvailableLot } from "@/lib/types";
 
 export async function getLots(variantId: string): Promise<ActionResult<AvailableLot[]>> {
   const supabase = await createClient();
@@ -29,6 +14,8 @@ export async function getLots(variantId: string): Promise<ActionResult<Available
 }
 
 export type NewSale = {
+  /** Identificador de este intento: si llega dos veces, se registra una sola venta. */
+  client_request_id?: string;
   sale_date: string;
   responsible_id?: string | null;
   platform_id: string;

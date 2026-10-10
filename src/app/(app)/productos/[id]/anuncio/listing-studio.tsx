@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Check, Copy, Download, ExternalLink, Share2, Sparkles } from "lucide-react";
 import { FadeImg, type GalleryPhotoView } from "@/components/photo-gallery";
 import { Badge, Button, Field, Input, Notice, Select, Textarea, clsx } from "@/components/ui";
-import { money } from "@/lib/format";
+import { date, money } from "@/lib/format";
 import { freshCopy } from "@/lib/image";
 import { setPhotosUsed } from "../../photo-actions";
 import { generateListingText, saveListing, setListingStatus, type ListingPlatform } from "../../../anuncios/actions";
@@ -246,7 +246,7 @@ function PhotosStep({ productId, name, photos }: { productId: string; name: stri
                   on ? "border-brand" : "border-transparent",
                 )}
               >
-                <FadeImg src={p.url} alt="" className={clsx("h-full w-full object-cover transition-opacity duration-200", on ? "opacity-100" : "opacity-45")} />
+                <FadeImg src={p.thumb} alt="" className={clsx("h-full w-full object-cover transition-opacity duration-200", on ? "opacity-100" : "opacity-45")} />
                 <span
                   className={clsx(
                     "absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors",
@@ -453,7 +453,7 @@ function TextStep({
     >
       <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
         <StatusBadge l={l} />
-        {l?.status === "publicado" && l.published_at && <span className="text-[12.5px] text-muted">desde el {new Date(l.published_at).toLocaleDateString("es-ES")}</span>}
+        {l?.status === "publicado" && l.published_at && <span className="text-[12.5px] text-muted">desde el {date(l.published_at)}</span>}
         {l?.url && (
           <a href={l.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand-ink hover:underline">
             Abrir anuncio <ExternalLink size={13} />

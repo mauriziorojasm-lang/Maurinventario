@@ -2,9 +2,10 @@
 import { House, LayoutGrid, LogOut, Plus, Receipt, Truck, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { RememberList, forgetAllLists, useRememberedHref } from "./list-memory";
 import { NAV, type NavItem } from "./nav";
+import { NavProgress } from "./nav-progress";
 import { clsx } from "./ui";
 
 function isActive(pathname: string, href: string) {
@@ -32,7 +33,7 @@ function NavLink({ href, active, onClick, ...props }: Omit<React.ComponentProps<
   );
 }
 
-/** Logo: cuadro «MI» + Maur (naranja) Inventario. */
+/** Logo: cuadro «MI» + Maur (verde) Inventario. */
 export function Logo({ compact = false, className }: { compact?: boolean; className?: string }) {
   return (
     <span className={clsx("flex items-center gap-2.5", className)}>
@@ -41,7 +42,7 @@ export function Logo({ compact = false, className }: { compact?: boolean; classN
       </span>
       {!compact && (
         <span className="display text-[23px] uppercase tracking-[0.02em] text-chrome-ink">
-          <span className="text-brand">Maur</span>Inventario
+          <span className="text-brand-bright">Maur</span>Inventario
         </span>
       )}
     </span>
@@ -84,11 +85,13 @@ export function Shell({
     setLastPath(pathname);
     setMore(false);
   }
+  // Hoja «Más»: <dialog> nativo (Escape, foco y fondo los gestiona el navegador)
+  const sheet = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    if (!more) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMore(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const d = sheet.current;
+    if (!d) return;
+    if (more && !d.open) d.showModal();
+    if (!more && d.open) d.close();
   }, [more]);
 
   const account = (
@@ -107,7 +110,7 @@ export function Shell({
       </div>
       <form action="/auth/salir" method="post">
         <button
-          className="press flex h-9 w-9 items-center justify-center rounded-full text-chrome-ink/60 hover:bg-chrome-2 hover:text-chrome-ink"
+          className="press flex h-11 w-11 items-center justify-center rounded-full text-chrome-ink/60 hover:bg-chrome-2 hover:text-chrome-ink"
           aria-label="Cerrar sesión"
           title="Cerrar sesión"
         >
@@ -147,7 +150,7 @@ export function Shell({
                           active ? "scale-y-100" : "scale-y-0",
                         )}
                       />
-                      <Icon size={18} strokeWidth={2.25} className={active ? "text-brand" : "text-chrome-ink/55 group-hover:text-chrome-ink/90"} />
+                      <Icon size={18} strokeWidth={2.25} className={active ? "text-brand-bright" : "text-chrome-ink/55 group-hover:text-chrome-ink/90"} />
                       <span className="flex-1">{it.label}</span>
                       <Counter n={badgeOf(it)} tone={it.badgeKey === "shipments" || it.badgeKey === "detected" ? "brand" : "tag"} />
                     </NavLink>
@@ -170,12 +173,12 @@ export function Shell({
   ];
   const inTabs = isActive(pathname, "/") || isActive(pathname, "/ventas") || isActive(pathname, "/envios") || pathname.startsWith("/ventas/nueva");
   const tabClass = (active: boolean) =>
-    clsx("press relative flex flex-1 flex-col items-center gap-0.5 pt-2 text-[11px] font-semibold", active ? "text-brand" : "text-chrome-ink/60");
+    clsx("press relative flex flex-1 flex-col items-center gap-0.5 pt-2 text-[11px] font-semibold", active ? "text-brand-bright" : "text-chrome-ink/60");
 
   const tabBar = (
     <nav
       aria-label="Accesos rápidos"
-      className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-white/8 bg-chrome/95 backdrop-blur-md lg:hidden no-print"
+      className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-white/8 bg-chrome/95 backdrop-blur-md md:hidden no-print"
     >
       <ul className="mx-auto flex max-w-xl items-end">
         {tabs.slice(0, 2).map((t) => {
@@ -230,10 +233,16 @@ export function Shell({
     </nav>
   );
 
-  const moreSheet = more && (
-    <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menú" id="menu-mas">
-      <button className="absolute inset-0 animate-fade bg-black/55" aria-label="Cerrar menú" onClick={() => setMore(false)} />
-      <div className="safe-bottom absolute inset-x-0 bottom-0 max-h-[88dvh] animate-sheet overflow-y-auto rounded-t-[var(--radius-lg)] bg-chrome px-4 pt-3 text-chrome-ink">
+  const moreSheet = (
+    <dialog
+      ref={sheet}
+      id="menu-mas"
+      aria-label="Menú"
+      onClose={() => setMore(false)}
+      onClick={(e) => e.target === e.currentTarget && setMore(false)}
+      className="mi-sheet max-h-[88dvh] overflow-hidden rounded-t-[var(--radius-lg)] bg-chrome p-0 text-chrome-ink md:hidden"
+    >
+      <div className="safe-bottom max-h-[88dvh] overflow-y-auto px-4 pt-3">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" aria-hidden />
         <div className="mb-4 flex items-center justify-between">
           <Logo />
@@ -267,7 +276,7 @@ export function Shell({
                             active ? "bg-brand text-on-brand" : "bg-chrome-2 text-chrome-ink/90",
                           )}
                         >
-                          <it.icon size={22} strokeWidth={2.25} className={active ? "" : "text-brand"} />
+                          <it.icon size={22} strokeWidth={2.25} className={active ? "" : "text-brand-bright"} />
                           <span>{it.label}</span>
                           {n > 0 && (
                             <span className="absolute right-2 top-2">
@@ -285,13 +294,16 @@ export function Shell({
           <div className="rounded-[14px] bg-chrome-2/60 p-3">{account}</div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
-      {/* Barra lateral (ordenador) */}
-      <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto bg-chrome lg:flex">
+    <div className="min-h-dvh md:grid md:grid-cols-[236px_1fr] lg:grid-cols-[264px_1fr]">
+      <Suspense fallback={null}>
+        <NavProgress />
+      </Suspense>
+      {/* Barra lateral (iPad y ordenador) */}
+      <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto bg-chrome md:flex">
         <Link href="/" className="px-5 pb-4 pt-5" aria-label="Inicio">
           <Logo />
         </Link>
@@ -309,8 +321,8 @@ export function Shell({
         <div className="mt-auto border-t border-white/8 px-4 py-4">{account}</div>
       </aside>
 
-      {/* Barra superior (móvil y iPad) */}
-      <header className="sticky top-0 z-30 flex items-center justify-between bg-chrome/95 px-4 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-md lg:hidden no-print">
+      {/* Barra superior (iPhone) */}
+      <header className="sticky top-0 z-30 flex items-center justify-between bg-chrome/95 px-4 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-md md:hidden no-print">
         <Link href="/" aria-label="Inicio">
           <Logo />
         </Link>
@@ -321,10 +333,8 @@ export function Shell({
         <RememberList />
       </Suspense>
 
-      <main className="min-w-0 px-4 pb-32 pt-5 sm:px-6 lg:py-8 lg:pl-9 lg:pr-5 xl:pr-6">
-        <div key={pathname} className="mx-auto max-w-[1720px] animate-fade">
-          {children}
-        </div>
+      <main className="min-w-0 px-4 pb-32 pt-5 sm:px-6 md:py-7 md:pl-7 md:pr-5 lg:py-8 lg:pl-9 xl:pr-6">
+        <div className="mx-auto max-w-[1720px]">{children}</div>
       </main>
 
       {tabBar}

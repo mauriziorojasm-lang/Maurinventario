@@ -41,7 +41,7 @@ export function ProductThumb({ url, size = 56 }: { url?: string; size?: number }
 /** Productos en tarjetas para el móvil: foto, nombre, stock y precio. */
 export function ProductCards({ items }: { items: CardProduct[] }) {
   return (
-    <ul className="stagger flex flex-col gap-2 md:hidden">
+    <ul className="stagger grid gap-2 lg:hidden">
       {items.map((p) => (
         <li key={p.key}>
           <Link

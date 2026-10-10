@@ -7,6 +7,7 @@ import { loadSuppliers } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import { variantDisplay } from "@/lib/types";
 import { PurchaseOrderForm } from "../../po-form";
+import { must } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Editar pedido" };
 
@@ -14,7 +15,7 @@ export default async function EditPO({ params }: PageProps<"/compras/[id]/editar
   await requireAdmin();
   const { id } = await params;
   const supabase = await createClient();
-  const { data: po } = await supabase.from("purchase_orders").select("id, order_number, supplier_id, order_date, notes, status").eq("id", id).maybeSingle();
+  const po = must(await supabase.from("purchase_orders").select("id, order_number, supplier_id, order_date, notes, status").eq("id", id).maybeSingle(), "el pedido");
   if (!po) notFound();
   if (po.status !== "pendiente") redirect(`/compras/${id}`);
   const [{ data: lines }, { data: costs }, suppliers] = await Promise.all([

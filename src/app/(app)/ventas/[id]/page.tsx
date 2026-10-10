@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { Badge, LinkButton, LotTag, Notice, PageHeader, Panel, Table, Td, Th, Tr } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { RETURN_TYPES, date, dateTime, money } from "@/lib/format";
-import { signLabels } from "@/lib/labels";
+import { must } from "@/lib/db";
+import { signLabels } from "@/lib/storage";
 import { loadSaleOptions } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
 import { variantDisplay } from "@/lib/types";
@@ -21,42 +22,44 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
   const fromShipments = typeof sp.desde === "string" && /^[0-9a-z-]{1,40}$/i.test(sp.desde) ? sp.desde : null;
   const supabase = await createClient();
 
-  const { data: sale } = await supabase
-    .from("sales")
-    .select(
-      "id, sale_number, sale_date, status, void_reason, voided_at, responsible_id, platform_id, carrier_id, mobile_device_id, shipping_status, shipping_label_path, external_reference, notes, source_ref, created_at, source, buyer_name, tracking_number, platform_transaction_id, shipping_deadline, responsibles(name), platforms(name, requires_shipping), carriers(name), mobile_devices(number, name)",
-    )
-    .eq("id", id)
-    .maybeSingle();
-  if (!sale) notFound();
-
-  const { data: items } = await supabase
-    .from("sale_items")
-    .select("id, line_number, quantity, unit_price, notes, lot_id, variant_id, product_variants(name, product_id, products(name))")
-    .eq("sale_id", id)
-    .order("line_number");
-
-  const lotIds = (items ?? []).map((i) => i.lot_id);
-  const lots = isAdmin && lotIds.length ? ((await supabase.from("v_lots").select("lot_id, lot_label, unit_cost, origin").in("lot_id", lotIds)).data ?? []) : [];
-  const lotMap = new Map(lots.map((l) => [l.lot_id as string, l]));
-
-  const returns = isAdmin
-    ? ((
-        await supabase
+  // Todo lo que no depende de nada se pide a la vez
+  const [saleRes, itemsRes, returnsRes, profitRes, opts] = await Promise.all([
+    supabase
+      .from("sales")
+      .select(
+        "id, sale_number, sale_date, status, void_reason, voided_at, responsible_id, platform_id, carrier_id, mobile_device_id, shipping_status, shipping_label_path, external_reference, notes, source_ref, created_at, source, buyer_name, tracking_number, platform_transaction_id, shipping_deadline, responsibles(name), platforms(name, requires_shipping), carriers(name), mobile_devices(number, name)",
+      )
+      .eq("id", id)
+      .maybeSingle(),
+    supabase
+      .from("sale_items")
+      .select("id, line_number, quantity, unit_price, notes, lot_id, variant_id, product_variants(name, product_id, products(name))")
+      .eq("sale_id", id)
+      .order("line_number"),
+    isAdmin
+      ? supabase
           .from("v_returns")
           .select("id, return_date, return_type, reason, product_name, variant_name, quantity, refund_amount, restocked, lost_cost")
           .eq("sale_id", id)
           .order("return_date")
-      ).data ?? [])
-    : [];
-  const refundTotal = returns.reduce((a, r) => a + Number(r.refund_amount), 0);
-  const netProfit =
-    isAdmin && returns.length
-      ? ((await supabase.from("v_sale_lines").select("profit").eq("sale_id", id)).data ?? []).reduce((a, r) => a + Number(r.profit), 0)
-      : null;
+      : Promise.resolve({ data: [], error: null }),
+    isAdmin ? supabase.from("v_sale_lines").select("profit").eq("sale_id", id) : Promise.resolve({ data: [], error: null }),
+    loadSaleOptions(),
+  ]);
+  const sale = must(saleRes, "la venta");
+  if (!sale) notFound();
+  const items = must(itemsRes, "las líneas de la venta");
+  const returns = must(returnsRes, "las devoluciones") ?? [];
 
-  const opts = await loadSaleOptions();
-  const labelUrl = sale.shipping_label_path ? ((await signLabels([sale.shipping_label_path])).get(sale.shipping_label_path) ?? null) : null;
+  const lotIds = (items ?? []).map((i) => i.lot_id);
+  const [lots, labels] = await Promise.all([
+    isAdmin && lotIds.length ? supabase.from("v_lots").select("lot_id, lot_label, unit_cost, origin").in("lot_id", lotIds).then((r) => r.data ?? []) : Promise.resolve([]),
+    signLabels([sale.shipping_label_path]),
+  ]);
+  const lotMap = new Map(lots.map((l) => [l.lot_id as string, l]));
+  const refundTotal = returns.reduce((a, r) => a + Number(r.refund_amount), 0);
+  const netProfit = isAdmin && returns.length ? (profitRes.data ?? []).reduce((a, r) => a + Number(r.profit), 0) : null;
+  const labelUrl = sale.shipping_label_path ? (labels.get(sale.shipping_label_path) ?? null) : null;
   const s = sale as unknown as {
     id: string;
     sale_number: string;

@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 import { first, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
 import { dateTime } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { must } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Auditoría" };
 
@@ -63,7 +64,9 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   if (from) q = q.gte("occurred_at", `${from}T00:00:00`);
   if (to) q = q.lte("occurred_at", `${to}T23:59:59`);
   if (user) q = q.ilike("user_email", `%${user}%`);
-  const { data, count } = await q.order("occurred_at", { ascending: false }).order("id", { ascending: false }).range(a, b);
+  const res = await q.order("occurred_at", { ascending: false }).order("id", { ascending: false }).range(a, b);
+  const data = must(res, "la auditoría");
+  const count = res.count;
   const values = { entidad: entity, from, to, usuario: user };
 
   return (

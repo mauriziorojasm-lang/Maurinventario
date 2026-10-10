@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { date, money, units } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { SupplierButton } from "../supplier-form";
+import { must } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Proveedor" };
 
@@ -14,9 +15,9 @@ export default async function SupplierDetail({ params }: PageProps<"/proveedores
   await requireAdmin();
   const { id } = await params;
   const supabase = await createClient();
-  const { data: s } = await supabase.from("suppliers").select("*").eq("id", id).maybeSingle();
+  const s = must(await supabase.from("suppliers").select("*").eq("id", id).maybeSingle(), "el proveedor");
   if (!s) notFound();
-  const { data: pos } = await supabase.from("v_purchase_orders").select("*").eq("supplier_id", id).order("order_date", { ascending: false });
+  const pos = must(await supabase.from("v_purchase_orders").select("*").eq("supplier_id", id).order("order_date", { ascending: false }), "los pedidos");
   const active = (pos ?? []).filter((p) => p.status !== "cancelado");
   const total = active.reduce((a, p) => a + Number(p.total_cost), 0);
   return (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Plus, Truck } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Suspense } from "react";
 import { CountUp } from "@/components/count-up";
 import { LinkButton, Notice, PageHeader, clsx } from "@/components/ui";
@@ -7,11 +7,13 @@ import { requireUser } from "@/lib/auth";
 import { money, units } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { BusinessDashboard, DashboardSkeleton } from "./business-dashboard";
+import { HomeTasks, QuickActions } from "./home-tasks";
+import { loadBadges } from "@/lib/badges";
 
 export default async function Dashboard({ searchParams }: PageProps<"/">) {
   const user = await requireUser();
   const sp = await searchParams;
-  const supabase = await createClient();
+  const [supabase, badges] = await Promise.all([createClient(), loadBadges()]);
   const sinPermiso = sp.aviso === "sin-permiso" && (
     <Notice tone="warn" className="mb-4">
       Esa sección es solo para administradores.
@@ -33,7 +35,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
           title={`Hola${user.responsibleName ? `, ${user.responsibleName.split(" ")[0]}` : ""}`}
           description="Tus ventas de hoy y de este mes."
           actions={
-            <LinkButton href="/ventas/nueva" variant="primary" className="max-lg:hidden">
+            <LinkButton href="/ventas/nueva" variant="primary" className="max-md:hidden">
               <Plus size={17} strokeWidth={2.75} />
               Nueva venta
             </LinkButton>
@@ -48,7 +50,10 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
           today={{ revenue: d?.today.revenue ?? 0, orders: d?.today.orders ?? 0, units: d?.today.units ?? 0 }}
           month={{ revenue: d?.month.revenue ?? 0, orders: d?.month.orders ?? 0, units: d?.month.units ?? 0 }}
         />
-        {(d?.pending_shipments ?? 0) > 0 && <ShipmentsCallout n={d!.pending_shipments} className="mt-4" />}
+        <div className="mt-5 flex flex-col gap-5">
+          <HomeTasks badges={badges} admin={false} />
+          <QuickActions admin={false} />
+        </div>
       </>
     );
   }
@@ -68,7 +73,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
                 key={m}
                 href={m === 6 ? "/" : "/?meses=12"}
                 aria-current={months === m ? "page" : undefined}
-                className={clsx("press rounded-full px-3.5 py-1.5", months === m ? "bg-ink text-paper" : "text-ink-soft hover:text-ink")}
+                className={clsx("press whitespace-nowrap rounded-full px-3.5 py-1.5", months === m ? "bg-ink text-paper" : "text-ink-soft hover:text-ink")}
               >
                 {m} meses
               </Link>
@@ -77,7 +82,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
         }
       />
       <Suspense key={months} fallback={<DashboardSkeleton />}>
-        <BusinessDashboard months={months} />
+        <BusinessDashboard months={months} badges={badges} />
       </Suspense>
     </>
   );
@@ -90,7 +95,7 @@ function Hero({ today, month, losses = 0 }: { today: Period; month: Period; loss
   const block = (label: string, p: Period, main: boolean) => (
     <div className={clsx("flex flex-col gap-3 p-5 sm:p-6", main ? "bg-chrome text-chrome-ink" : "bg-chrome-2 text-chrome-ink")}>
       <p className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-chrome-ink/55">
-        {main && <span className="h-2 w-2 animate-pulse rounded-full bg-brand" aria-hidden />}
+        {main && <span className="h-2 w-2 animate-pulse rounded-full bg-brand-bright" aria-hidden />}
         {label}
       </p>
       <div>
@@ -103,7 +108,7 @@ function Hero({ today, month, losses = 0 }: { today: Period; month: Period; loss
         {p.profit !== undefined && (
           <div>
             <p className="text-[12px] font-medium text-chrome-ink/55">Beneficio</p>
-            <p className={clsx("display text-[28px]", p.profit < 0 ? "text-danger" : "text-brand")}>
+            <p className={clsx("display text-[28px]", p.profit < 0 ? "text-danger" : "text-brand-bright")}>
               {p.profit > 0 ? "+" : ""}
               <CountUp value={p.profit} />
             </p>
@@ -125,28 +130,5 @@ function Hero({ today, month, losses = 0 }: { today: Period; month: Period; loss
       {block("Hoy", today, true)}
       {block("Este mes", month, false)}
     </section>
-  );
-}
-
-function ShipmentsCallout({ n, className }: { n: number; className?: string }) {
-  return (
-    <Link
-      href="/envios"
-      className={clsx(
-        "press flex items-center gap-3 rounded-[var(--radius-md)] border border-brand/40 bg-brand-soft p-4 shadow-[var(--shadow-card)] hover:border-brand",
-        className,
-      )}
-    >
-      <span className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-brand text-on-brand">
-        <Truck size={22} strokeWidth={2.25} />
-      </span>
-      <span className="flex-1 text-sm">
-        <span className="display num block text-[22px] uppercase leading-none">
-          {n} {n === 1 ? "paquete" : "paquetes"} por enviar
-        </span>
-        <span className="text-muted">Ver por paquetería</span>
-      </span>
-      <ChevronRight size={20} className="text-muted" />
-    </Link>
   );
 }
