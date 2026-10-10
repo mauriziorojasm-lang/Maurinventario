@@ -1,4 +1,5 @@
 import "server-only";
+import { testOnlyEnv } from "../test-env";
 import { cleanText, htmlToText } from "./parse";
 
 /**
@@ -11,9 +12,9 @@ export const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 export const CENTRAL_ACCOUNT = "maurinventario@gmail.com";
 
 // Direcciones de Google. Solo se cambian en las pruebas automáticas (Gmail simulado).
-const AUTH_URL = () => process.env.GOOGLE_OAUTH_AUTH_URL || "https://accounts.google.com/o/oauth2/v2/auth";
-const TOKEN_URL = () => process.env.GOOGLE_OAUTH_TOKEN_URL || "https://oauth2.googleapis.com/token";
-const API = () => (process.env.GMAIL_API_BASE || "https://gmail.googleapis.com").replace(/\/$/, "");
+const AUTH_URL = () => testOnlyEnv("GOOGLE_OAUTH_AUTH_URL") || "https://accounts.google.com/o/oauth2/v2/auth";
+const TOKEN_URL = () => testOnlyEnv("GOOGLE_OAUTH_TOKEN_URL") || "https://oauth2.googleapis.com/token";
+const API = () => (testOnlyEnv("GMAIL_API_BASE") || "https://gmail.googleapis.com").replace(/\/$/, "");
 
 /** Google ha retirado el permiso (o ya no vale): hay que volver a conectar. */
 export class GmailAuthError extends Error {}

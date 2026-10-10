@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { REPORT_FILTER_KEYS } from "@/lib/filters";
+import { csvCell } from "@/lib/csv";
 import { REPORTS, type Column, type ReportType } from "@/lib/reports";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
   const type = sp.get("tipo") as ReportType;
   const format = sp.get("formato") === "csv" ? "csv" : "xlsx";
-  const report = REPORTS[type];
+  const report = Object.hasOwn(REPORTS, type) ? REPORTS[type] : undefined;
   if (!report) return new NextResponse("Informe desconocido", { status: 400 });
 
   const filters: Record<string, string> = {};
@@ -93,7 +94,7 @@ function cellValue(c: Column, r: Record<string, unknown>) {
 
 /** CSV con «;» y coma decimal, para que Excel en español lo abra bien. */
 function toCsv(columns: Column[], rows: Record<string, unknown>[]) {
-  const esc = (s: string) => (/[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+  const esc = csvCell;
   const lines = [columns.map((c) => esc(c.label)).join(";")];
   for (const r of rows) {
     lines.push(

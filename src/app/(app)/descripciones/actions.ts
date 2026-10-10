@@ -14,13 +14,16 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import type { ActionResult } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
+import { testOnlyEnv } from "@/lib/test-env";
 import { LENGTHS, MAX_FIELD, MAX_LONG_FIELD, MAX_PRODUCTS, PLATFORMS, TONES, type ProductDetails } from "./options";
 
 // Modelos con nivel gratuito.
 // Se prueban en orden: si uno está saturado, sin cupo o no existe, se pasa al siguiente.
 const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
 // GEMINI_BASE_URL solo se usa en las pruebas automáticas (un Gemini simulado en local)
-const GEMINI_URL = process.env.GEMINI_BASE_URL?.trim() || "https://generativelanguage.googleapis.com/v1beta/models";
+/** Descripciones que cada usuario puede generar al día. */
+const DAILY_LIMIT = 60;
+const GEMINI_URL = testOnlyEnv("GEMINI_BASE_URL") || "https://generativelanguage.googleapis.com/v1beta/models";
 
 const short = z.string().trim().max(MAX_FIELD, `Cada campo admite como máximo ${MAX_FIELD} caracteres.`);
 const long = z.string().trim().max(MAX_LONG_FIELD, `Este campo admite como máximo ${MAX_LONG_FIELD} caracteres.`);
@@ -271,6 +274,11 @@ export async function generateDescriptions(input: GenerateRequest): Promise<Acti
   if (error) return { ok: false, error: "No se han podido leer los productos." };
   const byId = new Map(((products ?? []) as unknown as DbProduct[]).map((p) => [p.id, p]));
   if (ids.some((id) => !byId.has(id))) return { ok: false, error: "Alguno de los productos no existe o no tienes acceso a él." };
+
+  // Límite diario por usuario (lo cuenta la base de datos, día de Madrid)
+  const { data: allowed, error: limitError } = await supabase.rpc("ai_usage_take", { p_units: req.items.length, p_limit: DAILY_LIMIT });
+  if (limitError) return { ok: false, error: "No se ha podido comprobar el límite diario. Inténtalo de nuevo." };
+  if (!allowed) return { ok: false, error: `Has llegado al límite de ${DAILY_LIMIT} descripciones de hoy. Mañana podrás generar más.` };
 
   const variantIds = req.items.map((i) => i.variantId).filter((v): v is string => !!v);
   const variants = new Map<string, { name: string; sku: string | null; product_id: string }>();

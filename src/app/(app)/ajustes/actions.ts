@@ -1,13 +1,17 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { friendlyError, type ActionResult } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 
 type ListName = "platforms" | "carriers" | "categories" | "brands" | "mobile_devices";
 
+const LISTS = z.enum(["platforms", "carriers", "categories", "brands", "mobile_devices"]);
+
 export async function saveListItem(list: ListName, item: Record<string, unknown> & { id?: string }): Promise<ActionResult> {
   await requireAdmin();
+  if (!LISTS.safeParse(list).success) return { ok: false, error: "Lista no válida." };
   const supabase = await createClient();
   const { id, account, ...row } = item as { id?: string; account?: { email?: string; phone?: string } } & Record<string, unknown>;
   if (typeof row.name === "string") row.name = row.name.trim();
