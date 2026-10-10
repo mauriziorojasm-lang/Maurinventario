@@ -16,7 +16,7 @@ export function CountUp({ value, format = "money" }: { value: number; format?: "
   useEffect(() => {
     const start = from.current ?? 0;
     from.current = value;
-    if (start === value || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (start === value || (window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "reduce")) {
       setShown(value);
       return;
     }

@@ -6,6 +6,8 @@ import { requireUser } from "@/lib/auth";
 import { filtersFrom, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
 import { date, money, units } from "@/lib/format";
 import { loadSaleOptions } from "@/lib/options";
+import { SALES_COLUMNS } from "@/lib/preferences";
+import { loadPrefs } from "@/lib/user-prefs";
 import { createClient } from "@/lib/supabase/server";
 import { type SaleLine, variantDisplay } from "@/lib/types";
 import { BulkShippingBar, SaleCheckbox, SelectAllCheckbox, ShippingSelection } from "./bulk-shipping";
@@ -25,7 +27,10 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const user = await requireUser();
   const sp = await searchParams;
   const filters = filtersFrom(sp);
-  const { page, from, to, size } = pageFrom(sp, 50);
+  // Preferencias de la tabla (Ajustes → Tablas)
+  const tp = (await loadPrefs()).tables.ventas;
+  const cols = tp.columns.filter((c) => c.visible).map((c) => c.key);
+  const { page, from, to, size } = pageFrom(sp, tp.pageSize);
   const supabase = await createClient();
   const hrefFor = (p: number) => `/ventas${toQuery({ ...filters, page: p })}`;
 
@@ -262,17 +267,11 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                       }))}
                     />
                   </Th>
-                  <Th>Fecha</Th>
-                  <Th>Venta</Th>
-                  <Th>Producto</Th>
-                  <Th>Lote</Th>
-                  <Th num>Uds.</Th>
-                  <Th num>Precio</Th>
-                  <Th num>Importe</Th>
-                  <Th num>Beneficio</Th>
-                  <Th>Responsable</Th>
-                  <Th>Plataforma</Th>
-                  <Th>Envío</Th>
+                  {cols.map((c) => (
+                    <Th key={c} num={["uds", "precio", "importe", "beneficio"].includes(c)}>
+                      {SALES_COLUMNS[c]}
+                    </Th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -281,35 +280,74 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                     <Td>
                       <SaleCheckbox saleId={l.sale_id} status={shipOf(l.shipping_status, l.requires_shipping)} label={`la venta ${l.sale_number}`} />
                     </Td>
-                    <Td className="num">{date(l.sale_date)}</Td>
-                    <Td>
-                      <Link className="whitespace-nowrap font-semibold text-brand-ink hover:underline" href={`/ventas/${l.sale_id}`}>
-                        {l.sale_number}
-                      </Link>
-                    </Td>
-                    <Td>
-                      <Link href={`/productos/${l.product_id}`} className="hover:underline">
-                        {variantDisplay(l.product_name, l.variant_name)}
-                      </Link>
-                      {l.line_notes && <span className="block text-xs text-muted">{l.line_notes}</span>}
-                    </Td>
-                    <Td>
-                      <LotTag label={l.lot_label} />
-                    </Td>
-                    <Td num>
-                      {l.quantity}
-                      {l.returned_qty > 0 && <span className="block text-xs text-danger">−{l.returned_qty} dev.</span>}
-                    </Td>
-                    <Td num>{money(l.unit_price)}</Td>
-                    <Td num>{money(l.net_amount)}</Td>
-                    <Td num className={Number(l.profit) < 0 ? "text-danger" : undefined}>
-                      {money(l.profit)}
-                    </Td>
-                    <Td>{l.responsible_name}</Td>
-                    <Td>{l.platform_name}</Td>
-                    <Td>
-                      <ShippingBadge status={l.shipping_status} requires={l.requires_shipping} />
-                    </Td>
+                    {cols.map((c) => {
+                      switch (c) {
+                        case "fecha":
+                          return (
+                            <Td key={c} className="num">
+                              {date(l.sale_date)}
+                            </Td>
+                          );
+                        case "venta":
+                          return (
+                            <Td key={c}>
+                              <Link className="whitespace-nowrap font-semibold text-brand-ink hover:underline" href={`/ventas/${l.sale_id}`}>
+                                {l.sale_number}
+                              </Link>
+                            </Td>
+                          );
+                        case "producto":
+                          return (
+                            <Td key={c}>
+                              <Link href={`/productos/${l.product_id}`} className="hover:underline">
+                                {variantDisplay(l.product_name, l.variant_name)}
+                              </Link>
+                              {l.line_notes && <span className="block text-xs text-muted">{l.line_notes}</span>}
+                            </Td>
+                          );
+                        case "lote":
+                          return (
+                            <Td key={c}>
+                              <LotTag label={l.lot_label} />
+                            </Td>
+                          );
+                        case "uds":
+                          return (
+                            <Td key={c} num>
+                              {l.quantity}
+                              {l.returned_qty > 0 && <span className="block text-xs text-danger">−{l.returned_qty} dev.</span>}
+                            </Td>
+                          );
+                        case "precio":
+                          return (
+                            <Td key={c} num>
+                              {money(l.unit_price)}
+                            </Td>
+                          );
+                        case "importe":
+                          return (
+                            <Td key={c} num>
+                              {money(l.net_amount)}
+                            </Td>
+                          );
+                        case "beneficio":
+                          return (
+                            <Td key={c} num className={Number(l.profit) < 0 ? "text-danger" : undefined}>
+                              {money(l.profit)}
+                            </Td>
+                          );
+                        case "responsable":
+                          return <Td key={c}>{l.responsible_name}</Td>;
+                        case "plataforma":
+                          return <Td key={c}>{l.platform_name}</Td>;
+                        case "envio":
+                          return (
+                            <Td key={c}>
+                              <ShippingBadge status={l.shipping_status} requires={l.requires_shipping} />
+                            </Td>
+                          );
+                      }
+                    })}
                   </Tr>
                 ))}
               </tbody>

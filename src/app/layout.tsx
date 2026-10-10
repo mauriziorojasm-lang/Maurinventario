@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
+import { APPEARANCE_COOKIE, parseAppearanceCookie } from "@/lib/preferences";
 import "@fontsource-variable/public-sans";
 import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
@@ -25,9 +27,18 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Aspecto elegido por el usuario (se guarda también en una cookie para pintar ya con él)
+  const a = parseAppearanceCookie((await cookies()).get(APPEARANCE_COOKIE)?.value);
   return (
-    <html lang="es" className="h-full antialiased">
+    <html
+      lang="es"
+      className="h-full antialiased"
+      data-mode={a.mode === "auto" ? undefined : a.mode}
+      data-palette={a.palette === "vinted" ? undefined : a.palette}
+      data-motion={a.reduceMotion ? "reduce" : undefined}
+      suppressHydrationWarning
+    >
       <body className="min-h-full">{children}</body>
     </html>
   );

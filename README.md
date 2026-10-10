@@ -659,6 +659,21 @@ Vercel despliega
 
 > Truco para no equivocarte: en el panel de Supabase, mira **siempre el nombre del proyecto** arriba antes de tocar nada.
 
+### Ajustes personales (menú **Ajustes**)
+
+Cada usuario tiene los suyos (tabla `user_preferences`, protegida para que nadie vea ni cambie los de otro):
+
+- **Personalizar panel** (administrador): widgets del inicio, tamaño (pequeño, ancho, grande), orden, periodo, plataforma y comparación con el periodo anterior. El panel no se edita desde el inicio, solo desde aquí.
+- **Aspecto**: claro, oscuro o automático, 6 temas de color y «Reducir animaciones».
+- **Tablas** (administrador): columnas, orden y filas por página de Ventas y Productos.
+- **Ventas e inventario**: plataforma predeterminada al registrar una venta.
+- **Avisos**: qué tareas y contadores del menú se muestran (incluido «stock bajo»).
+- **Seguridad y privacidad**: contraseña, cerrar sesión aquí o en todos los dispositivos, descargar tus datos.
+- **Copias de seguridad** (administrador): descarga completa de los datos del negocio en JSON y comprobación de una copia. Restaurar desde la app no está disponible (se haría con ayuda técnica en Supabase).
+- **Historial de actividad**: exportaciones, copias y cambios de ajustes.
+
+«Beneficio neto» y «Gastos del negocio» aparecen como no disponibles: la app no registra gastos, así que no se pueden calcular sin inventar.
+
 ---
 
 ## 16. Seguridad

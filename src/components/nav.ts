@@ -10,6 +10,7 @@ import {
   MailCheck,
   Megaphone,
   House,
+  List,
   ListChecks,
   Receipt,
   ScrollText,
@@ -67,7 +68,11 @@ export const NAV: NavGroup[] = [
       { href: "/revision", label: "Pendientes de revisar", icon: ListChecks, adminOnly: true, badgeKey: "reviews" },
       { href: "/usuarios", label: "Usuarios", icon: UserCog, adminOnly: true },
       { href: "/auditoria", label: "Auditoría", icon: ScrollText, adminOnly: true },
-      { href: "/ajustes", label: "Listas y ajustes", icon: Settings, adminOnly: true },
+      { href: "/ajustes", label: "Listas", icon: List, adminOnly: true },
     ],
+  },
+  {
+    label: "Cuenta",
+    items: [{ href: "/configuracion", label: "Ajustes", icon: Settings }],
   },
 ];

@@ -7,6 +7,8 @@ import { filtersFrom, first, pageFrom, toQuery, type SearchParams } from "@/lib/
 import { money, units } from "@/lib/format";
 import { loadCatalogOptions } from "@/lib/options";
 import { must } from "@/lib/db";
+import { PRODUCT_COLUMNS, PRODUCT_SORTS, type ProductSort } from "@/lib/preferences";
+import { loadPrefs } from "@/lib/user-prefs";
 import { signPhotos } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { type SellableVariant, variantDisplay } from "@/lib/types";
@@ -107,17 +109,35 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
 
   const filters = filtersFrom(sp);
   const missing = first(sp.missing) === "true";
-  const { page, from, to, size } = pageFrom(sp, 50);
+  // Preferencias de la tabla (Ajustes → Tablas): columnas, orden y filas por página
+  const tp = (await loadPrefs()).tables.productos;
+  const low = Number(first(sp.bajo));
+  const lowStock = Number.isInteger(low) && low >= 1 && low <= 1000 ? low : null;
+  const sortKey: ProductSort = Object.hasOwn(PRODUCT_SORTS, first(sp.orden) ?? "") ? (first(sp.orden) as ProductSort) : tp.sort;
+  const { page, from, to, size } = pageFrom(sp, tp.pageSize);
   let q = supabase.from("v_product_inventory").select("*", { count: "exact" });
   if (filters.search) q = q.or(`product_name.ilike.%${filters.search.replace(/[%,()]/g, " ")}%,sku.ilike.%${filters.search.replace(/[%,()]/g, " ")}%`);
   if (filters.category_id) q = q.eq("category_id", filters.category_id);
   if (filters.brand_id) q = q.eq("brand_id", filters.brand_id);
   if (filters.only_in_stock === "true") q = q.gt("stock", 0);
   if (missing) q = q.eq("has_missing_data", true);
-  const [{ data, count, error }, opts] = await Promise.all([q.order("stock", { ascending: false }).order("product_name").range(from, to), loadCatalogOptions()]);
+  if (lowStock) q = q.gte("stock", 1).lte("stock", lowStock);
+  q =
+    sortKey === "nombre"
+      ? q.order("product_name")
+      : sortKey === "recientes"
+        ? q.order("created_at", { ascending: false })
+        : sortKey === "valor"
+          ? q.order("stock_value", { ascending: false, nullsFirst: false })
+          : sortKey === "vendidas"
+            ? q.order("units_sold", { ascending: false, nullsFirst: false })
+            : q.order("stock", { ascending: false });
+  const [{ data, count, error }, opts] = await Promise.all([q.order("product_name").order("product_id").range(from, to), loadCatalogOptions()]);
+  const cols = tp.columns.filter((c) => c.visible).map((c) => c.key);
   const rows = (data ?? []) as ProductRow[];
   const photos = await signPhotos(rows.map((r) => r.photo_path), { thumbs: true });
-  const hrefFor = (p: number) => `/productos${toQuery({ ...filters, missing: missing ? "true" : undefined, page: p })}`;
+  const hrefFor = (p: number) =>
+    `/productos${toQuery({ ...filters, missing: missing ? "true" : undefined, bajo: lowStock ? String(lowStock) : undefined, orden: first(sp.orden), page: p })}`;
 
   return (
     <>
@@ -132,17 +152,24 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       />
       <FilterBar
         basePath="/productos"
-        values={{ ...filters, missing: missing ? "true" : undefined }}
+        values={{ ...filters, missing: missing ? "true" : undefined, orden: first(sp.orden) }}
         fields={[
           { type: "text", name: "search", label: "Buscar", placeholder: "Nombre o SKU" },
           { type: "select", name: "category_id", label: "Categoría", empty: "Todas", options: opts.categories.map((c) => ({ value: c.id, label: c.name })) },
           { type: "select", name: "brand_id", label: "Marca", empty: "Todas", options: opts.brands.map((c) => ({ value: c.id, label: c.name })) },
           { type: "checkbox", name: "only_in_stock", label: "Solo con stock" },
           { type: "checkbox", name: "missing", label: "Con datos pendientes" },
+          { type: "select", name: "orden", label: "Ordenar", empty: PRODUCT_SORTS[tp.sort], options: (Object.keys(PRODUCT_SORTS) as ProductSort[]).filter((k) => k !== tp.sort).map((k) => ({ value: k, label: PRODUCT_SORTS[k] })) },
         ]}
         extra={<ExportLinks type="inventario" filters={filters} />}
       />
       {error && <Notice tone="bad">{error.message}</Notice>}
+      {lowStock && (
+        <Notice tone="info" className="mb-3">
+          Mostrando productos con stock bajo (entre 1 y {lowStock} {lowStock === 1 ? "unidad" : "unidades"}).{" "}
+          <Link href="/productos">Ver todos</Link>
+        </Notice>
+      )}
       <ProductCards
         items={rows.map((r) => ({
           key: r.product_id,
@@ -168,43 +195,56 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           <Table className="max-lg:hidden">
             <thead>
               <tr>
-                <Th>Producto</Th>
-                <Th>Categoría</Th>
-                <Th num>Stock</Th>
-                <Th num>Coste medio</Th>
-                <Th num>Precio normal</Th>
-                <Th num>Precio medio venta</Th>
-                <Th num>Vendidas</Th>
-                <Th num>Valor almacén</Th>
+                {cols.map((c) => (
+                  <Th key={c} num={c !== "producto" && c !== "categoria"}>
+                    {PRODUCT_COLUMNS[c]}
+                  </Th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <Tr key={r.product_id} muted={r.stock <= 0}>
-                  <Td>
-                    <div className="flex items-center gap-3">
-                      <ProductThumb url={r.photo_path ? photos.get(r.photo_path) : undefined} size={40} />
-                      <div className="min-w-0">
-                        <Link href={`/productos/${r.product_id}`} className="font-semibold text-ink hover:underline">
-                          {r.product_name}
-                        </Link>
-                        <span className="block text-xs text-muted">
-                          {[r.brand_name ?? "Marca pendiente", r.sku ?? "Sin SKU", r.variant_count > 1 ? `${r.variant_count} variantes` : null]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </span>
-                      </div>
-                    </div>
-                  </Td>
-                  <Td>{r.category_name ?? <Badge tone="warn">Pendiente</Badge>}</Td>
-                  <Td num>
-                    <StockBadge stock={r.stock} />
-                  </Td>
-                  <Td num>{money(r.weighted_avg_cost)}</Td>
-                  <Td num>{r.normal_sale_price !== null ? money(r.normal_sale_price) : <span className="text-faint">—</span>}</Td>
-                  <Td num>{money(r.avg_sale_price)}</Td>
-                  <Td num>{units(r.units_sold)}</Td>
-                  <Td num>{money(r.stock_value)}</Td>
+                  {cols.map((c) => {
+                    switch (c) {
+                      case "producto":
+                        return (
+                          <Td key={c}>
+                            <div className="flex items-center gap-3">
+                              <ProductThumb url={r.photo_path ? photos.get(r.photo_path) : undefined} size={40} />
+                              <div className="min-w-0">
+                                <Link href={`/productos/${r.product_id}`} className="font-semibold text-ink hover:underline">
+                                  {r.product_name}
+                                </Link>
+                                <span className="block text-xs text-muted">
+                                  {[r.brand_name ?? "Marca pendiente", r.sku ?? "Sin SKU", r.variant_count > 1 ? `${r.variant_count} variantes` : null]
+                                    .filter(Boolean)
+                                    .join(", ")}
+                                </span>
+                              </div>
+                            </div>
+                          </Td>
+                        );
+                      case "categoria":
+                        return <Td key={c}>{r.category_name ?? <Badge tone="warn">Pendiente</Badge>}</Td>;
+                      case "stock":
+                        return (
+                          <Td key={c} num>
+                            <StockBadge stock={r.stock} />
+                          </Td>
+                        );
+                      case "coste":
+                        return <Td key={c} num>{money(r.weighted_avg_cost)}</Td>;
+                      case "precio":
+                        return <Td key={c} num>{r.normal_sale_price !== null ? money(r.normal_sale_price) : <span className="text-faint">—</span>}</Td>;
+                      case "precio_medio":
+                        return <Td key={c} num>{money(r.avg_sale_price)}</Td>;
+                      case "vendidas":
+                        return <Td key={c} num>{units(r.units_sold)}</Td>;
+                      case "valor":
+                        return <Td key={c} num>{money(r.stock_value)}</Td>;
+                    }
+                  })}
                 </Tr>
               ))}
             </tbody>

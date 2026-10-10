@@ -1,19 +1,28 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, SlidersHorizontal } from "lucide-react";
 import { Suspense } from "react";
 import { CountUp } from "@/components/count-up";
-import { LinkButton, Notice, PageHeader, clsx } from "@/components/ui";
+import { LinkButton, Notice, PageHeader, buttonClass, clsx } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { money, units } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { BusinessDashboard, DashboardSkeleton } from "./business-dashboard";
 import { HomeTasks, QuickActions } from "./home-tasks";
+import { PlatformFilter } from "./platform-filter";
 import { loadBadges } from "@/lib/badges";
+import { loadSaleOptions } from "@/lib/options";
+import { PERIODS, type Period as PeriodKey } from "@/lib/preferences";
+import { loadPrefs } from "@/lib/user-prefs";
 
 export default async function Dashboard({ searchParams }: PageProps<"/">) {
   const user = await requireUser();
   const sp = await searchParams;
-  const [supabase, badges] = await Promise.all([createClient(), loadBadges()]);
+  const [supabase, badges, prefs0] = await Promise.all([createClient(), loadBadges(), loadPrefs()]);
+  // Aviso opcional de stock bajo (solo si el usuario lo ha activado)
+  const lowStock =
+    user.role === "admin" && prefs0.notifications.lowStock
+      ? Number((await supabase.rpc("low_stock_count", { p_threshold: prefs0.notifications.lowStockThreshold })).data ?? 0)
+      : 0;
   const sinPermiso = sp.aviso === "sin-permiso" && (
     <Notice tone="warn" className="mb-4">
       Esa sección es solo para administradores.
@@ -51,39 +60,80 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
           month={{ revenue: d?.month.revenue ?? 0, orders: d?.month.orders ?? 0, units: d?.month.units ?? 0 }}
         />
         <div className="mt-5 flex flex-col gap-5">
-          <HomeTasks badges={badges} admin={false} />
+          <HomeTasks badges={badges} admin={false} notify={prefs0.notifications} lowStock={0} />
           <QuickActions admin={false} />
         </div>
       </>
     );
   }
 
-  // Panel de negocio (administrador). Periodo del gráfico y rankings: 6 o 12 meses.
-  const months = sp.meses === "12" ? 12 : 6;
+  // Panel de negocio (administrador): widgets elegidos en Ajustes → Personalizar panel.
+  // Periodo y plataforma: los de la dirección o, si no, los predeterminados del usuario.
+  const prefs = await loadPrefs();
+  const dp = prefs.dashboard;
+  const period: PeriodKey = typeof sp.periodo === "string" && Object.hasOwn(PERIODS, sp.periodo) ? (sp.periodo as PeriodKey) : dp.period;
+  const platformParam = typeof sp.plataforma === "string" ? sp.plataforma : undefined;
+  const platformId = platformParam === "todas" ? null : platformParam && /^[0-9a-f-]{36}$/i.test(platformParam) ? platformParam : dp.platformId;
+  const opts = await loadSaleOptions();
+  const platformName = platformId ? (opts.platforms.find((p) => p.id === platformId)?.name ?? null) : null;
+  const q = (o: { periodo?: string; plataforma?: string | null }) => {
+    const u = new URLSearchParams();
+    const per = o.periodo ?? period;
+    if (per !== dp.period) u.set("periodo", per);
+    const pl = o.plataforma === undefined ? platformId : o.plataforma;
+    if ((pl ?? null) !== (dp.platformId ?? null)) u.set("plataforma", pl ?? "todas");
+    const s = u.toString();
+    return s ? `/?${s}` : "/";
+  };
   return (
     <>
       {sinPermiso}
       <PageHeader
         title={`Hola${user.fullName ? `, ${user.fullName.split(" ")[0]}` : ""}`}
-        description="Cómo va el negocio: ventas, beneficio bruto, stock y actividad. Solo datos reales."
+        description="Cómo va el negocio. Solo datos reales."
         actions={
-          <nav aria-label="Periodo" className="flex rounded-full border border-line-strong bg-surface p-1 text-[13px] font-semibold">
-            {[6, 12].map((m) => (
+          <Link href="/configuracion/panel" className={buttonClass("secondary", "sm")}>
+            <SlidersHorizontal size={16} strokeWidth={2.25} />
+            Personalizar panel
+          </Link>
+        }
+      />
+      <div className="flex flex-col gap-5">
+        <HomeTasks badges={badges} admin notify={prefs.notifications} lowStock={lowStock} />
+        <QuickActions admin />
+        <div className="flex flex-wrap items-center gap-2">
+          <nav aria-label="Periodo" className="no-scrollbar flex max-w-full overflow-x-auto rounded-full border border-line-strong bg-surface p-1 text-[13px] font-semibold">
+            {(Object.keys(PERIODS) as PeriodKey[]).map((k) => (
               <Link
-                key={m}
-                href={m === 6 ? "/" : "/?meses=12"}
-                aria-current={months === m ? "page" : undefined}
-                className={clsx("press whitespace-nowrap rounded-full px-3.5 py-1.5", months === m ? "bg-ink text-paper" : "text-ink-soft hover:text-ink")}
+                key={k}
+                href={q({ periodo: k })}
+                scroll={false}
+                aria-current={period === k ? "page" : undefined}
+                className={clsx("press whitespace-nowrap rounded-full px-3 py-1.5", period === k ? "bg-ink text-paper" : "text-ink-soft hover:text-ink")}
               >
-                {m} meses
+                {PERIODS[k]}
               </Link>
             ))}
           </nav>
-        }
-      />
-      <Suspense key={months} fallback={<DashboardSkeleton />}>
-        <BusinessDashboard months={months} badges={badges} />
-      </Suspense>
+          {opts.platforms.length > 1 && (
+            <PlatformFilter
+              value={platformId ?? ""}
+              options={opts.platforms.map((p) => ({ value: p.id, label: p.name, href: q({ plataforma: p.id }) }))}
+              allHref={q({ plataforma: null })}
+            />
+          )}
+        </div>
+        <Suspense key={`${period}-${platformId}`} fallback={<DashboardSkeleton />}>
+          <BusinessDashboard
+            items={dp.widgets}
+            period={period}
+            platformId={platformId}
+            platformName={platformName}
+            compare={dp.compare}
+            granularity={dp.granularity}
+          />
+        </Suspense>
+      </div>
     </>
   );
 }

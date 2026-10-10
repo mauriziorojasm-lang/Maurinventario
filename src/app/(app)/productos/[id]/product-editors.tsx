@@ -46,6 +46,7 @@ export function VariantEditor({
   const [price, setPrice] = useState(variant?.normal_sale_price != null ? String(variant.normal_sale_price) : "");
   const save = useServerAction(saveVariant);
   const del = useServerAction(deleteVariant);
+  const [armed, setArmed] = useState(false);
   return (
     <>
       {variant ? (
@@ -69,11 +70,13 @@ export function VariantEditor({
                 className="mr-auto"
                 disabled={del.pending}
                 onClick={async () => {
+                  // Doble pulsación para confirmar (evita borrados sin querer)
+                  if (!armed) return setArmed(true);
                   const r = await del.run(variant.id);
                   if (r.ok) setOpen(false);
                 }}
               >
-                Eliminar variante
+                {armed ? "¿Seguro? Pulsa otra vez" : "Eliminar variante"}
               </Button>
             )}
             <Button onClick={() => setOpen(false)}>Cancelar</Button>

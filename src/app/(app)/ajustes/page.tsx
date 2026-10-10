@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ListEditor } from "./list-editor";
 
-export const metadata: Metadata = { title: "Listas y ajustes" };
+export const metadata: Metadata = { title: "Listas" };
 
 export default async function SettingsPage() {
   await requireAdmin();
@@ -27,7 +27,7 @@ export default async function SettingsPage() {
   }
   return (
     <>
-      <PageHeader title="Listas y ajustes" description="Las opciones que aparecen en los desplegables de ventas y productos." />
+      <PageHeader title="Listas" back={{ href: "/configuracion", label: "Ajustes" }} description="Las opciones que aparecen en los desplegables de ventas y productos." />
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Plataformas de venta" description="«Con envío» muestra transportista, etiqueta y estado del envío al vender." padded={false}>
           <ListEditor list="platforms" kind="platform" rows={platforms.data ?? []} />

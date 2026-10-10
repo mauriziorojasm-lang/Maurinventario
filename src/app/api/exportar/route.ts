@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
     rows.push(...((data ?? []) as Record<string, unknown>[]));
     if (!data || data.length < chunk) break;
   }
+  // Historial de actividad (sin datos del informe)
+  await supabase.rpc("log_user_event", { p_action: "exportar", p_summary: `${report.title} exportado (${format.toUpperCase()}, ${rows.length} filas)` });
 
   const stamp = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date());
   const name = `maurinventario-${report.fileName}-${stamp}`;

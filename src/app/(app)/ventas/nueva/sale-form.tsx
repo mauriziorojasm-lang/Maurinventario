@@ -28,7 +28,9 @@ export function SaleForm({
   platforms,
   carriers,
   mobiles,
+  defaultPlatformId = null,
 }: {
+  defaultPlatformId?: string | null;
   isAdmin: boolean;
   today: string;
   responsibles: Option[];
@@ -40,7 +42,7 @@ export function SaleForm({
   const router = useRouter();
   const [date, setDate] = useState(today);
   const [responsible, setResponsible] = useState(ownResponsible?.id ?? (responsibles.length === 1 ? responsibles[0].id : ""));
-  const [platformId, setPlatformId] = useState("");
+  const [platformId, setPlatformId] = useState(defaultPlatformId ?? "");
   const [carrierId, setCarrierId] = useState("");
   const [shipping, setShipping] = useState<"pendiente" | "enviado">("pendiente");
   const [mobileId, setMobileId] = useState("");

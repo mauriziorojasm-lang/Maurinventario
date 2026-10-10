@@ -2,25 +2,32 @@
  * Inicio: «Tareas» pendientes y accesos rápidos. Mismos contadores que el
  * menú (una sola consulta). El vendedor solo ve lo suyo.
  */
-import { CheckCheck, ChevronRight, CirclePlus, Mail, MailCheck, Megaphone, PackageSearch, ShoppingCart, Truck, type LucideIcon } from "lucide-react";
+import { CheckCheck, ChevronRight, CirclePlus, Mail, MailCheck, Megaphone, PackageMinus, PackageSearch, ShoppingCart, Truck, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { clsx } from "@/components/ui";
 import type { Badges } from "@/lib/badges";
+import type { Prefs } from "@/lib/preferences";
 
 type Task = { href: string; label: string; done: string; n: number; icon: LucideIcon; strong?: boolean };
 
-export function HomeTasks({ badges, admin }: { badges: Badges; admin: boolean }) {
-  const tasks: Task[] = admin
+export function HomeTasks({ badges, admin, notify, lowStock }: { badges: Badges; admin: boolean; notify: Prefs["notifications"]; lowStock: number }) {
+  // Cada aviso se puede desactivar en Ajustes → Avisos
+  const all: (Task & { on: boolean })[] = admin
     ? [
-        { href: "/detectadas", label: "Ventas por confirmar", done: "Sin ventas por confirmar", n: badges.detected, icon: MailCheck, strong: true },
-        { href: "/envios", label: "Envíos pendientes", done: "Todo enviado", n: badges.shipments, icon: Truck, strong: true },
-        { href: "/anuncios?ver=por-retirar", label: "Anuncios por quitar", done: "Ningún anuncio por quitar", n: badges.listings, icon: Megaphone },
-        { href: "/correos", label: "Correos a revisar", done: "Correos al día", n: badges.emails, icon: Mail },
+        { href: "/detectadas", label: "Ventas por confirmar", done: "Sin ventas por confirmar", n: badges.detected, icon: MailCheck, strong: true, on: notify.detected },
+        { href: "/envios", label: "Envíos pendientes", done: "Todo enviado", n: badges.shipments, icon: Truck, strong: true, on: notify.shipments },
+        { href: "/anuncios?ver=por-retirar", label: "Anuncios por quitar", done: "Ningún anuncio por quitar", n: badges.listings, icon: Megaphone, on: notify.listings },
+        { href: "/correos", label: "Correos a revisar", done: "Correos al día", n: badges.emails, icon: Mail, on: notify.emails },
       ]
-    : [{ href: "/envios", label: "Envíos pendientes", done: "Todo enviado", n: badges.shipments, icon: Truck, strong: true }];
-  if (admin && badges.reviews > 0) {
-    tasks.push({ href: "/revision", label: "Pendientes de revisar", done: "", n: badges.reviews, icon: CheckCheck });
+    : [{ href: "/envios", label: "Envíos pendientes", done: "Todo enviado", n: badges.shipments, icon: Truck, strong: true, on: notify.shipments }];
+  if (admin && notify.lowStock) {
+    all.push({ href: `/productos?bajo=${notify.lowStockThreshold}`, label: `Stock bajo (≤ ${notify.lowStockThreshold} uds.)`, done: "Sin stock bajo", n: lowStock, icon: PackageMinus, on: true });
   }
+  if (admin && notify.imports && badges.reviews > 0) {
+    all.push({ href: "/revision", label: "Pendientes de revisar (importación)", done: "", n: badges.reviews, icon: CheckCheck, on: true });
+  }
+  const tasks: Task[] = all.filter((t) => t.on);
+  if (!tasks.length) return null;
   const pending = tasks.filter((t) => t.n > 0);
 
   return (

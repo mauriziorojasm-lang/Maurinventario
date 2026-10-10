@@ -9,11 +9,14 @@ type Point = { month: string; revenue: number; profit: number; orders: number; u
  * más estrecha = beneficio. Cifra solo en el último mes y en el máximo, y el
  * detalle de cada mes al pasar el ratón o tocar.
  */
-export function MonthlyBars({ data }: { data: Point[] }) {
+export function MonthlyBars({ data, unit = "mes", height = 220 }: { data: Point[]; unit?: "mes" | "semana" | "dia"; height?: number }) {
+  const axisLabel = (k: string) => (unit === "mes" ? monthLabel(k) : unit === "semana" ? dayMonth(k) : String(Number(k.slice(8, 10))));
+  const longLabel = (k: string) => (unit === "mes" ? monthLabel(k) : unit === "semana" ? `Semana del ${dayMonth(k)}` : dayMonth(k));
+  const every = data.length > 16 ? 5 : 1;
   const [hover, setHover] = useState<number | null>(null);
   const [asTable, setAsTable] = useState(false);
   const W = 640;
-  const H = 220;
+  const H = height;
   const pad = { l: 52, r: 12, t: 22, b: 28 };
   const innerW = W - pad.l - pad.r;
   const innerH = H - pad.t - pad.b;
@@ -38,7 +41,7 @@ export function MonthlyBars({ data }: { data: Point[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-[12.5px] text-muted">
-              <th className="py-1.5 font-semibold">Mes</th>
+              <th className="py-1.5 font-semibold">{unit === "mes" ? "Mes" : unit === "semana" ? "Semana" : "Día"}</th>
               <th className="py-1.5 text-right font-semibold">Vendido</th>
               <th className="py-1.5 text-right font-semibold">Beneficio</th>
               <th className="py-1.5 text-right font-semibold">Pedidos</th>
@@ -47,7 +50,7 @@ export function MonthlyBars({ data }: { data: Point[] }) {
           <tbody>
             {data.map((d) => (
               <tr key={d.month} className="border-t border-line/70">
-                <td className="py-1.5">{monthLabel(d.month)}</td>
+                <td className="py-1.5">{longLabel(d.month)}</td>
                 <td className="num py-1.5 text-right">{money(d.revenue)}</td>
                 <td className="num py-1.5 text-right">{money(d.profit)}</td>
                 <td className="num py-1.5 text-right">{units(d.orders)}</td>
@@ -85,7 +88,7 @@ export function MonthlyBars({ data }: { data: Point[] }) {
         viewBox={`0 0 ${W} ${H}`}
         className="h-auto w-full"
         role="img"
-        aria-label="Facturación y beneficio por mes en los últimos 12 meses"
+        aria-label={`Ingresos y beneficio bruto ${unit === "mes" ? "por mes" : unit === "semana" ? "por semana" : "por día"}`}
         onMouseLeave={() => setHover(null)}
       >
         {ticks.map((t) => (
@@ -126,9 +129,11 @@ export function MonthlyBars({ data }: { data: Point[] }) {
                   {compactEur(d.revenue)}
                 </text>
               )}
-              <text x={x} y={H - 9} textAnchor="middle" fontSize={11} className={hover === i ? "fill-ink" : "fill-muted"}>
-                {monthLabel(d.month)}
-              </text>
+              {(i % every === 0 || i === last || hover === i) && (
+                <text x={x} y={H - 9} textAnchor="middle" fontSize={11} className={hover === i ? "fill-ink" : "fill-muted"}>
+                  {axisLabel(d.month)}
+                </text>
+              )}
             </g>
           );
         })}
@@ -140,7 +145,7 @@ export function MonthlyBars({ data }: { data: Point[] }) {
           className="pointer-events-none absolute top-10 animate-fade rounded-[var(--radius-sm)] border border-line bg-surface px-3 py-2 text-[13px] shadow-[var(--shadow-pop)]"
           style={{ left: `clamp(0px, calc(${((pad.l + band * hover! + band / 2) / W) * 100}% - 80px), calc(100% - 170px))` }}
         >
-          <p className="font-semibold">{monthLabel(h.month)}</p>
+          <p className="font-semibold">{longLabel(h.month)}</p>
           <p className="num">Ventas: {money(h.revenue)}</p>
           <p className="num">Beneficio bruto: {money(h.profit)}</p>
           <p className="num text-muted">
@@ -150,6 +155,11 @@ export function MonthlyBars({ data }: { data: Point[] }) {
       )}
     </div>
   );
+}
+
+function dayMonth(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("es-ES", { day: "numeric", month: "short", timeZone: "UTC" }).replace(".", "");
 }
 
 function niceStep(raw: number) {

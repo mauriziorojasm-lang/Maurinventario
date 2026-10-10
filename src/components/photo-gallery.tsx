@@ -467,7 +467,7 @@ function Lightbox({ photos, start, name, onClose }: { photos: GalleryPhotoView[]
   function close() {
     if (closing) return;
     setClosing(true);
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = (window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "reduce");
     setTimeout(onClose, reduce ? 0 : 180);
   }
 

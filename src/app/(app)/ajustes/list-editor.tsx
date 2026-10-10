@@ -31,6 +31,7 @@ function RowEditor({ list, row, kind, onDone }: { list: Parameters<typeof saveLi
   const [v, setV] = useState(row);
   const { run, pending, error } = useServerAction(saveListItem);
   const del = useServerAction(archiveListItem);
+  const [armed, setArmed] = useState(false);
   const dirty = JSON.stringify(v) !== JSON.stringify(row) || !row.id;
   return (
     <li className="flex flex-wrap items-center gap-2 px-4 py-2.5">
@@ -83,8 +84,14 @@ function RowEditor({ list, row, kind, onDone }: { list: Parameters<typeof saveLi
         </Button>
       )}
       {kind === "simple" && row.id && row.uses === 0 && (list === "categories" || list === "brands") && (
-        <Button size="sm" variant="ghost" disabled={del.pending} onClick={() => del.run(list, row.id)}>
-          Eliminar
+        <Button
+          size="sm"
+          variant={armed ? "danger" : "ghost"}
+          disabled={del.pending}
+          onClick={() => (armed ? del.run(list, row.id) : setArmed(true))}
+          onBlur={() => setArmed(false)}
+        >
+          {armed ? "¿Seguro? Pulsa otra vez" : "Eliminar"}
         </Button>
       )}
       {(error || del.error) && <span className="w-full text-xs text-danger">{error ?? del.error}</span>}

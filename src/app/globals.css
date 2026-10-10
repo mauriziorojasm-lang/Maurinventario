@@ -50,8 +50,10 @@
   --shadow-pop: 0 24px 60px -24px rgba(20, 18, 16, 0.5);
 }
 
+/* Modo oscuro: automático (según el dispositivo) salvo que el usuario elija
+   «Claro» en Ajustes → Aspecto; o forzado si elige «Oscuro». */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-mode="light"]) {
     color-scheme: dark;
     --paper: #121110;
     --surface: #1b1917;
@@ -92,6 +94,179 @@
     --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.3);
     --shadow-pop: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
   }
+}
+:root[data-mode="dark"] {
+    color-scheme: dark;
+    --paper: #121110;
+    --surface: #1b1917;
+    --surface-2: #221f1d;
+    --ink: #f3efea;
+    --ink-soft: #ddd6ce;
+    --muted: #a69e95;
+    --faint: #7c746c;
+    --line: #2d2926;
+    --line-strong: #403a36;
+
+    --brand: #2bb3bd;
+    --brand-strong: #4cc4cd;
+    --brand-ink: #7dd6dc;
+    --brand-soft: #0d2a2d;
+    --on-brand: #04191b;
+    --brand-bright: #2bb3bd;
+
+    --chrome: #0b0a09;
+    --chrome-2: #1a1816;
+    --chrome-ink: #f4f1ec;
+
+    --good: #6cc070;
+    --good-soft: #15291a;
+    --good-ink: #9ad89c;
+    --on-good: #07140c;
+    --danger: #ff6b5e;
+    --danger-soft: #3a1714;
+    --warn: #f5a524;
+    --warn-soft: #33240c;
+    --info: #85b4e3;
+    --info-soft: #142536;
+
+    --tag: #f5d547;
+    --tag-ink: #3d3200;
+    --tag-adjust: #d9d0a5;
+
+    --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.3);
+    --shadow-pop: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+}
+
+/* Temas de color (Ajustes → Aspecto). Solo cambian los tonos de marca. */
+:root[data-palette="oceano"] {
+  --brand: #1d5fa8;
+  --brand-strong: #174d89;
+  --brand-ink: #134177;
+  --brand-soft: #e3edf8;
+  --on-brand: #ffffff;
+  --brand-bright: #5aa2ea;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="oceano"]:not([data-mode="light"]) {
+    --brand: #5aa2ea;
+    --brand-strong: #7bb6f0;
+    --brand-ink: #a3cdf5;
+    --brand-soft: #10243b;
+    --on-brand: #061322;
+    --brand-bright: #5aa2ea;
+  }
+}
+:root[data-palette="oceano"][data-mode="dark"] {
+  --brand: #5aa2ea;
+  --brand-strong: #7bb6f0;
+  --brand-ink: #a3cdf5;
+  --brand-soft: #10243b;
+  --on-brand: #061322;
+  --brand-bright: #5aa2ea;
+}
+:root[data-palette="bosque"] {
+  --brand: #2f6b3f;
+  --brand-strong: #26573a;
+  --brand-ink: #1f4a2c;
+  --brand-soft: #e4f0e6;
+  --on-brand: #ffffff;
+  --brand-bright: #5fb877;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="bosque"]:not([data-mode="light"]) {
+    --brand: #5fb877;
+    --brand-strong: #7cc78f;
+    --brand-ink: #a5dbb2;
+    --brand-soft: #12261a;
+    --on-brand: #06140b;
+    --brand-bright: #5fb877;
+  }
+}
+:root[data-palette="bosque"][data-mode="dark"] {
+  --brand: #5fb877;
+  --brand-strong: #7cc78f;
+  --brand-ink: #a5dbb2;
+  --brand-soft: #12261a;
+  --on-brand: #06140b;
+  --brand-bright: #5fb877;
+}
+:root[data-palette="ciruela"] {
+  --brand: #7a3e8f;
+  --brand-strong: #653276;
+  --brand-ink: #572a66;
+  --brand-soft: #f2e7f5;
+  --on-brand: #ffffff;
+  --brand-bright: #c48ad6;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="ciruela"]:not([data-mode="light"]) {
+    --brand: #c48ad6;
+    --brand-strong: #d2a3e0;
+    --brand-ink: #e2c3eb;
+    --brand-soft: #2a1631;
+    --on-brand: #1a0b20;
+    --brand-bright: #c48ad6;
+  }
+}
+:root[data-palette="ciruela"][data-mode="dark"] {
+  --brand: #c48ad6;
+  --brand-strong: #d2a3e0;
+  --brand-ink: #e2c3eb;
+  --brand-soft: #2a1631;
+  --on-brand: #1a0b20;
+  --brand-bright: #c48ad6;
+}
+:root[data-palette="teja"] {
+  --brand: #b5471b;
+  --brand-strong: #973a15;
+  --brand-ink: #8a3412;
+  --brand-soft: #fbe8df;
+  --on-brand: #ffffff;
+  --brand-bright: #f0875a;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="teja"]:not([data-mode="light"]) {
+    --brand: #f0875a;
+    --brand-strong: #f4a07c;
+    --brand-ink: #f7bfa3;
+    --brand-soft: #3a1a0e;
+    --on-brand: #1f0b04;
+    --brand-bright: #f0875a;
+  }
+}
+:root[data-palette="teja"][data-mode="dark"] {
+  --brand: #f0875a;
+  --brand-strong: #f4a07c;
+  --brand-ink: #f7bfa3;
+  --brand-soft: #3a1a0e;
+  --on-brand: #1f0b04;
+  --brand-bright: #f0875a;
+}
+:root[data-palette="grafito"] {
+  --brand: #3d4650;
+  --brand-strong: #2f363e;
+  --brand-ink: #2b3239;
+  --brand-soft: #e8ebee;
+  --on-brand: #ffffff;
+  --brand-bright: #aab6c2;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="grafito"]:not([data-mode="light"]) {
+    --brand: #aab6c2;
+    --brand-strong: #c3ccd5;
+    --brand-ink: #d9e0e6;
+    --brand-soft: #1f2429;
+    --on-brand: #0d1013;
+    --brand-bright: #aab6c2;
+  }
+}
+:root[data-palette="grafito"][data-mode="dark"] {
+  --brand: #aab6c2;
+  --brand-strong: #c3ccd5;
+  --brand-ink: #d9e0e6;
+  --brand-soft: #1f2429;
+  --on-brand: #0d1013;
+  --brand-bright: #aab6c2;
 }
 
 @theme inline {
@@ -394,6 +569,16 @@ dialog.mi-lightbox {
     animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* «Reducir animaciones» elegido en Ajustes (aunque el sistema no lo pida) */
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 @media print {
