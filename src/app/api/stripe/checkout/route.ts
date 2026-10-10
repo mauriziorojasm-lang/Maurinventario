@@ -49,6 +49,9 @@ export async function POST(request: NextRequest) {
       subscription_data: { metadata: { organization_id: user.orgId }, ...(keepTrial ? { trial_end: trialEnd } : {}) },
       metadata: { organization_id: user.orgId },
       locale: "es",
+      // Stripe activa por defecto «Managed Payments» (Stripe como vendedor, con comisión
+      // extra y códigos fiscales obligatorios). Aquí se usa el cobro normal.
+      ...({ managed_payments: { enabled: false } } as object),
       ...(process.env.STRIPE_AUTOMATIC_TAX === "1" ? { automatic_tax: { enabled: true }, customer_update: { address: "auto" as const } } : {}),
       success_url: `${base}/suscripcion?ok=pago`,
       cancel_url: `${base}/suscripcion`,
