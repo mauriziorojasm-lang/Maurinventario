@@ -41,3 +41,8 @@ grant select, insert, update, delete on storage.objects to authenticated;
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+
+-- Como en Supabase: el esquema de pg_cron existe pero no es accesible para los roles normales
+create schema if not exists cron;
+create table if not exists cron.job (jobid bigserial primary key, jobname text, schedule text, command text, active boolean default true);
+revoke all on schema cron from public;
