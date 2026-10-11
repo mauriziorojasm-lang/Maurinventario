@@ -61,7 +61,7 @@ window.Serie = (tl) => {
     el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ad89c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>${text}`;
     $("#scr").appendChild(el);
     tl.fromTo(el, { autoAlpha: 0, y: -16 }, { autoAlpha: 1, y: 0, duration: S.sp.duration, ease: S.sp.ease, immediateRender: false }, t);
-    tl.to(el, { autoAlpha: 0, duration: 0.25 }, tOut);
+    tl.to(el, { autoAlpha: 0, duration: 0.25 }, Math.max(tOut, t + S.sp.duration + 0.3));
   };
 
   /* ---- subtítulos: cada línea de voz en trozos cortos, palabra a palabra ---- */
