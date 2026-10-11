@@ -1,4 +1,4 @@
-# MaurInventario · Serie de 6 vídeos para TikTok, Reels y Shorts
+# Resellap · Serie de 6 vídeos para TikTok, Reels y Shorts
 
 ## Enfoque elegido (cuestionario)
 
@@ -78,7 +78,7 @@
   - Anillos sobre el dato del que se habla.
   - Toques con un círculo.
   - Zooms suaves y cambios de pantalla con fundido.
-- **Cierre (3,4 s):** logo MI + MAURINVENTARIO + texto final + «Comenta PALABRA y te paso el enlace» + `maurinventario.vercel.app`.
+- **Cierre (3,4 s):** logo MI + RESELLAP + texto final + «Comenta PALABRA y te paso el enlace» + `resellap.vercel.app`.
 - **Sonido:**
   - Música a −22 LUFS con sidechain bajo la voz.
   - Efectos de interfaz:
@@ -99,7 +99,7 @@
 **Voz**
 1. ¿Y si no tuvieras que apuntar a mano cada venta de Vinted?
 2. Abrir el correo, apuntar la venta, comprobar el precio…
-3. MaurInventario se conecta a tu Gmail y lee los correos de venta de Vinted y de Wallapop.
+3. Resellap se conecta a tu Gmail y lee los correos de venta de Vinted y de Wallapop.
 4. Cada pocos minutos revisa lo nuevo, detecta la venta con su producto, precio y comprador… y tú la confirmas con un toque.
 5. Y la etiqueta en PDF de Vinted se asocia sola a su venta, sin duplicarla.
 6. La de Wallapop, de momento, la subes tú.
@@ -113,14 +113,14 @@
 | 12,3–19,0 | Correo de venta (EJEMPLO) que cae dentro del móvil → Ventas detectadas: anillos en producto, precio y comprador → toque en «Sí, es una venta» → «Venta registrada.» | DETECTADA. CONFIRMAS CON UN TOQUE. | notificación, barrido, toque, éxito |
 | 19,4–24,3 | Correo «Tu etiqueta de envío» con PDF (EJEMPLO) → venta V-000152: «Ver etiqueta», Seguimiento y «Origen: Automática, desde el correo de Vinted» | LA ETIQUETA, A SU VENTA · ✓ Misma venta · sin duplicar | notificación, barrido, pop |
 | 24,7–27,1 | Anillo en «Cambiar por otra / subir archivo» | WALLAPOP: ETIQUETA A MANO | clic |
-| 27,6–30,4 | Comparación A MANO / CON MAURINVENTARIO | — | — |
+| 27,6–30,4 | Comparación A MANO / CON RESELLAP | — | — |
 | 30,7–34,1 | Cierre | MENOS TAREAS MANUALES. MÁS TIEMPO PARA VENDER. · Comenta **CORREO** | aire |
 
 **Grabación:** `/correos` (Gmail conectado) → `/detectadas` → **Sí, es una venta** → `/ventas/<venta con etiqueta que llegó por correo>`.
 
 **Copy:**
-> ¿Sigues apuntando cada venta de Vinted a mano? 📩 MaurInventario lee el correo, detecta la venta y tú solo la confirmas. Y la etiqueta en PDF de Vinted se pega sola a su venta. Comenta CORREO y te paso el enlace 👇
-> #vinted #wallapop #revender #automatizacion #productividad #ventasonline #segundamano #emprendedores #negocioonline #maurinventario
+> ¿Sigues apuntando cada venta de Vinted a mano? 📩 Resellap lee el correo, detecta la venta y tú solo la confirmas. Y la etiqueta en PDF de Vinted se pega sola a su venta. Comenta CORREO y te paso el enlace 👇
+> #vinted #wallapop #revender #automatizacion #productividad #ventasonline #segundamano #emprendedores #negocioonline #resellap
 
 ---
 
@@ -132,7 +132,7 @@
 **Voz**
 1. ¿Te ha pasado comprar algo y no recordar si todavía lo tienes en stock?
 2. Cuando tienes muchos productos, la memoria deja de funcionar.
-3. En MaurInventario buscas un producto y ves al momento sus unidades, su coste medio y de qué pedido vino cada unidad.
+3. En Resellap buscas un producto y ves al momento sus unidades, su coste medio y de qué pedido vino cada unidad.
 4. En inventario y lotes tienes todo el almacén: cuántas unidades te quedan y cuánto dinero tienes invertido en mercancía.
 5. Y los pedidos que aún no han llegado se quedan como pendientes hasta que los recibes.
 6. Menos desorden, menos confusiones y más control sobre tu almacén.
@@ -151,7 +151,7 @@
 
 **Copy:**
 > ¿Te ha pasado no saber si aún te queda algo en stock? 📦 Busca un producto y mira al momento cuántas unidades tienes, cuánto te costó y de qué pedido salió. Comenta STOCK y te paso el enlace 👇
-> #vinted #wallapop #stock #inventario #revender #segundamano #almacen #emprendedores #reventa #maurinventario
+> #vinted #wallapop #stock #inventario #revender #segundamano #almacen #emprendedores #reventa #resellap
 
 ---
 
@@ -163,7 +163,7 @@
 **Voz**
 1. ¿Vendes en Vinted o Wallapop y todavía lo apuntas todo en Excel?
 2. Al principio, controlas tus productos de memoria. Pero cuando se acumulan las ventas, los costes y los envíos, la cosa cambia.
-3. Con MaurInventario organizas tu inventario, registras tus ventas, controlas lo que te cuesta cada compra y ves cómo va tu negocio, desde un mismo sitio.
+3. Con Resellap organizas tu inventario, registras tus ventas, controlas lo que te cuesta cada compra y ves cómo va tu negocio, desde un mismo sitio.
 4. Nada de notas sueltas, hojas de cálculo y correos por todas partes.
 5. Si quieres tomarte tus ventas en serio, empieza por tener tus números bajo control.
 
@@ -180,7 +180,7 @@
 
 **Copy:**
 > ¿Todavía llevas tus ventas de Vinted y Wallapop en Excel? 📒 Inventario, ventas, costes y números en un solo sitio. Comenta APP y te paso el enlace 👇
-> #vinted #wallapop #revender #excel #segundamano #inventario #emprendedores #negocioonline #reventa #maurinventario
+> #vinted #wallapop #revender #excel #segundamano #inventario #emprendedores #negocioonline #reventa #resellap
 
 ---
 
@@ -192,7 +192,7 @@
 **Voz**
 1. ¿Sabes cuánto te queda de verdad de cada venta?
 2. Vendes por treinta y cinco lo que te costó veinte. ¿Quince de beneficio? ¿Y el transporte o las aduanas de esa compra?
-3. MaurInventario calcula cada venta con el coste real de su lote, incluidos los costes de la compra.
+3. Resellap calcula cada venta con el coste real de su lote, incluidos los costes de la compra.
 4. Ves el precio, el coste y lo que te queda. Y la rentabilidad de cada artículo.
 5. Es beneficio bruto, antes de los gastos generales, y la app te lo dice claro.
 6. Lo importante no es cuánto vendes. Es cuánto te queda.
@@ -213,7 +213,7 @@
 
 **Copy:**
 > Vender por 35 € algo que te costó 20 € no son 15 € limpios 👀 Mira cuánto te queda de verdad en cada venta. Comenta BENEFICIO y te paso el enlace 👇
-> #vinted #wallapop #revender #beneficio #margen #negocioonline #segundamano #emprendedores #reventa #maurinventario
+> #vinted #wallapop #revender #beneficio #margen #negocioonline #segundamano #emprendedores #reventa #resellap
 
 ---
 
@@ -225,7 +225,7 @@
 **Voz**
 1. ¿Tu negocio está creciendo y lo sigues llevando en hojas de cálculo?
 2. Al principio, una hoja de cálculo basta. Pero con más productos, más ventas y más envíos, necesitas algo más ordenado.
-3. MaurInventario reúne en un solo sitio tu inventario, tus ventas, tus compras y los números de tu negocio.
+3. Resellap reúne en un solo sitio tu inventario, tus ventas, tus compras y los números de tu negocio.
 4. Lo usas desde el ordenador o desde el móvil, y encuentras lo que buscas al momento.
 5. Es la diferencia entre ir apagando fuegos y saber exactamente cómo va tu negocio.
 6. Empieza a gestionar tus ventas como un profesional.
@@ -238,11 +238,11 @@
 | 18,2–22,4 | Inicio real en el ordenador con el móvil delante; búsqueda «Oakley» | ORDENADOR Y MÓVIL | barrido, clic |
 | 22,8–27,2 | Inicio en el móvil, anillo en los widgets | SABES CÓMO VA TU NEGOCIO | clic |
 | 27,6–30,4 | Móvil desenfocado | GESTIONA COMO UN PROFESIONAL | — |
-| 30,8–34,2 | Cierre | MAURINVENTARIO. TU NEGOCIO, BAJO CONTROL. · Comenta **ORDEN** | aire |
+| 30,8–34,2 | Cierre | RESELLAP. TU NEGOCIO, BAJO CONTROL. · Comenta **ORDEN** | aire |
 
 **Copy:**
 > Del Excel infinito a tenerlo todo en orden 💼 Inventario, ventas, compras y números, en el móvil y en el ordenador. Comenta ORDEN y te paso el enlace 👇
-> #vinted #wallapop #excel #organizacion #revender #emprendedores #negocioonline #segundamano #reventa #maurinventario
+> #vinted #wallapop #excel #organizacion #revender #emprendedores #negocioonline #segundamano #reventa #resellap
 
 ---
 
@@ -254,7 +254,7 @@
 **Voz**
 1. ¿Sabes qué productos te dan más beneficio?
 2. No basta con vender. Necesitas entender qué está pasando en tu negocio.
-3. El panel de MaurInventario te enseña tus ingresos, tu beneficio bruto, el margen y tu stock, del periodo que elijas.
+3. El panel de Resellap te enseña tus ingresos, tu beneficio bruto, el margen y tu stock, del periodo que elijas.
 4. Ves la evolución de tus ventas, los artículos más vendidos, cuánto vendes en cada plataforma y la rentabilidad de cada artículo.
 5. Y puedes personalizarlo: eliges qué ver, en qué orden y con qué tamaño.
 6. Menos intuición. Más decisiones con datos.
@@ -273,13 +273,13 @@
 
 **Copy:**
 > ¿Sabes qué artículo te deja más margen y en qué plataforma vendes más? 📊 Tu panel te lo enseña de un vistazo. Comenta PANEL y te paso el enlace 👇
-> #vinted #wallapop #datos #dashboard #revender #negocioonline #emprendedores #segundamano #reventa #maurinventario
+> #vinted #wallapop #datos #dashboard #revender #negocioonline #emprendedores #segundamano #reventa #resellap
 
 ---
 
 ## 2. Subtítulos
 
-- **Texto:** dicen exactamente la voz, en trozos de unas 24 letras. Cada palabra se enciende al decirse. «MaurInventario» va en turquesa.
+- **Texto:** dicen exactamente la voz, en trozos de unas 24 letras. Cada palabra se enciende al decirse. «Resellap» va en turquesa.
 - **Gancho:** es el titular grande y no lleva subtítulo.
 - **Palabras destacadas:** son las que van en turquesa en cada tabla.
 

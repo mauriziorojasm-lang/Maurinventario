@@ -1,14 +1,16 @@
-{"A1": "¿Vendes en Vinted o Wallapop?",
+{
+ "A1": "¿Vendes en Vinted o Wallapop?",
  "A2": "Entonces sabes lo que es tener ventas por gestionar, inventario que controlar, envíos pendientes... y números que cuadrar.",
- "B1": "Con MaurInventario, tienes todo tu negocio bajo control, desde un solo lugar.",
+ "B1": "Con Riselap, tienes todo tu negocio bajo control, desde un solo lugar.",
  "B2": "Organiza tus productos, controla tu stock y consulta tus ventas y beneficios... sin volverte loco con hojas de cálculo.",
  "C1": "Controla qué tienes en almacén, cuánto te cuesta cada producto, qué has vendido, cuánto has ingresado... y cuál es tu beneficio.",
  "C2": "Todo organizado, para que sepas cómo va tu negocio en cada momento.",
- "D1": "Y aquí viene lo interesante: MaurInventario automatiza tareas que antes hacías a mano.",
+ "D1": "Y aquí viene lo interesante: Riselap automatiza tareas que antes hacías a mano.",
  "D2": "Cuando te llega un correo de venta, la venta se detecta sola, y la confirmas con un toque.",
  "D3": "Y cuando llega la etiqueta de envío de Vinted, se asocia a su venta... sin duplicarla.",
  "D4": "Menos trabajo manual. Menos errores. Más tiempo para hacer crecer tu negocio.",
  "E1": "Tanto si estás empezando como si ya gestionas cientos de productos,",
  "E2": "necesitas algo más que una lista de ventas: datos claros, y herramientas que te faciliten el trabajo.",
  "F1": "Deja de perder tiempo organizándolo todo a mano.",
- "F2": "Dedícate a vender. Del resto, se encarga MaurInventario."}
+ "F2": "Dedícate a vender. Del resto, se encarga Riselap."
+}

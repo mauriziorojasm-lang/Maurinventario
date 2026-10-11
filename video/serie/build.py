@@ -12,7 +12,7 @@ import json, os, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 TOOLS = os.path.join(HERE, "../../.claude/skills/video-saas-premium/scripts/audio_tools.py")
 MUSIC = os.path.join(HERE, "audio/music-track.mp3")   # la pista de 80 s del estilo elegido (B); su drop está en 19 s
-URL = "maurinventario.vercel.app"
+URL = "resellap.vercel.app"
 
 # ---------------------------------------------------------------- utilidades
 CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="#04191b" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
@@ -276,7 +276,7 @@ V["v4"] = dict(
 <div class="card" id="cmp" style="left:60px;top:520px;width:960px;padding:36px 36px;display:grid;grid-template-columns:1fr 1fr;gap:26px">
   <div><div style="font:700 26px 'BC';letter-spacing:.16em;color:#ff8a7a">A MANO</div>
     <div class="c1" style="font:600 34px/1.4 'PS';margin-top:18px;color:#b9b1a8">Abrir el correo<br />Apuntar la venta<br />Comprobar precio<br />Descontar stock<br />Subir la etiqueta</div></div>
-  <div style="border-left:2px solid #2d2926;padding-left:26px"><div style="font:700 26px 'BC';letter-spacing:.16em;color:var(--brand)">CON MAURINVENTARIO</div>
+  <div style="border-left:2px solid #2d2926;padding-left:26px"><div style="font:700 26px 'BC';letter-spacing:.16em;color:var(--brand)">CON RESELLAP</div>
     <div class="c2" style="font:650 34px/1.4 'PS';margin-top:18px">✓ Venta detectada<br />✓ Confirmas con un toque<br />✓ Stock descontado<br />✓ Etiqueta de Vinted vinculada</div></div>
 </div>
 <div class="ttl sm" id="t1" data-w="Lee tus *correos de venta*"></div>
@@ -307,9 +307,9 @@ V["v4"] = dict(
   S.cam(S.V("L4", 6), { px: 195, py: 300, s: 1.2, fy: 1090 }, 0.8);
   S.ring(S.V("L4", 11), "detectadas", [24, 315, 250, 30], S.V("L4", 17));
   S.ring(S.V("L4", 12), "detectadas", [265, 300, 105, 50], S.V("L4", 17));
-  S.ring(S.V("L4", 14), "detectadas", [24, 345, 200, 22], S.V("L4", 17));
-  S.ring(S.V("L4", 16), "detectadas", [33, 481, 157, 44], S.V("L4", 21) + 0.2, 4);
-  S.tap(S.V("L4", 21), "detectadas", 111, 503);
+  S.ring(S.V("L4", 14), "detectadas", [24, 343, 330, 22], S.V("L4", 17));
+  S.ring(S.V("L4", 16), "detectadas", [33, 462, 157, 44], S.V("L4", 21) + 0.2, 4);
+  S.tap(S.V("L4", 21), "detectadas", 111, 484);
   S.page(S.V("L4", 21) + 0.12, "detectadas-ok", { y: 160, x: 0 });
   S.toast(S.V("L4", 21) + 0.15, "Venta registrada.", S.V("L5", 9) - 0.3);
   // la etiqueta en PDF de Vinted se asocia a su venta
@@ -402,7 +402,7 @@ V["v5"] = dict(
 V["v6"] = dict(
     title="Tu negocio merece algo mejor que mil hojas de cálculo",
     cover=("Serie · 5/6", "Más que *mil hojas de cálculo*"),
-    fin="MaurInventario. *Tu negocio, bajo control.*", cta="Comenta <b>ORDEN</b> y te paso el enlace",
+    fin="Resellap. *Tu negocio, bajo control.*", cta="Comenta <b>ORDEN</b> y te paso el enlace",
     pages=["inventario", "ventas", "compras", "inicio", "productos-buscar"],
     gaps={},
     hook_acc=[3, 9, 10, 11],
@@ -478,7 +478,8 @@ def build(vid):
         t += align[k][-1][2]
     end_t = round(t + 0.35, 3)
     dur = round(end_t + 3.4, 2)
-    vo = {k: [[w.replace("...", "…"), round(starts[k] + s, 3), round(starts[k] + e, 3)] for w, s, e in align[k]] for k in keys}
+    show = lambda w: w.replace("...", "…").replace("Riselap", "Resellap")   # la voz dice «riselap»; en pantalla, «Resellap»
+    vo = {k: [[show(w), round(starts[k] + s, 3), round(starts[k] + e, 3)] for w, s, e in align[k]] for k in keys}
     json.dump(starts, open(os.path.join(d, "starts.json"), "w"))
     open(os.path.join(d, "vo.js"), "w").write(f"// generado por build.py\nwindow.VO = {json.dumps(vo, ensure_ascii=False)};\nwindow.END = {end_t};\n")
     run = lambda *a: subprocess.run(["python3", TOOLS, *a], check=True, capture_output=True, text=True).stdout.strip().splitlines()[-1]
@@ -506,7 +507,7 @@ def build(vid):
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=1080, height=1920" />
-<title>MaurInventario · {spec['title']}</title>
+<title>Resellap · {spec['title']}</title>
 <script src="kit/vendor/gsap.min.js"></script>
 <script src="kit/vendor/motion.js"></script>
 <script src="kit/premium.js"></script>
@@ -528,8 +529,8 @@ def build(vid):
     <div id="subs"></div>
     <div id="cov"><div class="k">{kick}</div><div class="h" data-w="{head}"></div></div>
     <div id="end">
-      <div class="tile">MI</div>
-      <div class="wm"><span class="w"><b>MAUR</b>INVENTARIO</span></div>
+      <div class="tile">R</div>
+      <div class="wm"><span class="w"><b>RESELL</b>AP</span></div>
       <div class="fin" data-w="{fin}"></div>
       <div class="cta">{spec['cta']}</div>
       <div class="url">{URL}</div>
@@ -549,7 +550,7 @@ document.fonts.ready.then(() => {{
   // gancho: el titular entra palabra a palabra con la voz
   S.say("#hook", "H", 0, S.V("L2", 0) - 0.35);
 {spec['js']}
-  S.subs({json.dumps(keys[1:])}, {{ hl: ["MaurInventario"] }});
+  S.subs({json.dumps(keys[1:])}, {{ hl: ["Resellap"] }});
   S.end(END);
   window.__timelines = window.__timelines || {{}};
   window.__timelines["main"] = tl;
