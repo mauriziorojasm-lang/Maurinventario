@@ -66,7 +66,7 @@ Usa la cuenta **resellap.app@gmail.com** en todo este paso.
    - Tipo de aplicación: **Aplicación web**
    - Nombre: `Resellap web`
    - **URIs de redireccionamiento autorizados** → Agregar URI → pega exactamente:
-     `https://resellap.vercel.app/api/correo/oauth`
+     `https://resellap.com/api/correo/oauth`
    - Pulsa **Crear**.
 9. Aparecen dos datos: **ID de cliente** (termina en `.apps.googleusercontent.com`) y **Secreto del cliente**. Cópialos en un sitio seguro. **No los compartas ni los pegues en GitHub.**
 
@@ -90,7 +90,7 @@ Usa la cuenta **resellap.app@gmail.com** en todo este paso.
 
 ### Paso D · Conectar Gmail en la app
 
-1. Abre **resellap.vercel.app** con tu usuario de administrador.
+1. Abre **resellap.com** con tu usuario de administrador.
 2. Menú → **Ventas por correo** → **Conectar Gmail**.
 3. Elige la cuenta **resellap.app@gmail.com** (si eliges otra, la app no la acepta).
 4. Google avisa: «Google no ha verificado esta aplicación». Pulsa **Configuración avanzada** → **Ir a Resellap (no seguro)**. Es tu propia app; el aviso sale porque no se ha pasado la verificación pública de Google.

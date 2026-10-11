@@ -409,8 +409,8 @@ Resellap usa **Supabase Auth** con **email y contraseña**:
 
 | Campo | Desarrollo | Producción |
 |---|---|---|
-| **Site URL** | `http://localhost:3000` | `https://resellap.vercel.app` (tu dominio de Vercel, paso 12) |
-| **Redirect URLs** | `http://localhost:3000/**` | `https://resellap.vercel.app/**` y `https://*-TU-USUARIO.vercel.app/**` (para los Preview) |
+| **Site URL** | `http://localhost:3000` | `https://resellap.com` (tu dominio) |
+| **Redirect URLs** | `http://localhost:3000/**` | `https://resellap.com/**` y `https://*-TU-USUARIO.vercel.app/**` (para los Preview) |
 
 > La app no envía emails de confirmación ni de recuperación: el admin pone y cambia las contraseñas desde 📦 Usuarios. Por eso no necesitas configurar un servidor de correo.
 
@@ -485,7 +485,7 @@ Lo que puede hacer cada rol (lo aplica la base de datos, no solo la pantalla):
 
 | Entorno de Vercel | Cuándo se usa | Qué valores poner |
 |---|---|---|
-| **Production** | La web real (`resellap.vercel.app`), cada push a `main` | Los del proyecto Supabase de **producción** |
+| **Production** | La web real (`resellap.com`), cada push a `main` | Los del proyecto Supabase de **producción** |
 | **Preview** | Las URL de prueba que Vercel crea para cada rama distinta de `main` | Los del proyecto Supabase de **desarrollo** |
 | **Development** | Solo si usas `vercel dev` o `vercel env pull` en tu ordenador | Los de **desarrollo** (opcional; con `.env.local` basta) |
 
@@ -653,7 +653,7 @@ Vercel despliega
 | **Código** | Tu ordenador, o una rama distinta de `main` | Rama `main` en GitHub |
 | **Base de datos** | Proyecto Supabase `resellap-dev` | Proyecto Supabase `resellap` |
 | **Variables** | `.env.local` y Vercel «Preview» con los valores de **dev** | Vercel «Production» con los valores de **producción** |
-| **URL** | `http://localhost:3000` y las URL Preview de Vercel | `https://resellap.vercel.app` (o tu dominio) |
+| **URL** | `http://localhost:3000` y las URL Preview de Vercel | `https://resellap.com` |
 | **Deploy** | `npm run dev`, o push a una rama → Preview | Push o merge a `main` → Production |
 | **Migraciones** | Primero aquí: `link` dev + `db push` | Después, cuando todo funcione en dev |
 | **Datos** | De prueba; puedes importar el Excel tantas veces como quieras (o crear el proyecto de nuevo) | Los reales: no se prueban cosas aquí |

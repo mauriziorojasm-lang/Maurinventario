@@ -78,7 +78,7 @@
   - Anillos sobre el dato del que se habla.
   - Toques con un círculo.
   - Zooms suaves y cambios de pantalla con fundido.
-- **Cierre (3,4 s):** logo MI + RESELLAP + texto final + «Comenta PALABRA y te paso el enlace» + `resellap.vercel.app`.
+- **Cierre (3,4 s):** logo R + RESELLAP + texto final + «Comenta PALABRA y te paso el enlace» + `resellap.com`.
 - **Sonido:**
   - Música a −22 LUFS con sidechain bajo la voz.
   - Efectos de interfaz:

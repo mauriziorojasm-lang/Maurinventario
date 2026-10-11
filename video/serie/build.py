@@ -12,7 +12,7 @@ import json, os, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 TOOLS = os.path.join(HERE, "../../.claude/skills/video-saas-premium/scripts/audio_tools.py")
 MUSIC = os.path.join(HERE, "audio/music-track.mp3")   # la pista de 80 s del estilo elegido (B); su drop está en 19 s
-URL = "resellap.vercel.app"
+URL = "resellap.com"
 
 # ---------------------------------------------------------------- utilidades
 CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="#04191b" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
