@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1080, height=1920" />
+<title>MaurInventario · ¿Sabes cuánto ganas realmente con cada venta?</title>
+<script src="kit/vendor/gsap.min.js"></script>
+<script src="kit/vendor/motion.js"></script>
+<script src="kit/premium.js"></script>
+<script src="kit/serie.js"></script>
+<script src="audio/v2/vo.js"></script>
+<link rel="stylesheet" href="kit/serie.css" />
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="42.1" data-width="1080" data-height="1920">
+  <div id="scene" class="clip stage" data-start="0" data-duration="42.1" data-track-index="0">
+    <div id="bg" class="stage"></div>
+    <div class="ttl hook" id="hook" data-w="Vender mucho no significa *ganar* *mucho.* ¿Sabes cuánto te queda *de* *verdad?*"></div>
+
+<div class="card" id="calc" style="left:150px;top:560px;width:780px;padding:40px 46px">
+  <div style="font:700 24px 'BC';letter-spacing:.18em;color:#8f877f">EJEMPLO</div>
+  <div class="row r1" style="display:flex;justify-content:space-between;font:600 44px 'PS';margin-top:26px"><span>Venta</span><span>35,00 €</span></div>
+  <div class="row r2" style="display:flex;justify-content:space-between;font:600 44px 'PS';margin-top:18px;color:#ddd6ce"><span>Compra</span><span>− 20,00 €</span></div>
+  <div style="height:2px;background:#3a3531;margin:26px 0"></div>
+  <div class="row r3" style="display:flex;justify-content:space-between;align-items:center;font:700 64px 'BC'"><span>Beneficio</span><span><span class="q" style="color:#6cc070">15,00 €</span></span></div>
+  <div class="row r4" style="display:flex;justify-content:space-between;font:600 38px 'PS';margin-top:28px;color:#ffb020"><span>¿Transporte?</span><span>?</span></div>
+  <div class="row r5" style="display:flex;justify-content:space-between;font:600 38px 'PS';margin-top:14px;color:#ffb020"><span>¿Aduanas?</span><span>?</span></div>
+</div>
+<div class="card" id="dsk" style="left:40px;top:700px;width:1000px;height:286px;overflow:hidden;padding:0;border-radius:18px">
+  <img src="assets/ui/venta.png" style="position:absolute;left:-1518px;top:-429px;width:3432px" alt="" />
+  <div class="ring" id="dr1" style="left:4px;top:8px;width:236px;height:270px;opacity:0"></div>
+  <div class="ring" id="dr2" style="left:416px;top:8px;width:236px;height:270px;opacity:0"></div>
+  <div class="ring" id="dr3" style="left:660px;top:8px;width:244px;height:270px;opacity:0"></div>
+</div>
+<div class="card" id="dskl" style="left:40px;top:610px;width:1000px;padding:0;background:none;border:0;box-shadow:none;font:700 26px 'BC';letter-spacing:.12em;color:#8f877f">VENTA V-000152 · OAKLEY HSTN · VISTA DE ORDENADOR</div>
+<div class="ttl sm" id="t1" data-w="El *coste real* de cada lote"></div>
+<div class="ttl sm" id="t2" data-w="Precio, coste y *lo que te queda*"></div>
+<div class="ttl sm" id="t3" data-w="Beneficio *bruto*, sin trampas"></div>
+<div class="ttl" id="t4" data-w="No es cuánto vendes. *Es cuánto te queda.*"></div>
+
+    <div id="dev"><div id="scrwrap"><div id="scr">
+          <div class="pg" id="pg-ventas"><img src="assets/ui-m/ventas.png" alt="" /></div>
+          <div class="pg" id="pg-compra"><img src="assets/ui-m/compra.png" alt="" /></div>
+          <div class="pg" id="pg-inicio"><img src="assets/ui-m/inicio.png" alt="" /></div>
+          <img id="hdr" src="assets/ui-m/hdr.png" alt="" />
+          <img id="nav" src="assets/ui-m/nav.png" alt="" />
+    </div></div></div>
+    <div id="subs"></div>
+    <div id="cov"><div class="k">Serie · 2/6</div><div class="h" data-w="¿Cuánto te *queda* de cada venta?"></div></div>
+    <div id="end">
+      <div class="tile">MI</div>
+      <div class="wm"><span class="w"><b>MAUR</b>INVENTARIO</span></div>
+      <div class="fin" data-w="Controla tus números, *no vendas a ciegas.*"></div>
+      <div class="cta">Descubre MaurInventario.</div>
+      <div class="url">maurinventario.vercel.app</div>
+    </div>
+    <div id="grain" class="stage"></div>
+  </div>
+  <audio id="vo" src="audio/v2/vo-mix.mp3" data-start="0" data-duration="42.1" data-volume="1" data-track-index="6"></audio>
+  <audio id="music" src="audio/v2/music-mix.mp3" data-start="0" data-duration="42.1" data-volume="0.9" data-track-index="7"></audio>
+  <audio id="fx1" src="assets/sfx/ui/tick.wav" data-start="3.667" data-duration="0.341" data-volume="0.35" data-track-index="2"></audio>
+  <audio id="fx2" src="assets/sfx/ui/pop-hi.wav" data-start="5.577" data-duration="0.38" data-volume="0.3" data-track-index="3"></audio>
+  <audio id="fx3" src="assets/sfx/ui/pop-hi.wav" data-start="7.190" data-duration="0.38" data-volume="0.3" data-track-index="4"></audio>
+  <audio id="fx4" src="assets/sfx/ui/snap.wav" data-start="8.403" data-duration="0.43" data-volume="0.35" data-track-index="5"></audio>
+  <audio id="fx5" src="assets/sfx/ui/tick.wav" data-start="11.670" data-duration="0.341" data-volume="0.3" data-track-index="2"></audio>
+  <audio id="fx6" src="assets/sfx/ui/tick.wav" data-start="11.843" data-duration="0.341" data-volume="0.3" data-track-index="3"></audio>
+  <audio id="fx7" src="assets/sfx/ui/swish-low.wav" data-start="13.390" data-duration="0.561" data-volume="0.4" data-track-index="4"></audio>
+  <audio id="fx8" src="assets/sfx/ui/click-soft.wav" data-start="22.630" data-duration="0.385" data-volume="0.4" data-track-index="5"></audio>
+  <audio id="fx9" src="assets/sfx/ui/click-soft.wav" data-start="25.657" data-duration="0.385" data-volume="0.4" data-track-index="2"></audio>
+  <audio id="fx10" src="assets/sfx/ui/tick.wav" data-start="32.650" data-duration="0.341" data-volume="0.35" data-track-index="3"></audio>
+  <audio id="fx11" src="assets/sfx/ui/swish-low.wav" data-start="34.630" data-duration="0.561" data-volume="0.4" data-track-index="4"></audio>
+  <audio id="fx12" src="assets/sfx/ui/air-up.wav" data-start="38.700" data-duration="0.718" data-volume="0.4" data-track-index="5"></audio>
+</div>
+<script>
+document.fonts.ready.then(() => {
+  const tl = gsap.timeline({ paused: true });
+  MKP.words();
+  const S = Serie(tl);
+  if (SerieCover(() => { gsap.set("#dev", { autoAlpha: 1, x: 187, y: 700, scale: 1 }); gsap.set("#pg-ventas", { autoAlpha: 1 }); gsap.set(".ttl, .nt, .xls, .note, .card, .mail", { autoAlpha: 0 }); })) return;
+  // gancho: el titular entra palabra a palabra con la voz
+  S.say("#hook", "H", 0, S.V("L2", 0) - 0.35);
+
+  // gancho: muchas ventas pasando… ¿y cuánto te queda?
+  S.page(0, "ventas", { x: 0, y: 450 });
+  S.phoneIn(0.1, { ...S.HOME, fy: 1420 });
+  S.cam(S.V("L2", 0) - 0.5, S.HOME, 0.7);
+  S.scroll(0.4, "ventas", 2600, S.V("H", 6) - 0.4, "power1.in");
+  S.scroll(S.V("H", 6), "ventas", 0, 0.7, "expo.out");
+  S.ring(S.V("H", 10), "ventas", [16, 385, 358, 70], S.V("L2", 0));
+  // el ejemplo (ilustrativo)
+  gsap.set("#calc .row", { autoAlpha: 0 });
+  tl.to("#dev", { autoAlpha: 0.18, filter: "blur(6px)", duration: 0.5 }, S.V("L2", 0) - 0.3);
+  tl.fromTo("#calc", { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: S.sp.duration, ease: S.sp.ease, immediateRender: false }, S.V("L2", 0) - 0.2);
+  tl.fromTo("#calc .r2", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3, immediateRender: false }, S.V("L2", 3));
+  tl.fromTo("#calc .r1", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3, immediateRender: false }, S.V("L2", 9));
+  tl.fromTo("#calc .r3", { autoAlpha: 0, scale: 0.9 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: "back.out(2)", immediateRender: false }, S.V("L2", 12));
+  tl.to("#calc .q", { color: "#ffb020", duration: 0.2 }, S.V("L2", 16));
+  tl.fromTo("#calc .r4", { autoAlpha: 0, x: -30 }, { autoAlpha: 1, x: 0, duration: 0.35, immediateRender: false }, S.V("L2", 20));
+  tl.fromTo("#calc .r5", { autoAlpha: 0, x: -30 }, { autoAlpha: 1, x: 0, duration: 0.35, immediateRender: false }, S.V("L2", 22));
+  tl.to("#calc", { autoAlpha: 0, y: -40, duration: 0.35, ease: "power2.in" }, S.V("L3", 0) - 0.3);
+  tl.to("#dev", { autoAlpha: 1, filter: "blur(0px)", duration: 0.4 }, S.V("L3", 0) - 0.2);
+  // coste real del lote: pedido con sus costes
+  S.page(S.V("L3", 0) - 0.2, "compra", { y: 380 });
+  S.title("#t1", S.V("L3", 0), S.V("L4", 0) - 0.3);
+  S.ring(S.V("L3", 9), "compra", [16, 465, 358, 150], S.V("L3", 15));
+  S.ring(S.V("L3", 19), "compra", [196, 465, 178, 75], S.V("L4", 0));
+  S.scroll(S.V("L3", 22), "compra", 850, 0.8);
+  S.ring(S.V("L3", 23), "compra", [16, 1100, 358, 190], S.V("L4", 0));
+  // en cada venta: precio, coste y beneficio (vista de ordenador, mismo dato)
+  S.title("#t2", S.V("L4", 0), S.V("L5", 0) - 0.3);
+  S.page(S.V("L4", 0) - 0.1, "ventas", { y: 450 });
+  tl.to("#dev", { autoAlpha: 0.25, duration: 0.3 }, S.V("L4", 0));
+  tl.fromTo("#dskl", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3, immediateRender: false }, S.V("L4", 0));
+  tl.to("#dskl", { autoAlpha: 0, duration: 0.2 }, S.V("L4", 12) - 0.3);
+  tl.fromTo("#dsk", { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: S.sp.duration, ease: S.sp.ease, immediateRender: false }, S.V("L4", 0));
+  tl.fromTo("#dr1", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25, immediateRender: false }, S.V("L4", 4));
+  tl.fromTo("#dr2", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25, immediateRender: false }, S.V("L4", 7));
+  tl.fromTo("#dr3", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25, immediateRender: false }, S.V("L4", 9));
+  tl.to("#dsk", { autoAlpha: 0, y: -30, duration: 0.3 }, S.V("L4", 12) - 0.3);
+  tl.to("#dev", { autoAlpha: 1, duration: 0.3 }, S.V("L4", 12) - 0.2);
+  S.page(S.V("L4", 12) - 0.2, "inicio", { y: 2640 });         // rentabilidad por artículo
+  S.ring(S.V("L4", 18), "inicio", [16, 2690, 358, 440], S.V("L5", 0));
+  // beneficio bruto, sin gastos del negocio
+  S.title("#t3", S.V("L5", 0), S.V("L6", 0) - 0.3);
+  S.scroll(S.V("L5", 0), "inicio", 880, 0.9);
+  S.cam(S.V("L5", 3), { px: 110, py: 280, s: 1.5, fy: 1000 }, 0.8);
+  S.ring(S.V("L5", 7), "inicio", [16, 1040, 176, 190], S.V("L6", 0));
+  S.ring(S.V("L5", 11), "inicio", [26, 1168, 156, 50], S.V("L6", 0), 3);
+  // cierre con la idea
+  S.cam(S.V("L6", 0) - 0.2, S.HOME, 0.7);
+  tl.to("#dev", { autoAlpha: 0.2, filter: "blur(6px)", duration: 0.5 }, S.V("L6", 0) - 0.2);
+  S.say("#t4", "L6", 3, null);
+
+  S.subs(["L2", "L3", "L4", "L5", "L6"], { hl: ["MaurInventario"] });
+  S.end(END);
+  window.__timelines = window.__timelines || {};
+  window.__timelines["main"] = tl;
+  tl.seek(0);
+});
+</script>
+</body>
+</html>

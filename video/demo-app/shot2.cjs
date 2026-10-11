@@ -19,6 +19,7 @@ const fs = require("fs");
     const p = await ctxFor(s.vw || 1560, s.vh || 878, s.dpr || 2, s.mobile);
     await p.goto("http://localhost:3000" + s.path, { waitUntil: "networkidle", timeout: 120000 });
     await p.addStyleTag({ content: "nextjs-portal{display:none!important} *{caret-color:transparent!important}" });
+    if (s.full && s.mobile) await p.addStyleTag({ content: ".safe-bottom.fixed{display:none!important} header.sticky{position:relative!important}" });
     for (const a of s.actions || []) {
       if (a.click) await p.click(a.click);
       if (a.fill) await p.fill(a.fill, a.value);

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1080, height=1920" />
+<title>MaurInventario · Tu inventario puede estar costándote dinero</title>
+<script src="kit/vendor/gsap.min.js"></script>
+<script src="kit/vendor/motion.js"></script>
+<script src="kit/premium.js"></script>
+<script src="kit/serie.js"></script>
+<script src="audio/v3/vo.js"></script>
+<link rel="stylesheet" href="kit/serie.css" />
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="33.22" data-width="1080" data-height="1920">
+  <div id="scene" class="clip stage" data-start="0" data-duration="33.22" data-track-index="0">
+    <div id="bg" class="stage"></div>
+    <div class="ttl hook" id="hook" data-w="¿Te ha pasado comprar algo y no recordar si *todavía* *lo* *tienes* *en* *stock?*"></div>
+
+<div class="note" id="note" style="left:300px;top:760px;transform:rotate(-3deg);width:480px;font-size:36px">Oakley HSTN… ¿me quedan?<b>¿5? ¿10? ¿ninguna?</b></div>
+<div class="ttl sm" id="t1" data-w="Busca y *lo sabes al momento*"></div>
+<div class="ttl sm" id="t2" data-w="Todo tu almacén, *en euros*"></div>
+<div class="ttl sm" id="t3" data-w="Pedidos *pendientes* de llegar"></div>
+<div class="ttl" id="t4" data-w="Menos desorden. *Más control.*"></div>
+
+    <div id="dev"><div id="scrwrap"><div id="scr">
+          <div class="pg" id="pg-productos"><img src="assets/ui-m/productos.png" alt="" /></div>
+          <div class="pg" id="pg-productos-buscar"><img src="assets/ui-m/productos-buscar.png" alt="" /></div>
+          <div class="pg" id="pg-producto"><img src="assets/ui-m/producto.png" alt="" /></div>
+          <div class="pg" id="pg-inventario"><img src="assets/ui-m/inventario.png" alt="" /></div>
+          <div class="pg" id="pg-compras"><img src="assets/ui-m/compras.png" alt="" /></div>
+          <div class="pg" id="pg-compra"><img src="assets/ui-m/compra.png" alt="" /></div>
+          <img id="hdr" src="assets/ui-m/hdr.png" alt="" />
+          <img id="nav" src="assets/ui-m/nav.png" alt="" />
+    </div></div></div>
+    <div id="subs"></div>
+    <div id="cov"><div class="k">Serie · 3/6</div><div class="h" data-w="¿Sabes qué tienes en *stock?*"></div></div>
+    <div id="end">
+      <div class="tile">MI</div>
+      <div class="wm"><span class="w"><b>MAUR</b>INVENTARIO</span></div>
+      <div class="fin" data-w="Cada producto *bajo control.*"></div>
+      <div class="cta">Organiza tu stock con MaurInventario.</div>
+      <div class="url">maurinventario.vercel.app</div>
+    </div>
+    <div id="grain" class="stage"></div>
+  </div>
+  <audio id="vo" src="audio/v3/vo-mix.mp3" data-start="0" data-duration="33.22" data-volume="1" data-track-index="6"></audio>
+  <audio id="music" src="audio/v3/music-mix.mp3" data-start="0" data-duration="33.22" data-volume="0.9" data-track-index="7"></audio>
+  <audio id="fx0" src="assets/sfx/ui/snap.wav" data-start="1.208" data-duration="0.43" data-volume="0.35" data-track-index="2"></audio>
+  <audio id="fx1" src="assets/sfx/ui/swish-low.wav" data-start="3.970" data-duration="0.561" data-volume="0.4" data-track-index="3"></audio>
+  <audio id="fx2" src="assets/sfx/ui/click-soft.wav" data-start="8.550" data-duration="0.385" data-volume="0.4" data-track-index="4"></audio>
+  <audio id="fx3" src="assets/sfx/ui/click.wav" data-start="9.830" data-duration="0.385" data-volume="0.5" data-track-index="5"></audio>
+  <audio id="fx4" src="assets/sfx/ui/tick.wav" data-start="10.721" data-duration="0.341" data-volume="0.3" data-track-index="2"></audio>
+  <audio id="fx5" src="assets/sfx/ui/tick.wav" data-start="11.578" data-duration="0.341" data-volume="0.3" data-track-index="3"></audio>
+  <audio id="fx6" src="assets/sfx/ui/click-soft.wav" data-start="14.390" data-duration="0.385" data-volume="0.4" data-track-index="4"></audio>
+  <audio id="fx7" src="assets/sfx/ui/tick.wav" data-start="18.939" data-duration="0.341" data-volume="0.3" data-track-index="5"></audio>
+  <audio id="fx8" src="assets/sfx/ui/click-soft.wav" data-start="21.090" data-duration="0.385" data-volume="0.4" data-track-index="2"></audio>
+  <audio id="fx9" src="assets/sfx/ui/click.wav" data-start="22.170" data-duration="0.385" data-volume="0.5" data-track-index="3"></audio>
+  <audio id="fx10" src="assets/sfx/ui/swish-low.wav" data-start="25.430" data-duration="0.561" data-volume="0.4" data-track-index="4"></audio>
+  <audio id="fx11" src="assets/sfx/ui/air-up.wav" data-start="29.820" data-duration="0.718" data-volume="0.4" data-track-index="5"></audio>
+</div>
+<script>
+document.fonts.ready.then(() => {
+  const tl = gsap.timeline({ paused: true });
+  MKP.words();
+  const S = Serie(tl);
+  if (SerieCover(() => { gsap.set("#dev", { autoAlpha: 1, x: 187, y: 700, scale: 1 }); gsap.set("#pg-productos", { autoAlpha: 1 }); gsap.set(".ttl, .nt, .xls, .note, .card, .mail", { autoAlpha: 0 }); })) return;
+  // gancho: el titular entra palabra a palabra con la voz
+  S.say("#hook", "H", 0, S.V("L2", 0) - 0.35);
+
+  S.pop("#note", S.V("H", 4), { y: 60, rotation: -10, r1: -3 });
+  tl.to("#note", { x: "+=6", duration: 0.05, yoyo: true, repeat: 5 }, S.V("H", 12));
+  tl.to("#note", { autoAlpha: 0, y: 200, rotation: 8, duration: 0.45, ease: "power3.in" }, S.V("L2", 0) - 0.3);
+  // muchos productos
+  S.page(S.V("L2", 0) - 0.3, "productos", { x: 0, y: 0 });
+  S.phoneIn(S.V("L2", 0) - 0.3);
+  S.scroll(S.V("L2", 1), "productos", 980, S.E("L2") - S.V("L2", 1), "sine.inOut");
+  // buscar → ficha del producto
+  S.title("#t1", S.V("L3", 0), S.V("L4", 0) - 0.3);
+  S.page(S.V("L3", 2), "productos-buscar", { y: 0 });
+  S.ring(S.V("L3", 3), "productos-buscar", [16, 290, 358, 100], S.V("L3", 7));
+  S.tap(S.V("L3", 6), "productos-buscar", 200, 330);
+  S.page(S.V("L3", 7), "producto", { y: 0 });
+  S.ring(S.V("L3", 10), "producto", [16, 210, 180, 90], S.V("L3", 14));
+  S.ring(S.V("L3", 12), "producto", [196, 210, 178, 90], S.V("L3", 14));
+  S.scroll(S.V("L3", 14), "producto", 1330, 0.9);
+  S.ring(S.V("L3", 17), "producto", [16, 1395, 358, 205], S.V("L4", 0));
+  // todo el almacén y el dinero invertido
+  S.title("#t2", S.V("L4", 0), S.V("L5", 0) - 0.3);
+  S.page(S.V("L4", 0) - 0.1, "inventario", { y: 220 });
+  S.cam(S.V("L4", 2), { px: 195, py: 260, s: 1.25, fy: 1080 }, 0.8);
+  S.ring(S.V("L4", 9), "inventario", [16, 312, 180, 85], S.V("L5", 0));
+  S.ring(S.V("L4", 14), "inventario", [16, 400, 180, 90], S.V("L5", 0));
+  // pedidos pendientes
+  S.cam(S.V("L5", 0) - 0.2, S.HOME, 0.7);
+  S.title("#t3", S.V("L5", 0), S.V("L6", 0) - 0.3);
+  S.page(S.V("L5", 0), "compras", { y: 0 });
+  S.ring(S.V("L5", 2), "compras", [16, 345, 358, 75], S.V("L5", 7));
+  S.tap(S.V("L5", 6), "compras", 120, 370);
+  S.page(S.V("L5", 7), "compra", { y: 0 });
+  S.ring(S.V("L5", 11), "compra", [12, 143, 76, 26], S.E("L5") + 0.3, 3);
+  S.ring(S.V("L5", 15), "compra", [16, 307, 127, 44], S.E("L5") + 0.3, 4);
+  // menos desorden
+  tl.to("#dev", { autoAlpha: 0.2, filter: "blur(6px)", duration: 0.5 }, S.V("L6", 0) - 0.2);
+  S.title("#t4", S.V("L6", 0), null);
+
+  S.subs(["L2", "L3", "L4", "L5", "L6"], { hl: ["MaurInventario"] });
+  S.end(END);
+  window.__timelines = window.__timelines || {};
+  window.__timelines["main"] = tl;
+  tl.seek(0);
+});
+</script>
+</body>
+</html>

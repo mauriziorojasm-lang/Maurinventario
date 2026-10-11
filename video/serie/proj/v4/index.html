@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1080, height=1920" />
+<title>MaurInventario · ¿Y si tus ventas se apuntaran solas?</title>
+<script src="kit/vendor/gsap.min.js"></script>
+<script src="kit/vendor/motion.js"></script>
+<script src="kit/premium.js"></script>
+<script src="kit/serie.js"></script>
+<script src="audio/v4/vo.js"></script>
+<link rel="stylesheet" href="kit/serie.css" />
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="41.96" data-width="1080" data-height="1920">
+  <div id="scene" class="clip stage" data-start="0" data-duration="41.96" data-track-index="0">
+    <div id="bg" class="stage"></div>
+    <div class="ttl hook" id="hook" data-w="Imagina vender en *Vinted* y no tener que apuntar *cada* *venta* *a* *mano.*"></div>
+
+<div class="nt" id="n1" style="left:160px;top:640px"><div class="ic v">V</div><div style="flex:1"><div class="top"><span>VINTED</span><span>ahora</span></div><div class="tt">¡Has vendido un artículo!</div><div class="bd">Nike Air Force 1 '07 · 79,00 €</div></div></div>
+<div class="card" id="man" style="left:130px;top:560px;width:820px;padding:36px 42px">
+  <div style="font:700 26px 'BC';letter-spacing:.18em;color:#8f877f">A MANO, EN CADA VENTA</div>
+  <div class="mk" style="font:600 40px 'PS';margin-top:24px">✉️&nbsp; Abrir el correo</div>
+  <div class="mk" style="font:600 40px 'PS';margin-top:16px">✍️&nbsp; Apuntar el artículo</div>
+  <div class="mk" style="font:600 40px 'PS';margin-top:16px">🔍&nbsp; Comprobar el precio</div>
+  <div class="mk" style="font:600 40px 'PS';margin-top:16px">📦&nbsp; Preparar el envío</div>
+</div>
+<div class="mail" id="mail1" style="top:600px"><span class="demo">Ejemplo</span>
+  <div class="hd"><div class="av">V</div><div><div class="from">Vinted</div><div class="to">a tu Gmail · 20:12</div></div></div>
+  <div class="sub">Has vendido un artículo en Vinted</div>
+  <div class="bd">Nike Air Force 1 '07 · <b>79,00 €</b> · Comprador: alba.k</div>
+</div>
+<div class="mail" id="mail2" style="top:600px"><span class="demo">Ejemplo</span>
+  <div class="hd"><div class="av">V</div><div><div class="from">Vinted</div><div class="to">a tu Gmail · 18:47</div></div></div>
+  <div class="sub">Tu etiqueta de envío</div>
+  <div class="att"><div class="pdf">PDF</div>etiqueta-vinted.pdf</div>
+</div>
+<div class="card" id="dup" style="left:250px;top:1230px;width:580px;padding:18px 26px;border-radius:999px;background:#15291a;border-color:#2f5a33;color:#9ad89c;font:750 32px 'PS';text-align:center">✓ Misma venta · sin duplicar</div>
+<div class="card" id="cmp" style="left:60px;top:520px;width:960px;padding:36px 36px;display:grid;grid-template-columns:1fr 1fr;gap:26px">
+  <div><div style="font:700 26px 'BC';letter-spacing:.16em;color:#ff8a7a">A MANO</div>
+    <div class="c1" style="font:600 34px/1.4 'PS';margin-top:18px;color:#b9b1a8">Abrir el correo<br />Apuntar la venta<br />Comprobar precio<br />Descontar stock<br />Subir la etiqueta</div></div>
+  <div style="border-left:2px solid #2d2926;padding-left:26px"><div style="font:700 26px 'BC';letter-spacing:.16em;color:var(--brand)">CON MAURINVENTARIO</div>
+    <div class="c2" style="font:650 34px/1.4 'PS';margin-top:18px">✓ Venta detectada<br />✓ Confirmas con un toque<br />✓ Stock descontado<br />✓ Etiqueta de Vinted vinculada</div></div>
+</div>
+<div class="ttl sm" id="t1" data-w="Lee tus *correos de venta*"></div>
+<div class="ttl sm" id="t2" data-w="Detectada. *Confirmas con un toque.*"></div>
+<div class="ttl sm" id="t3" data-w="La etiqueta, *a su venta*"></div>
+<div class="ttl sm" id="t4" data-w="Wallapop: *etiqueta a mano*"></div>
+
+    <div id="dev"><div id="scrwrap"><div id="scr">
+          <div class="pg" id="pg-correos"><img src="assets/ui-m/correos.png" alt="" /></div>
+          <div class="pg" id="pg-detectadas"><img src="assets/ui-m/detectadas.png" alt="" /></div>
+          <div class="pg" id="pg-detectadas-ok"><img src="assets/ui-m/detectadas-ok.png" alt="" /></div>
+          <div class="pg" id="pg-venta"><img src="assets/ui-m/venta.png" alt="" /></div>
+          <img id="hdr" src="assets/ui-m/hdr.png" alt="" />
+          <img id="nav" src="assets/ui-m/nav.png" alt="" />
+    </div></div></div>
+    <div id="subs"></div>
+    <div id="cov"><div class="k">Serie · 4/6</div><div class="h" data-w="Ventas que se *apuntan solas*"></div></div>
+    <div id="end">
+      <div class="tile">MI</div>
+      <div class="wm"><span class="w"><b>MAUR</b>INVENTARIO</span></div>
+      <div class="fin" data-w="Menos tareas manuales. *Más tiempo para vender.*"></div>
+      <div class="cta">Descubre la automatización de MaurInventario.</div>
+      <div class="url">maurinventario.vercel.app</div>
+    </div>
+    <div id="grain" class="stage"></div>
+  </div>
+  <audio id="vo" src="audio/v4/vo-mix.mp3" data-start="0" data-duration="41.96" data-volume="1" data-track-index="6"></audio>
+  <audio id="music" src="audio/v4/music-mix.mp3" data-start="0" data-duration="41.96" data-volume="0.9" data-track-index="7"></audio>
+  <audio id="fx0" src="assets/sfx/ui/notify.wav" data-start="1.160" data-duration="0.885" data-volume="0.4" data-track-index="2"></audio>
+  <audio id="fx1" src="assets/sfx/ui/tick.wav" data-start="5.910" data-duration="0.341" data-volume="0.3" data-track-index="3"></audio>
+  <audio id="fx2" src="assets/sfx/ui/tick.wav" data-start="6.963" data-duration="0.341" data-volume="0.3" data-track-index="4"></audio>
+  <audio id="fx3" src="assets/sfx/ui/tick.wav" data-start="8.310" data-duration="0.341" data-volume="0.3" data-track-index="5"></audio>
+  <audio id="fx4" src="assets/sfx/ui/tick.wav" data-start="9.527" data-duration="0.341" data-volume="0.3" data-track-index="2"></audio>
+  <audio id="fx5" src="assets/sfx/ui/swish-low.wav" data-start="11.070" data-duration="0.561" data-volume="0.4" data-track-index="3"></audio>
+  <audio id="fx6" src="assets/sfx/ui/notify.wav" data-start="16.390" data-duration="0.885" data-volume="0.4" data-track-index="4"></audio>
+  <audio id="fx7" src="assets/sfx/ui/swish.wav" data-start="17.817" data-duration="0.488" data-volume="0.35" data-track-index="5"></audio>
+  <audio id="fx8" src="assets/sfx/ui/click.wav" data-start="23.723" data-duration="0.385" data-volume="0.55" data-track-index="2"></audio>
+  <audio id="fx9" src="assets/sfx/ui/success.wav" data-start="23.843" data-duration="1.19" data-volume="0.35" data-track-index="3"></audio>
+  <audio id="fx10" src="assets/sfx/ui/notify.wav" data-start="24.530" data-duration="0.885" data-volume="0.4" data-track-index="4"></audio>
+  <audio id="fx11" src="assets/sfx/ui/swish.wav" data-start="26.930" data-duration="0.488" data-volume="0.35" data-track-index="5"></audio>
+  <audio id="fx12" src="assets/sfx/ui/pop-hi.wav" data-start="30.090" data-duration="0.38" data-volume="0.35" data-track-index="2"></audio>
+  <audio id="fx13" src="assets/sfx/ui/click-soft.wav" data-start="31.390" data-duration="0.385" data-volume="0.4" data-track-index="3"></audio>
+  <audio id="fx14" src="assets/sfx/ui/swish-low.wav" data-start="35.030" data-duration="0.561" data-volume="0.4" data-track-index="4"></audio>
+  <audio id="fx15" src="assets/sfx/ui/air-up.wav" data-start="38.560" data-duration="0.718" data-volume="0.4" data-track-index="5"></audio>
+</div>
+<script>
+document.fonts.ready.then(() => {
+  const tl = gsap.timeline({ paused: true });
+  MKP.words();
+  const S = Serie(tl);
+  if (SerieCover(() => { gsap.set("#dev", { autoAlpha: 1, x: 187, y: 700, scale: 1 }); gsap.set("#pg-detectadas", { autoAlpha: 1 }); gsap.set(".ttl, .nt, .xls, .note, .card, .mail", { autoAlpha: 0 }); })) return;
+  // gancho: el titular entra palabra a palabra con la voz
+  S.say("#hook", "H", 0, S.V("L2", 0) - 0.35);
+
+  S.pop("#n1", S.V("H", 3), { y: -80 });
+  tl.to("#n1", { autoAlpha: 0, y: -60, duration: 0.3 }, S.V("L2", 0) - 0.3);
+  // el trabajo manual, paso a paso
+  gsap.set(["#man .mk", "#cmp .c2"], { autoAlpha: 0 });
+  tl.fromTo("#man", { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: S.sp.duration, ease: S.sp.ease, immediateRender: false }, S.V("L2", 0) - 0.2);
+  [4, 7, 10, 14].forEach((w, i) => tl.fromTo(`#man .mk:nth-of-type(${i + 2})`, { autoAlpha: 0, x: -30 }, { autoAlpha: 1, x: 0, duration: 0.3, immediateRender: false }, S.V("L2", w) - 0.05));
+  tl.to("#man", { autoAlpha: 0, y: -40, duration: 0.35, ease: "power2.in" }, S.V("L3", 0) - 0.3);
+  // se conecta a tu Gmail
+  S.page(S.V("L3", 0) - 0.3, "correos", { x: 0, y: 150 });
+  S.phoneIn(S.V("L3", 0) - 0.3);
+  S.title("#t1", S.V("L3", 0), S.V("L4", 0) - 0.3);
+  S.ring(S.V("L3", 5), "correos", [16, 214, 358, 120], S.V("L4", 0));
+  // llega un correo de venta → Ventas detectadas
+  tl.to("#dev", { autoAlpha: 0.25, duration: 0.3 }, S.V("L4", 0) - 0.2);
+  tl.fromTo("#mail1", { autoAlpha: 0, y: -60 }, { autoAlpha: 1, y: 0, duration: S.sp.duration, ease: S.sp.ease, immediateRender: false }, S.V("L4", 0) - 0.1);
+  tl.to("#mail1", { y: 600, scale: 0.35, autoAlpha: 0, duration: 0.55, ease: "power3.in" }, S.V("L4", 5) - 0.1);
+  tl.to("#dev", { autoAlpha: 1, duration: 0.3 }, S.V("L4", 5));
+  S.page(S.V("L4", 5), "detectadas", { y: 160 });
+  S.title("#t2", S.V("L4", 5), S.V("L5", 0) - 0.3);
+  S.cam(S.V("L4", 6), { px: 195, py: 300, s: 1.2, fy: 1090 }, 0.8);
+  S.ring(S.V("L4", 11), "detectadas", [24, 315, 250, 30], S.V("L4", 21));
+  S.ring(S.V("L4", 13), "detectadas", [265, 300, 105, 50], S.V("L4", 21));
+  S.ring(S.V("L4", 16), "detectadas", [24, 345, 200, 22], S.V("L4", 21));
+  S.ring(S.V("L4", 21), "detectadas", [33, 481, 157, 44], S.V("L4", 26) + 0.2, 4);
+  S.tap(S.V("L4", 26), "detectadas", 111, 503);
+  S.page(S.V("L4", 26) + 0.12, "detectadas-ok", { y: 160, x: 0 });
+  S.toast(S.V("L4", 26) + 0.15, "Venta registrada.", S.V("L5", 0) - 0.2);
+  // la etiqueta en PDF se asocia a su venta
+  S.cam(S.V("L5", 0) - 0.3, S.HOME, 0.6);
+  tl.to("#dev", { autoAlpha: 0.25, duration: 0.3 }, S.V("L5", 0) - 0.2);
+  tl.fromTo("#mail2", { autoAlpha: 0, y: -60 }, { autoAlpha: 1, y: 0, duration: S.sp.duration, ease: S.sp.ease, immediateRender: false }, S.V("L5", 0) - 0.1);
+  tl.to("#mail2", { y: 600, scale: 0.35, autoAlpha: 0, duration: 0.55, ease: "power3.in" }, S.V("L5", 10) - 0.15);
+  tl.to("#dev", { autoAlpha: 1, duration: 0.3 }, S.V("L5", 10));
+  S.page(S.V("L5", 10) - 0.1, "venta", { y: 740 });
+  S.title("#t3", S.V("L5", 10), S.V("L6", 0) - 0.3);
+  S.ring(S.V("L5", 11), "venta", [16, 835, 358, 90], S.V("L5", 15));
+  S.scroll(S.V("L5", 15), "venta", 1200, 0.8);
+  S.ring(S.V("L5", 16), "venta", [16, 1275, 358, 30], S.V("L6", 0));
+  S.ring(S.V("L5", 18), "venta", [16, 1395, 358, 95], S.V("L6", 0));
+  tl.fromTo("#dup", { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, duration: S.sp.duration, ease: S.sp.ease, immediateRender: false }, S.V("L5", 20));
+  tl.to("#dup", { autoAlpha: 0, duration: 0.25 }, S.V("L6", 0) - 0.2);
+  // Wallapop: la etiqueta la subes tú
+  S.title("#t4", S.V("L6", 0), S.V("L7", 0) - 0.3);
+  S.scroll(S.V("L6", 0), "venta", 740, 0.8);
+  S.ring(S.V("L6", 7), "venta", [16, 925, 358, 75], S.V("L7", 0));
+  // comparación
+  tl.to("#dev", { autoAlpha: 0.15, filter: "blur(6px)", duration: 0.5 }, S.V("L7", 0) - 0.3);
+  tl.fromTo("#cmp", { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: S.sp.duration, ease: S.sp.ease, immediateRender: false }, S.V("L7", 0) - 0.25);
+  tl.fromTo("#cmp .c2", { autoAlpha: 0, x: 30 }, { autoAlpha: 1, x: 0, duration: 0.4, immediateRender: false }, S.V("L7", 3));
+
+  S.subs(["L2", "L3", "L4", "L5", "L6", "L7"], { hl: ["MaurInventario"] });
+  S.end(END);
+  window.__timelines = window.__timelines || {};
+  window.__timelines["main"] = tl;
+  tl.seek(0);
+});
+</script>
+</body>
+</html>
