@@ -1,4 +1,4 @@
-# Archivos del usuario (Archivos de Apple → iCloud Drive → MaurInventario)
+# Archivos del usuario (Archivos de Apple → iCloud Drive → Resellap)
 
 Cada vez que entregues un archivo al usuario, di en qué carpeta guardarlo (ruta exacta) y si hace falta crear una carpeta nueva. Si una versión sustituye a otra, indica que la antigua va a `09 Archivo`.
 

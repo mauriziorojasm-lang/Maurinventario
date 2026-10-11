@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const redirectUri = `${request.nextUrl.origin}/api/correo/oauth`;
     const tok = await exchangeCode(code, redirectUri);
     if (!tok.scope.split(" ").includes(GMAIL_SCOPE)) return fail("Hay que marcar la casilla de permiso para leer el correo de Gmail.");
-    if (!tok.refreshToken) return fail("Google no ha dado el permiso permanente. Quita el acceso de MaurInventario en tu cuenta de Google y vuelve a conectar.");
+    if (!tok.refreshToken) return fail("Google no ha dado el permiso permanente. Quita el acceso de Resellap en tu cuenta de Google y vuelve a conectar.");
     const profile = await new Gmail(tok.accessToken).profile();
     if (profile.emailAddress.toLowerCase() !== CENTRAL_ACCOUNT) {
       return fail(`Has elegido ${profile.emailAddress}. Hay que conectar ${CENTRAL_ACCOUNT}.`);

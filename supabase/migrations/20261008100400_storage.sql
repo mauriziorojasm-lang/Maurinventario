@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 5 · Supabase Storage
+-- Resellap · Migración 5 · Supabase Storage
 --   product-photos   → fotos de productos (privado: se ven con enlaces firmados)
 --   shipping-labels  → etiquetas de envío de Vinted/Wallapop (privado)
 --                      ruta: <id de la venta>/<nombre del archivo>

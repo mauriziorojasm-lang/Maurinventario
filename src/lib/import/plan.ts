@@ -467,7 +467,7 @@ export function buildPlan(
     }
     if (existingPOs.has(po.order_number)) {
       summary.purchaseOrders.duplicated++;
-      add("warning", po.sheet, null, `El pedido de compra #${po.order_number} ya existe en MaurInventario: no se vuelve a importar.`);
+      add("warning", po.sheet, null, `El pedido de compra #${po.order_number} ya existe en Resellap: no se vuelve a importar.`);
       continue;
     }
     if (!po.supplier_name) {

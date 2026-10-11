@@ -1,15 +1,15 @@
 import type { MetadataRoute } from "next";
 
 /**
- * Manifiesto de la app: permite añadir MaurInventario a la pantalla de
+ * Manifiesto de la app: permite añadir Resellap a la pantalla de
  * inicio del iPhone/iPad (Safari → Compartir → Añadir a pantalla de inicio)
  * y que se abra a pantalla completa, como una app, sin barra de Safari.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "MaurInventario",
-    short_name: "MaurInventario",
+    name: "Resellap",
+    short_name: "Resellap",
     description: "Inventario, ventas, compras y rentabilidad.",
     lang: "es",
     start_url: "/",

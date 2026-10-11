@@ -7,12 +7,12 @@ import "@fontsource/barlow-condensed/700.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "MaurInventario", template: "%s · MaurInventario" },
+  title: { default: "Resellap", template: "%s · Resellap" },
   description: "Inventario, ventas, compras y rentabilidad.",
   robots: { index: false, follow: false },
   // Instalada desde Safari («Añadir a pantalla de inicio») se abre como una app
-  applicationName: "MaurInventario",
-  appleWebApp: { capable: true, title: "MaurInventario", statusBarStyle: "black-translucent" },
+  applicationName: "Resellap",
+  appleWebApp: { capable: true, title: "Resellap", statusBarStyle: "black-translucent" },
   icons: { apple: [{ url: "/icons/apple-icon-180.png", sizes: "180x180" }] },
   formatDetection: { telephone: false },
 };

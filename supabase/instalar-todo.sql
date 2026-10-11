@@ -1,8 +1,8 @@
 -- =====================================================================
--- MaurInventario · INSTALACIÓN COMPLETA DE LA BASE DE DATOS
+-- Resellap · INSTALACIÓN COMPLETA DE LA BASE DE DATOS
 -- Pégalo ENTERO en Supabase → SQL Editor → New query → Run.
 -- Solo una vez por proyecto, en un proyecto NUEVO y vacío.
--- Contiene, en orden, las 16 migraciones de supabase/migrations/ (este
+-- Contiene, en orden, las 17 migraciones de supabase/migrations/ (este
 -- archivo se genera a partir de ellas con «npm run db:instalador»).
 -- Si algo falla, no se guarda nada: todo va en una sola transacción.
 -- =====================================================================
@@ -11,7 +11,7 @@ begin;
 
 -- >>> 20261008100000_esquema_base.sql
 -- =====================================================================
--- MaurInventario · Migración 1 · Esquema base
+-- Resellap · Migración 1 · Esquema base
 -- Tablas, relaciones, restricciones e índices.
 -- =====================================================================
 
@@ -579,7 +579,7 @@ select n, 'Móvil ' || n from generate_series(1, 6) as n;
 
 -- >>> 20261008100100_seguridad_y_auditoria.sql
 -- =====================================================================
--- MaurInventario · Migración 2 · Permisos (RLS) y auditoría
+-- Resellap · Migración 2 · Permisos (RLS) y auditoría
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -939,7 +939,7 @@ $$;
 
 -- >>> 20261008100200_logica_de_negocio.sql
 -- =====================================================================
--- MaurInventario · Migración 3 · Lógica de negocio
+-- Resellap · Migración 3 · Lógica de negocio
 -- Todas las operaciones que tocan stock, lotes o costes se hacen con
 -- estas funciones. Cada llamada es una transacción: o se guarda todo,
 -- o no se guarda nada.
@@ -2388,7 +2388,7 @@ $$;
 
 -- >>> 20261008100300_informes.sql
 -- =====================================================================
--- MaurInventario · Migración 4 · Vistas, informes y estadísticas
+-- Resellap · Migración 4 · Vistas, informes y estadísticas
 --
 -- Principio contable:
 --   · Valoración del inventario  → coste medio ponderado de las unidades en stock.
@@ -3289,7 +3289,7 @@ $$;
 
 -- >>> 20261008100400_storage.sql
 -- =====================================================================
--- MaurInventario · Migración 5 · Supabase Storage
+-- Resellap · Migración 5 · Supabase Storage
 --   product-photos   → fotos de productos (privado: se ven con enlaces firmados)
 --   shipping-labels  → etiquetas de envío de Vinted/Wallapop (privado)
 --                      ruta: <id de la venta>/<nombre del archivo>
@@ -3345,7 +3345,7 @@ create policy "shipping_labels_delete" on storage.objects for delete to authenti
 
 -- >>> 20261008100500_importacion.sql
 -- =====================================================================
--- MaurInventario · Migración 6 · Importación de datos desde Excel
+-- Resellap · Migración 6 · Importación de datos desde Excel
 --
 -- La aplicación lee el Excel, valida cada fila y envía aquí un "plan"
 -- ya estructurado. Esta función lo guarda todo en UNA transacción.
@@ -3835,7 +3835,7 @@ $$;
 
 -- >>> 20261008100600_permisos_funciones.sql
 -- =====================================================================
--- MaurInventario · Migración 7 · Quién puede llamar a cada función
+-- Resellap · Migración 7 · Quién puede llamar a cada función
 -- Las funciones de la API solo las pueden llamar usuarios con sesión
 -- iniciada. Además, cada función comprueba internamente si el usuario
 -- es administrador o vendedor.
@@ -3869,7 +3869,7 @@ grant select on public.v_lots, public.v_sale_lines, public.v_variant_inventory, 
 
 -- >>> 20261009090000_envio_masivo.sql
 -- =====================================================================
--- MaurInventario · Migración 8 · Marcar varias ventas como enviadas o
+-- Resellap · Migración 8 · Marcar varias ventas como enviadas o
 -- pendientes de una vez.
 -- Todo o nada: si una venta falla (anulada, de otro vendedor…), no se
 -- cambia ninguna. Cada venta pasa por update_sale, así que se aplican
@@ -3917,7 +3917,7 @@ grant execute on function public.set_sales_shipping_status(uuid[], text) to auth
 
 -- >>> 20261009120000_busqueda_por_palabras.sql
 -- =====================================================================
--- MaurInventario · Migración 9 · Buscador de productos por palabras
+-- Resellap · Migración 9 · Buscador de productos por palabras
 -- «Oakley Encoder» encuentra «Oakley - Encoder»: cada palabra se busca por
 -- separado en nombre, variante, SKU, marca y categoría, en cualquier orden.
 -- Solo sustituye la función de búsqueda (misma firma y permisos). No toca datos.
@@ -3992,7 +3992,7 @@ $$;
 
 -- >>> 20261009150000_panel_negocio.sql
 -- =====================================================================
--- MaurInventario · Migración 10 · Panel de negocio del Inicio
+-- Resellap · Migración 10 · Panel de negocio del Inicio
 -- Una sola función de SOLO LECTURA (solo administrador) que reúne:
 -- indicadores del mes con comparación, evolución mensual, rendimiento de
 -- productos, antigüedad del stock y actividad reciente.
@@ -4175,7 +4175,7 @@ grant execute on function public.business_dashboard(integer) to authenticated, s
 
 -- >>> 20261010090000_ventas_por_correo.sql
 -- =====================================================================
--- MaurInventario · Migración 11 · Ventas automáticas por correo (Gmail)
+-- Resellap · Migración 11 · Ventas automáticas por correo (Gmail)
 --
 -- Lee los correos de Vinted y Wallapop que llegan a la cuenta centralizada
 -- y registra las ventas sin duplicarlas:
@@ -4569,7 +4569,7 @@ begin
   perform public.require_admin();
   select * into i from public.email_integration where id;
   if exists (select 1 from pg_namespace where nspname = 'cron') then
-    execute 'select exists (select 1 from cron.job where jobname = ''maurinventario-correo'' and active)' into v_cron;
+    execute 'select exists (select 1 from cron.job where jobname = ''resellap-correo'' and active)' into v_cron;
   end if;
   return jsonb_build_object(
     'email', i.email,
@@ -4691,17 +4691,17 @@ begin
       $body$
     $fn$;
     execute 'revoke execute on function private.email_cron_tick() from public, anon, authenticated';
-    if exists (select 1 from cron.job where jobname = 'maurinventario-correo') then
-      perform cron.unschedule('maurinventario-correo');
+    if exists (select 1 from cron.job where jobname = 'resellap-correo') then
+      perform cron.unschedule('resellap-correo');
     end if;
-    perform cron.schedule('maurinventario-correo', '*/5 * * * *', 'select private.email_cron_tick()');
+    perform cron.schedule('resellap-correo', '*/5 * * * *', 'select private.email_cron_tick()');
   end if;
 end
 $cron$;
 
 -- >>> 20261010120000_ventas_detectadas.sql
 -- =====================================================================
--- MaurInventario · Migración 12 · Ventas detectadas (confirmación manual)
+-- Resellap · Migración 12 · Ventas detectadas (confirmación manual)
 --
 -- Las ventas que llegan por correo ya no se registran solas: quedan como
 -- «detectadas» hasta que el administrador las confirma. Así puede:
@@ -4928,7 +4928,7 @@ $$;
 
 -- >>> 20261010150000_fotos_y_anuncios.sql
 -- =====================================================================
--- MaurInventario · Migración 13 · Fotos por producto y anuncios
+-- Resellap · Migración 13 · Fotos por producto y anuncios
 --
 --   · product_photos: varias fotos por producto, con orden. La primera es
 --     la portada (se copia a products.photo_path para las miniaturas).
@@ -5046,7 +5046,7 @@ grant select on public.v_listings_to_remove to authenticated;
 
 -- >>> 20261010200000_seguridad.sql
 -- =====================================================================
--- MaurInventario · Migración 14 · Seguridad
+-- Resellap · Migración 14 · Seguridad
 --   · product_price_history: el vendedor ya no ve el coste de compra ni
 --     las ventas de otros (solo las suyas). El administrador, todo.
 --   · ai_usage + ai_usage_take: límite diario del generador de
@@ -5145,7 +5145,7 @@ grant execute on function public.ai_usage_refund(uuid, integer) to service_role;
 
 -- >>> 20261011090000_rapidez_y_fallos.sql
 -- =====================================================================
--- MaurInventario · Migración 15 · Fallos y rapidez
+-- Resellap · Migración 15 · Fallos y rapidez
 --   · Ventas sin duplicados: si el móvil reenvía la misma venta (doble
 --     pulsación o corte de conexión), se devuelve la que ya existía.
 --   · Reordenar fotos de una vez (todo o nada).
@@ -5396,7 +5396,7 @@ grant execute on function public.listings_overview(text) to authenticated;
 
 -- >>> 20261011120000_ajustes_y_widgets.sql
 -- =====================================================================
--- MaurInventario · Migración 16 · Ajustes personales y panel por widgets
+-- Resellap · Migración 16 · Ajustes personales y panel por widgets
 --   · user_preferences: las preferencias de cada usuario (panel, aspecto,
 --     tablas, avisos…). Cada uno solo ve y cambia las suyas.
 --   · dashboard_widgets: datos reales para los widgets del inicio por
@@ -5609,6 +5609,60 @@ $$;
 revoke execute on function public.my_activity(integer) from public, anon;
 grant execute on function public.my_activity(integer) to authenticated;
 
+-- >>> 20261011150000_marca_resellap.sql
+-- =====================================================================
+-- Resellap · Migración 17 · Cambio de marca (antes MaurInventario)
+-- ---------------------------------------------------------------------
+-- · La tarea automática del correo pasa a llamarse «resellap-correo».
+-- · El estado de la conexión reconoce los dos nombres, para que nada se
+--   rompa mientras se aplica el cambio.
+-- No toca datos.
+-- =====================================================================
+
+create or replace function public.email_integration_status()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  i public.email_integration%rowtype;
+  v_cron boolean := false;
+begin
+  perform public.require_admin();
+  select * into i from public.email_integration where id;
+  if exists (select 1 from pg_namespace where nspname = 'cron') then
+    execute 'select exists (select 1 from cron.job where jobname in (''resellap-correo'', ''maurinventario-correo'') and active)' into v_cron;
+  end if;
+  return jsonb_build_object(
+    'email', i.email,
+    'status', i.status,
+    'connected', i.refresh_token_enc is not null,
+    'last_error', i.last_error,
+    'last_sync_at', i.last_sync_at,
+    'last_success_at', i.last_success_at,
+    'last_summary', i.last_summary,
+    'connected_at', i.connected_at,
+    'default_responsible_id', i.default_responsible_id,
+    'app_url', i.app_url,
+    'cron_active', v_cron
+  );
+end;
+$$;
+
+-- Renombrar la tarea programada (solo donde existe pg_cron, es decir, en Supabase)
+do $cron$
+begin
+  if exists (select 1 from pg_namespace where nspname = 'cron') then
+    if exists (select 1 from cron.job where jobname = 'maurinventario-correo') then
+      perform cron.unschedule('maurinventario-correo');
+      perform cron.schedule('resellap-correo', '*/5 * * * *', 'select private.email_cron_tick()');
+    end if;
+  end if;
+end
+$cron$;
+
 -- Registro de migraciones aplicadas (para que la CLI de Supabase sepa que ya están)
 create schema if not exists supabase_migrations;
 create table if not exists supabase_migrations.schema_migrations (version text primary key, statements text[], name text);
@@ -5628,7 +5682,8 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20261010150000', 'fotos_y_anuncios'),
   ('20261010200000', 'seguridad'),
   ('20261011090000', 'rapidez_y_fallos'),
-  ('20261011120000', 'ajustes_y_widgets')
+  ('20261011120000', 'ajustes_y_widgets'),
+  ('20261011150000', 'marca_resellap')
 on conflict (version) do nothing;
 
 commit;

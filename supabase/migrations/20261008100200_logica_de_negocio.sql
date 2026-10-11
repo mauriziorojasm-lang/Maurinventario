@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 3 · Lógica de negocio
+-- Resellap · Migración 3 · Lógica de negocio
 -- Todas las operaciones que tocan stock, lotes o costes se hacen con
 -- estas funciones. Cada llamada es una transacción: o se guarda todo,
 -- o no se guarda nada.

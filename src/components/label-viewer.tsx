@@ -1,7 +1,7 @@
 "use client";
 /**
  * Botón «Ver etiqueta»: abre la etiqueta de envío dentro de la app, en una
- * ventana encima de la página, sin salir de MaurInventario. El enlace ya
+ * ventana encima de la página, sin salir de Resellap. El enlace ya
  * viene preparado del servidor, así que se abre al instante.
  */
 import { useState } from "react";

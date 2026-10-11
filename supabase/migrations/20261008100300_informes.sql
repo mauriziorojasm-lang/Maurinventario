@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 4 · Vistas, informes y estadísticas
+-- Resellap · Migración 4 · Vistas, informes y estadísticas
 --
 -- Principio contable:
 --   · Valoración del inventario  → coste medio ponderado de las unidades en stock.

@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 11 · Ventas automáticas por correo (Gmail)
+-- Resellap · Migración 11 · Ventas automáticas por correo (Gmail)
 --
 -- Lee los correos de Vinted y Wallapop que llegan a la cuenta centralizada
 -- y registra las ventas sin duplicarlas:
@@ -393,7 +393,7 @@ begin
   perform public.require_admin();
   select * into i from public.email_integration where id;
   if exists (select 1 from pg_namespace where nspname = 'cron') then
-    execute 'select exists (select 1 from cron.job where jobname = ''maurinventario-correo'' and active)' into v_cron;
+    execute 'select exists (select 1 from cron.job where jobname = ''resellap-correo'' and active)' into v_cron;
   end if;
   return jsonb_build_object(
     'email', i.email,
@@ -515,10 +515,10 @@ begin
       $body$
     $fn$;
     execute 'revoke execute on function private.email_cron_tick() from public, anon, authenticated';
-    if exists (select 1 from cron.job where jobname = 'maurinventario-correo') then
-      perform cron.unschedule('maurinventario-correo');
+    if exists (select 1 from cron.job where jobname = 'resellap-correo') then
+      perform cron.unschedule('resellap-correo');
     end if;
-    perform cron.schedule('maurinventario-correo', '*/5 * * * *', 'select private.email_cron_tick()');
+    perform cron.schedule('resellap-correo', '*/5 * * * *', 'select private.email_cron_tick()');
   end if;
 end
 $cron$;

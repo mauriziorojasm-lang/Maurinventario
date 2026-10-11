@@ -1,6 +1,8 @@
 # Ventas por correo (Vinted y Wallapop)
 
-MaurInventario lee los correos que llegan a **maurinventario@gmail.com** y registra las ventas solo. Esta guía explica qué hace y cómo dejarlo funcionando. No hace falta saber programar.
+> **Cambio de marca:** la cuenta de ventas pasa a ser **resellap@gmail.com**. Hasta que la crees y pongas `GMAIL_CENTRAL_ACCOUNT=resellap@gmail.com` en Vercel, la app sigue usando `maurinventario@gmail.com` y todo funciona igual.
+
+Resellap lee los correos que llegan a **resellap@gmail.com** y registra las ventas solo. Esta guía explica qué hace y cómo dejarlo funcionando. No hace falta saber programar.
 
 ---
 
@@ -43,34 +45,34 @@ Necesitas unos 15 minutos. Hazlo desde un ordenador o iPad.
 
 ### Paso A · Google Cloud (crear el permiso para leer Gmail)
 
-Usa la cuenta **maurinventario@gmail.com** en todo este paso.
+Usa la cuenta **resellap@gmail.com** en todo este paso.
 
-1. Entra en **console.cloud.google.com** con maurinventario@gmail.com. Si te pide aceptar condiciones, acéptalas.
-2. Arriba, junto al logo, pulsa el selector de proyectos → **Proyecto nuevo** → nombre `MaurInventario` → **Crear**. Espera unos segundos y comprueba que arriba aparece «MaurInventario» seleccionado.
+1. Entra en **console.cloud.google.com** con resellap@gmail.com. Si te pide aceptar condiciones, acéptalas.
+2. Arriba, junto al logo, pulsa el selector de proyectos → **Proyecto nuevo** → nombre `Resellap` → **Crear**. Espera unos segundos y comprueba que arriba aparece «Resellap» seleccionado.
 3. Activa la API de Gmail: en el buscador de arriba escribe **Gmail API** → ábrela → botón **Habilitar**.
 4. Menú ☰ → **APIs y servicios** → **Pantalla de consentimiento de OAuth** (en algunas cuentas se llama **Google Auth Platform**). Pulsa **Comenzar**:
-   - Nombre de la aplicación: `MaurInventario`
-   - Correo de asistencia: maurinventario@gmail.com
+   - Nombre de la aplicación: `Resellap`
+   - Correo de asistencia: resellap@gmail.com
    - Público / Tipo de usuario: **Externo**
-   - Información de contacto: maurinventario@gmail.com
+   - Información de contacto: resellap@gmail.com
    - Acepta la política y pulsa **Crear**.
 5. Ve a **Acceso a los datos** (o «Permisos / Scopes») → **Agregar o quitar permisos** → en el filtro escribe `gmail.readonly` → marca **…/auth/gmail.readonly** («Ver tus mensajes de correo y tu configuración») → **Actualizar** → **Guardar**.
    - Solo lectura: la app nunca podrá enviar, borrar ni cambiar correos.
-6. Ve a **Público** (Audience) → en «Usuarios de prueba» añade **maurinventario@gmail.com** → Guardar.
+6. Ve a **Público** (Audience) → en «Usuarios de prueba» añade **resellap@gmail.com** → Guardar.
 7. En esa misma pantalla, pulsa **Publicar la aplicación** → **Confirmar**. Debe quedar en estado **«En producción»**.
    - Esto es importante: en estado «Prueba» Google caduca el permiso cada 7 días.
    - No hace falta que Google verifique la app: es solo para ti. Al conectar verás un aviso de «aplicación no verificada»; es normal (ver paso D).
 8. Ve a **Clientes** (o «Credenciales» → **Crear credenciales** → **ID de cliente de OAuth**):
    - Tipo de aplicación: **Aplicación web**
-   - Nombre: `MaurInventario web`
+   - Nombre: `Resellap web`
    - **URIs de redireccionamiento autorizados** → Agregar URI → pega exactamente:
-     `https://maurinventario.vercel.app/api/correo/oauth`
+     `https://resellap.vercel.app/api/correo/oauth`
    - Pulsa **Crear**.
 9. Aparecen dos datos: **ID de cliente** (termina en `.apps.googleusercontent.com`) y **Secreto del cliente**. Cópialos en un sitio seguro. **No los compartas ni los pegues en GitHub.**
 
 ### Paso B · Vercel (guardar las dos claves)
 
-1. Entra en **vercel.com** → proyecto **maurinventario** → **Settings** → **Environment Variables**.
+1. Entra en **vercel.com** → proyecto **resellap** → **Settings** → **Environment Variables**.
 2. Añade dos variables (marca Production, Preview y Development):
    | Nombre | Valor |
    |---|---|
@@ -83,15 +85,15 @@ Usa la cuenta **maurinventario@gmail.com** en todo este paso.
 **No tienes que hacer nada.** Ya está aplicado:
 
 - Las tablas nuevas (correos, cuentas, nombres recordados) y las columnas nuevas de ventas.
-- La revisión automática **cada 5 minutos** (Supabase Cron). Si quieres verla: Supabase → tu proyecto → **Integrations → Cron** → tarea `maurinventario-correo`.
+- La revisión automática **cada 5 minutos** (Supabase Cron). Si quieres verla: Supabase → tu proyecto → **Integrations → Cron** → tarea `resellap-correo`.
 - Las etiquetas se guardan en el almacén **privado** `shipping-labels` y solo se ven con enlaces temporales.
 
 ### Paso D · Conectar Gmail en la app
 
-1. Abre **maurinventario.vercel.app** con tu usuario de administrador.
+1. Abre **resellap.vercel.app** con tu usuario de administrador.
 2. Menú → **Ventas por correo** → **Conectar Gmail**.
-3. Elige la cuenta **maurinventario@gmail.com** (si eliges otra, la app no la acepta).
-4. Google avisa: «Google no ha verificado esta aplicación». Pulsa **Configuración avanzada** → **Ir a MaurInventario (no seguro)**. Es tu propia app; el aviso sale porque no se ha pasado la verificación pública de Google.
+3. Elige la cuenta **resellap@gmail.com** (si eliges otra, la app no la acepta).
+4. Google avisa: «Google no ha verificado esta aplicación». Pulsa **Configuración avanzada** → **Ir a Resellap (no seguro)**. Es tu propia app; el aviso sale porque no se ha pasado la verificación pública de Google.
 5. Marca la casilla de **leer tus correos** y pulsa **Continuar**.
 6. Vuelves a la app con el mensaje «Gmail conectado».
 7. En esa pantalla elige el **Responsable por defecto** (a quién se apuntan las ventas si no se sabe de quién son).

@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 7 · Quién puede llamar a cada función
+-- Resellap · Migración 7 · Quién puede llamar a cada función
 -- Las funciones de la API solo las pueden llamar usuarios con sesión
 -- iniciada. Además, cada función comprueba internamente si el usuario
 -- es administrador o vendedor.

@@ -1,4 +1,4 @@
-# MaurInventario
+# Resellap
 
 Mini ERP de inventario, ventas, compras y rentabilidad, preparado para sustituir el Excel `INVENTARIO.xlsx`.
 
@@ -18,7 +18,7 @@ Cada paso indica **dónde** se hace:
 | 🐙 | En GitHub (github.com) |
 | 🟩 | En Supabase (supabase.com/dashboard) |
 | ▲ | En Vercel (vercel.com) |
-| 📦 | Dentro de MaurInventario (la aplicación ya abierta en el navegador) |
+| 📦 | Dentro de Resellap (la aplicación ya abierta en el navegador) |
 
 ---
 
@@ -58,7 +58,7 @@ Cada paso indica **dónde** se hace:
 | **Cuenta de Supabase** | Plan gratuito vale | Base de datos PostgreSQL, usuarios (login) y archivos (fotos y etiquetas). |
 | **Cuenta de Vercel** | Plan Hobby vale | Publica la web. Entra en Vercel con tu cuenta de GitHub. |
 | **Editor de código** | Visual Studio Code | Para abrir y mirar el proyecto. |
-| **El proyecto** | Carpeta `maurinventario` | El código que te he entregado. |
+| **El proyecto** | Carpeta `resellap` | El código que te he entregado. |
 
 Comprueba que lo tienes instalado:
 
@@ -77,7 +77,7 @@ git --version
 
 Esto es lo que hay realmente en el proyecto:
 
-| Elemento | Qué usa MaurInventario |
+| Elemento | Qué usa Resellap |
 |---|---|
 | Framework | **Next.js 16** (App Router), con **React 19** |
 | Lenguaje | **TypeScript** |
@@ -93,7 +93,7 @@ Esto es lo que hay realmente en el proyecto:
 | Tests | `vitest` (importador y base de datos) |
 
 ```
-maurinventario/
+resellap/
 ├── src/
 │   ├── app/
 │   │   ├── (app)/             ← pantallas con sesión: ventas, productos, compras…
@@ -138,10 +138,10 @@ maurinventario/
 🐙 En github.com:
 
 1. Arriba a la derecha pulsa **+** y luego **New repository**.
-2. **Repository name:** `maurinventario`.
+2. **Repository name:** `resellap`.
 3. Marca **Private**. Es tu negocio: nadie más debe ver el código ni su historial.
 4. **No** marques «Add a README», «.gitignore» ni «license». El proyecto ya los trae.
-5. Pulsa **Create repository** y deja la página abierta: verás la URL del repositorio, del tipo `https://github.com/TU-USUARIO/maurinventario.git`.
+5. Pulsa **Create repository** y deja la página abierta: verás la URL del repositorio, del tipo `https://github.com/TU-USUARIO/resellap.git`.
 
 ### 3.2 Qué NO se sube nunca
 
@@ -159,7 +159,7 @@ Sí se sube `.env.example`: solo tiene los **nombres** de las variables, sin val
 
 ### 3.3 Conectar el proyecto y hacer el primer push
 
-💻 Abre una terminal **dentro de la carpeta `maurinventario`**:
+💻 Abre una terminal **dentro de la carpeta `resellap`**:
 
 ```bash
 # 1. El proyecto ya trae git inicializado con su historial. Comprueba que .env.local NO aparece:
@@ -169,12 +169,12 @@ git status
 npm install
 
 # 3. Conecta con tu repositorio de GitHub (pon tu URL del paso 3.1)
-git remote add origin https://github.com/TU-USUARIO/maurinventario.git
+git remote add origin https://github.com/TU-USUARIO/resellap.git
 git branch -M main
 
 # 4. Guarda cualquier cambio pendiente y súbelo
 git add .
-git commit -m "Primera versión de MaurInventario"   # si dice "nothing to commit", no pasa nada
+git commit -m "Primera versión de Resellap"   # si dice "nothing to commit", no pasa nada
 git push -u origin main
 ```
 
@@ -188,8 +188,8 @@ La primera vez, GitHub te pedirá iniciar sesión en el navegador. Hazlo con tu 
 
 **Decisión recomendada:** usa **dos proyectos de Supabase**.
 
-- `maurinventario-dev`: para probar. Puedes romperlo sin miedo.
-- `maurinventario`: producción, con tus datos reales.
+- `resellap-dev`: para probar. Puedes romperlo sin miedo.
+- `resellap`: producción, con tus datos reales.
 
 Así nunca pruebas nada sobre los datos de verdad. El plan gratuito permite dos proyectos. Repite este paso 4 para cada uno.
 
@@ -198,7 +198,7 @@ Así nunca pruebas nada sobre los datos de verdad. El plan gratuito permite dos 
 🟩 En supabase.com/dashboard:
 
 1. **New project**.
-2. **Name:** `maurinventario-dev` (o `maurinventario` para producción).
+2. **Name:** `resellap-dev` (o `resellap` para producción).
 3. **Database Password:** pulsa «Generate a password» y **guárdala en un gestor de contraseñas**. La necesitarás para las migraciones.
 4. **Region:** la más cercana a España, por ejemplo una de Europa (Frankfurt o París, según lo que aparezca).
 5. **Create new project** y espera a que termine (1-2 minutos).
@@ -207,7 +207,7 @@ Así nunca pruebas nada sobre los datos de verdad. El plan gratuito permite dos 
 
 🟩 Dentro del proyecto, pulsa **Connect** (arriba) o ve a **Project Settings → API Keys**:
 
-| Dato | Dónde | Formato | ¿Lo usa MaurInventario? |
+| Dato | Dónde | Formato | ¿Lo usa Resellap? |
 |---|---|---|---|
 | **Project URL** | Connect, o Project Settings → Data API | `https://xxxx.supabase.co` | Sí, `NEXT_PUBLIC_SUPABASE_URL` |
 | **Publishable key** | Project Settings → API Keys | `sb_publishable_…` | Sí, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
@@ -232,11 +232,11 @@ En Next.js, todo lo que empieza por `NEXT_PUBLIC_` se incluye en el código del 
 
 ## 5. Base de datos
 
-MaurInventario se conecta a PostgreSQL **a través de la API de Supabase**: lecturas con permisos (RLS) y funciones SQL para todo lo que mueve stock o dinero. No hay ORM ni conexión directa.
+Resellap se conecta a PostgreSQL **a través de la API de Supabase**: lecturas con permisos (RLS) y funciones SQL para todo lo que mueve stock o dinero. No hay ORM ni conexión directa.
 
 Toda la estructura está en `supabase/migrations/`. **No se crea nada a mano** en el panel de Supabase.
 
-### Desarrollo (crear la base de datos en `maurinventario-dev`)
+### Desarrollo (crear la base de datos en `resellap-dev`)
 
 💻
 ```bash
@@ -310,14 +310,14 @@ npx supabase migration list     # columnas Local y Remote: deben coincidir
 **Cómo evitar tocar producción sin control:**
 
 - No cambies tablas a mano en el Table Editor de producción. Todo cambio va en una migración.
-- Siempre primero en `maurinventario-dev` y después en producción.
+- Siempre primero en `resellap-dev` y después en producción.
 - Antes de un `db push` a producción, haz una copia de seguridad (🟩 Database → Backups; o `npx supabase db dump -f copia.sql`).
 
 ---
 
 ## 7. Variables de entorno
 
-Estas son **todas** las variables que usa MaurInventario. No hay más.
+Estas son **todas** las variables que usa Resellap. No hay más.
 
 | Variable | Local (`.env.local`) | Vercel | Pública/Secreta | Para qué sirve |
 |---|---|---|---|---|
@@ -327,6 +327,7 @@ Estas son **todas** las variables que usa MaurInventario. No hay más.
 | `GEMINI_API_KEY` | Opcional | ✅ | 🔴 Secreta | Generador de descripciones (IA de Google Gemini, nivel gratuito). Se crea en aistudio.google.com → *Get API key*. |
 | `GOOGLE_CLIENT_ID` | Opcional | ✅ | 🔴 Secreta | Ventas por correo (Gmail). Ver [docs/VENTAS-POR-CORREO.md](docs/VENTAS-POR-CORREO.md). |
 | `GOOGLE_CLIENT_SECRET` | Opcional | ✅ | 🔴 Secreta | Ventas por correo (Gmail). Mismo sitio que la anterior. |
+| `GMAIL_CENTRAL_ACCOUNT` | Opcional | ✅ | 🟢 No secreta | Cuenta de Gmail que recibe las ventas. Por defecto `maurinventario@gmail.com`; con la marca nueva, `resellap@gmail.com`. |
 | `GEMINI_MODEL` | Opcional | Opcional | 🔴 Secreta | Cambiar el modelo de Gemini. Por defecto se prueban en orden `gemini-3.5-flash`, `gemini-3.8-flash`, `gemini-3.5-flash-lite` y `gemini-3.1-flash-lite` (si uno está saturado o sin cupo, pasa al siguiente). |
 
 > Sin `SUPABASE_SECRET_KEY` la app funciona, pero la pantalla Usuarios no puede crear usuarios. Lo avisa en pantalla.
@@ -362,7 +363,7 @@ Las mismas tres variables, con los valores de cada proyecto, van en Vercel (paso
 
 ## 8. Supabase Storage
 
-MaurInventario usa archivos para dos cosas, y **los buckets ya los crea la migración** `…100400_storage.sql`. No hay que crearlos a mano.
+Resellap usa archivos para dos cosas, y **los buckets ya los crea la migración** `…100400_storage.sql`. No hay que crearlos a mano.
 
 | Bucket | Público | Qué guarda | Límite |
 |---|---|---|---|
@@ -390,7 +391,7 @@ MaurInventario usa archivos para dos cosas, y **los buckets ya los crea la migra
 
 ## 9. Autenticación
 
-MaurInventario usa **Supabase Auth** con **email y contraseña**:
+Resellap usa **Supabase Auth** con **email y contraseña**:
 
 - No hay registro público.
 - El primer usuario del proyecto es administrador automáticamente.
@@ -408,8 +409,8 @@ MaurInventario usa **Supabase Auth** con **email y contraseña**:
 
 | Campo | Desarrollo | Producción |
 |---|---|---|
-| **Site URL** | `http://localhost:3000` | `https://maurinventario.vercel.app` (tu dominio de Vercel, paso 12) |
-| **Redirect URLs** | `http://localhost:3000/**` | `https://maurinventario.vercel.app/**` y `https://*-TU-USUARIO.vercel.app/**` (para los Preview) |
+| **Site URL** | `http://localhost:3000` | `https://resellap.vercel.app` (tu dominio de Vercel, paso 12) |
+| **Redirect URLs** | `http://localhost:3000/**` | `https://resellap.vercel.app/**` y `https://*-TU-USUARIO.vercel.app/**` (para los Preview) |
 
 > La app no envía emails de confirmación ni de recuperación: el admin pone y cambia las contraseñas desde 📦 Usuarios. Por eso no necesitas configurar un servidor de correo.
 
@@ -464,7 +465,7 @@ Lo que puede hacer cada rol (lo aplica la base de datos, no solo la pantalla):
 
 1. Entra con **Continue with GitHub**.
 2. **Add New… → Project**.
-3. En «Import Git Repository», busca `maurinventario` y pulsa **Import**. Si no aparece, pulsa «Adjust GitHub App Permissions» y da acceso a ese repositorio.
+3. En «Import Git Repository», busca `resellap` y pulsa **Import**. Si no aparece, pulsa «Adjust GitHub App Permissions» y da acceso a ese repositorio.
 4. **Framework Preset:** Vercel detecta **Next.js** solo. No toques nada.
 5. **Build Command:** déjalo por defecto (`next build`).
 6. **Output Directory:** por defecto. No lo cambies.
@@ -474,7 +475,7 @@ Lo que puede hacer cada rol (lo aplica la base de datos, no solo la pantalla):
 10. Pulsa **Deploy** y espera 1-3 minutos.
 11. Abre la URL que te da Vercel. Debe aparecer la pantalla «Entrar».
 
-> Si haces **Deploy** sin las variables, la web mostrará «MaurInventario no está configurado: faltan…». Añádelas (paso 11) y vuelve a desplegar.
+> Si haces **Deploy** sin las variables, la web mostrará «Resellap no está configurado: faltan…». Añádelas (paso 11) y vuelve a desplegar.
 
 ---
 
@@ -484,7 +485,7 @@ Lo que puede hacer cada rol (lo aplica la base de datos, no solo la pantalla):
 
 | Entorno de Vercel | Cuándo se usa | Qué valores poner |
 |---|---|---|
-| **Production** | La web real (`maurinventario.vercel.app`), cada push a `main` | Los del proyecto Supabase de **producción** |
+| **Production** | La web real (`resellap.vercel.app`), cada push a `main` | Los del proyecto Supabase de **producción** |
 | **Preview** | Las URL de prueba que Vercel crea para cada rama distinta de `main` | Los del proyecto Supabase de **desarrollo** |
 | **Development** | Solo si usas `vercel dev` o `vercel env pull` en tu ordenador | Los de **desarrollo** (opcional; con `.env.local` basta) |
 
@@ -504,7 +505,7 @@ Por cada variable:
 
 ### Antes de Deploy
 
-- [ ] GitHub conectado (el código está en `github.com/TU-USUARIO/maurinventario`, privado)
+- [ ] GitHub conectado (el código está en `github.com/TU-USUARIO/resellap`, privado)
 - [ ] Supabase creado (proyecto de producción, y uno de desarrollo)
 - [ ] Base de datos preparada (`npx supabase db push` a producción)
 - [ ] Migraciones aplicadas (`npx supabase migration list`: Local = Remote)
@@ -524,7 +525,7 @@ Por cada variable:
 - [ ] Las operaciones importantes funcionan: importa el Excel (paso 13) y revisa Inicio, Ventas e Inventario
 - [ ] No aparecen errores críticos (▲ Deployments → el último → Runtime Logs)
 
-Tu dominio de Vercel será algo como `https://maurinventario.vercel.app`. Ponlo como **Site URL** en Supabase (paso 9.1). Si más adelante compras un dominio propio: ▲ Settings → Domains → Add, sigue las instrucciones de DNS y actualiza la Site URL y las Redirect URLs en Supabase.
+Tu dominio de Vercel será algo como `https://resellap.vercel.app`. Ponlo como **Site URL** en Supabase (paso 9.1). Si más adelante compras un dominio propio: ▲ Settings → Domains → Add, sigue las instrucciones de DNS y actualiza la Site URL y las Redirect URLs en Supabase.
 
 ---
 
@@ -585,7 +586,7 @@ Con tu Excel actual el resultado es:
 El valor del almacén puede salir algo distinto al de tu hoja Almacen. Con tus datos: 956,38 € frente a 935,43 €.
 
 - Tu Excel valora el stock con el coste medio de **todo lo comprado alguna vez**.
-- MaurInventario lo valora con el coste medio ponderado de **las unidades que quedan**, que salen de lotes concretos.
+- Resellap lo valora con el coste medio ponderado de **las unidades que quedan**, que salen de lotes concretos.
 
 Así cuadra la cuenta completa: compras = coste de lo vendido + pérdidas + almacén.
 
@@ -650,9 +651,9 @@ Vercel despliega
 | | Desarrollo | Producción |
 |---|---|---|
 | **Código** | Tu ordenador, o una rama distinta de `main` | Rama `main` en GitHub |
-| **Base de datos** | Proyecto Supabase `maurinventario-dev` | Proyecto Supabase `maurinventario` |
+| **Base de datos** | Proyecto Supabase `resellap-dev` | Proyecto Supabase `resellap` |
 | **Variables** | `.env.local` y Vercel «Preview» con los valores de **dev** | Vercel «Production» con los valores de **producción** |
-| **URL** | `http://localhost:3000` y las URL Preview de Vercel | `https://maurinventario.vercel.app` (o tu dominio) |
+| **URL** | `http://localhost:3000` y las URL Preview de Vercel | `https://resellap.vercel.app` (o tu dominio) |
 | **Deploy** | `npm run dev`, o push a una rama → Preview | Push o merge a `main` → Production |
 | **Migraciones** | Primero aquí: `link` dev + `db push` | Después, cuando todo funcione en dev |
 | **Datos** | De prueba; puedes importar el Excel tantas veces como quieras (o crear el proyecto de nuevo) | Los reales: no se prueban cosas aquí |
@@ -779,7 +780,7 @@ TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres npm run t
 - Comprueba que `package-lock.json` está subido a GitHub.
 - Versión de Node: ▲ Settings → General → Node.js Version: 20.x o superior (recomendado 22.x).
 
-**«Missing environment variable» / «MaurInventario no está configurado: faltan…»**
+**«Missing environment variable» / «Resellap no está configurado: faltan…»**
 - ▲ Settings → Environment Variables: están las 3, con el nombre exacto (mayúsculas incluidas) y en el entorno correcto (Production o Preview).
 - Después de añadirlas: **Redeploy**.
 - En local: el archivo se llama exactamente `.env.local` y está en la raíz del proyecto. Reinicia `npm run dev` tras cambiarlo.
@@ -820,7 +821,7 @@ TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres npm run t
 **«Git push rejected»**
 - `rejected (fetch first)`: hay cambios en GitHub que no tienes. 💻 `git pull --rebase` y luego `git push`.
 - `Authentication failed`: vuelve a iniciar sesión (GitHub ya no acepta la contraseña: usa el navegador o un token personal).
-- `remote origin already exists`: 💻 `git remote set-url origin https://github.com/TU-USUARIO/maurinventario.git`.
+- `remote origin already exists`: 💻 `git remote set-url origin https://github.com/TU-USUARIO/resellap.git`.
 - «File too large»: estás intentando subir algo pesado (un Excel, `node_modules`). Revisa `git status` y el `.gitignore`.
 
 **«No hay stock suficiente» al vender**
@@ -842,7 +843,7 @@ TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres npm run t
 
 ## 20. Checklist final
 
-MaurInventario está correctamente desplegado cuando:
+Resellap está correctamente desplegado cuando:
 
 - [ ] GitHub funciona (repositorio privado con el código, sin `.env` ni Excel)
 - [ ] Supabase funciona (proyectos de dev y producción activos)

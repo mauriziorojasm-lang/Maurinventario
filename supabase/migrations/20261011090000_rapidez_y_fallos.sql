@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 15 · Fallos y rapidez
+-- Resellap · Migración 15 · Fallos y rapidez
 --   · Ventas sin duplicados: si el móvil reenvía la misma venta (doble
 --     pulsación o corte de conexión), se devuelve la que ya existía.
 --   · Reordenar fotos de una vez (todo o nada).

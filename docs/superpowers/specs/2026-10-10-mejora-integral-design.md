@@ -1,10 +1,10 @@
-# MaurInventario · Mejora integral (seguridad, fallos, rapidez y visual)
+# Resellap · Mejora integral (seguridad, fallos, rapidez y visual)
 
 Fecha: 10/10/2026 · Estado: pendiente de aprobación
 
 ## 1. Objetivo
 
-Dejar MaurInventario más segura, sin fallos, más rápida y con una visual pulida y coherente en iPhone, iPad y ordenador, quitando lo que sobra, **sin perder ni un dato** y sin cambiar cómo se trabaja con ella.
+Dejar Resellap más segura, sin fallos, más rápida y con una visual pulida y coherente en iPhone, iPad y ordenador, quitando lo que sobra, **sin perder ni un dato** y sin cambiar cómo se trabaja con ella.
 
 **Éxito =**
 - Ningún hallazgo de seguridad medio o alto abierto.

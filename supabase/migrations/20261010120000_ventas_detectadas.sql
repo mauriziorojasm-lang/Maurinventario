@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 12 · Ventas detectadas (confirmación manual)
+-- Resellap · Migración 12 · Ventas detectadas (confirmación manual)
 --
 -- Las ventas que llegan por correo ya no se registran solas: quedan como
 -- «detectadas» hasta que el administrador las confirma. Así puede:

@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 16 · Ajustes personales y panel por widgets
+-- Resellap · Migración 16 · Ajustes personales y panel por widgets
 --   · user_preferences: las preferencias de cada usuario (panel, aspecto,
 --     tablas, avisos…). Cada uno solo ve y cambia las suyas.
 --   · dashboard_widgets: datos reales para los widgets del inicio por

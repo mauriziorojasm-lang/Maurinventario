@@ -10,7 +10,7 @@ const files = readdirSync(dir)
   .sort();
 
 let out = `-- =====================================================================
--- MaurInventario · INSTALACIÓN COMPLETA DE LA BASE DE DATOS
+-- Resellap · INSTALACIÓN COMPLETA DE LA BASE DE DATOS
 -- Pégalo ENTERO en Supabase → SQL Editor → New query → Run.
 -- Solo una vez por proyecto, en un proyecto NUEVO y vacío.
 -- Contiene, en orden, las ${files.length} migraciones de supabase/migrations/ (este

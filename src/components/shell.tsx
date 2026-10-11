@@ -33,16 +33,16 @@ function NavLink({ href, active, onClick, ...props }: Omit<React.ComponentProps<
   );
 }
 
-/** Logo: cuadro «MI» + Maur (verde) Inventario. */
+/** Logo: cuadro «R» + Resell (verde) ap. */
 export function Logo({ compact = false, className }: { compact?: boolean; className?: string }) {
   return (
     <span className={clsx("flex items-center gap-2.5", className)}>
       <span className="display flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-brand text-[19px] text-on-brand shadow-[0_0_0_2px_var(--chrome),0_0_0_3px_rgb(255_255_255/0.12)]">
-        MI
+        R
       </span>
       {!compact && (
         <span className="display text-[23px] uppercase tracking-[0.02em] text-chrome-ink">
-          <span className="text-brand-bright">Maur</span>Inventario
+          <span className="text-brand-bright">Resell</span>ap
         </span>
       )}
     </span>

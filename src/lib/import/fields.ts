@@ -1,5 +1,5 @@
 /**
- * Qué tipos de hoja sabe importar MaurInventario y qué campos tiene cada uno.
+ * Qué tipos de hoja sabe importar Resellap y qué campos tiene cada uno.
  * Los "sinónimos" sirven para relacionar automáticamente las columnas del
  * Excel con los campos, aunque los nombres no coincidan exactamente.
  * El administrador siempre puede cambiar la relación a mano.

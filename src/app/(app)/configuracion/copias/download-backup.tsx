@@ -16,7 +16,7 @@ export function DownloadBackup() {
         return;
       }
       const blob = await res.blob();
-      const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? "copia-maurinventario.json";
+      const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? "copia-resellap.json";
       const json = JSON.parse(await blob.text()) as { recuentos: Record<string, number> };
       const total = Object.values(json.recuentos).reduce((a, b) => a + b, 0);
       const url = URL.createObjectURL(blob);

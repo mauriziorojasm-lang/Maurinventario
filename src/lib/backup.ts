@@ -41,5 +41,7 @@ export const BACKUP_TABLES: { name: string; select?: string; order: string }[] =
   { name: "audit_log", order: "id" },
 ];
 
-export const BACKUP_FORMAT = "maurinventario-copia";
+export const BACKUP_FORMAT = "resellap-copia";
+/** Copias hechas antes del cambio de marca: siguen siendo válidas. */
+export const LEGACY_BACKUP_FORMATS = ["maurinventario-copia"];
 export const BACKUP_VERSION = 1;

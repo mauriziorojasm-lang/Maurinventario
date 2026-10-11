@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 6 · Importación de datos desde Excel
+-- Resellap · Migración 6 · Importación de datos desde Excel
 --
 -- La aplicación lee el Excel, valida cada fila y envía aquí un "plan"
 -- ya estructurado. Esta función lo guarda todo en UNA transacción.

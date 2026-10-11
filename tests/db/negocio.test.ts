@@ -8,7 +8,7 @@ import { TEST_DATABASE_URL, TestDb, asUser, createTestDatabase, createUser, rpc,
 
 const run = TEST_DATABASE_URL ? describe : describe.skip;
 
-run("Lógica de negocio de MaurInventario", () => {
+run("Lógica de negocio de Resellap", () => {
   let db: TestDb;
   let admin: string;
   let seller: string;

@@ -9,7 +9,8 @@ import { cleanText, htmlToText } from "./parse";
  */
 
 export const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
-export const CENTRAL_ACCOUNT = "maurinventario@gmail.com";
+/** Cuenta de Gmail que recibe los correos de venta. Se cambia con GMAIL_CENTRAL_ACCOUNT (p. ej. resellap@gmail.com). */
+export const CENTRAL_ACCOUNT = (process.env.GMAIL_CENTRAL_ACCOUNT || "resellap@gmail.com").trim().toLowerCase();
 
 // Direcciones de Google. Solo se cambian en las pruebas automáticas (Gmail simulado).
 const AUTH_URL = () => testOnlyEnv("GOOGLE_OAUTH_AUTH_URL") || "https://accounts.google.com/o/oauth2/v2/auth";

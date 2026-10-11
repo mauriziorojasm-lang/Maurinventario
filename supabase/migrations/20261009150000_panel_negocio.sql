@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 10 · Panel de negocio del Inicio
+-- Resellap · Migración 10 · Panel de negocio del Inicio
 -- Una sola función de SOLO LECTURA (solo administrador) que reúne:
 -- indicadores del mes con comparación, evolución mensual, rendimiento de
 -- productos, antigüedad del stock y actividad reciente.

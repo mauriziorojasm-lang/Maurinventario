@@ -1,4 +1,4 @@
-# Instalar MaurInventario desde un iPad
+# Instalar Resellap desde un iPad
 
 Todo se hace en **Safari**, sin terminal ni ordenador. Lo que en el README se hace con comandos aquí lo sustituyen dos cosas:
 
@@ -14,11 +14,11 @@ Tiempo aproximado: 30-40 minutos.
 En Safari, entra en **github.com** (crea la cuenta si no la tienes).
 
 1. Pulsa tu foto (arriba a la derecha) → **Your repositories** → **New**.
-2. **Repository name:** `maurinventario`
+2. **Repository name:** `resellap`
 3. Marca **Private**.
 4. **No** marques «Add a README file», ni «.gitignore», ni licencia.
 5. Pulsa **Create repository**.
-6. Dile a Claude tu usuario de GitHub: «es `TU-USUARIO/maurinventario`». Claude sube el código.
+6. Dile a Claude tu usuario de GitHub: «es `TU-USUARIO/resellap`». Claude sube el código.
 
 ✅ Sabrás que está hecho cuando, al recargar la página del repositorio, veas las carpetas `src`, `supabase` y `docs`.
 
@@ -31,7 +31,7 @@ En Safari, entra en **supabase.com/dashboard** (crea la cuenta con «Continue wi
 ### 2.1 Crear el proyecto
 
 1. **New project**.
-2. **Name:** `maurinventario`.
+2. **Name:** `resellap`.
 3. **Database Password:** pulsa «Generate a password» y guárdala en tus contraseñas de iCloud. Aquí no la vas a usar, pero no la pierdas.
 4. **Region:** una de Europa.
 5. **Create new project** y espera a que termine (1-2 minutos).
@@ -77,7 +77,7 @@ Pulsa **Connect** (arriba) o ve a **Project Settings → API Keys** y apunta en 
 En Safari, entra en **vercel.com** → **Continue with GitHub**.
 
 1. **Add New… → Project**.
-2. Busca `maurinventario` → **Import**. Si no aparece, pulsa «Adjust GitHub App Permissions» y dale acceso a ese repositorio.
+2. Busca `resellap` → **Import**. Si no aparece, pulsa «Adjust GitHub App Permissions» y dale acceso a ese repositorio.
 3. Vercel detecta **Next.js** solo. No toques Build, Output ni Install.
 4. Abre **Environment Variables** y añade estas tres (nombre exacto, valor del paso 2.4):
 
@@ -88,14 +88,14 @@ En Safari, entra en **vercel.com** → **Continue with GitHub**.
    | `SUPABASE_SECRET_KEY` | la Secret key |
 
 5. Pulsa **Deploy** y espera 1-3 minutos.
-6. Copia la dirección que te da Vercel, por ejemplo `https://maurinventario.vercel.app`.
+6. Copia la dirección que te da Vercel, por ejemplo `https://resellap.vercel.app`.
 
 ### 3.1 Avisar a Supabase de tu dirección
 
 Supabase → **Authentication → URL Configuration**:
 
 - **Site URL:** tu dirección de Vercel.
-- **Redirect URLs** → Add URL: tu dirección + `/**`, por ejemplo `https://maurinventario.vercel.app/**`.
+- **Redirect URLs** → Add URL: tu dirección + `/**`, por ejemplo `https://resellap.vercel.app/**`.
 
 ---
 
@@ -103,7 +103,7 @@ Supabase → **Authentication → URL Configuration**:
 
 1. Abre tu dirección de Vercel → entra con el usuario del paso 2.3.
 2. Guarda `INVENTARIO.xlsx` en la app **Archivos** del iPad (desde el correo, Drive…).
-3. En MaurInventario → **Importar Excel** → elige el archivo en Archivos.
+3. En Resellap → **Importar Excel** → elige el archivo en Archivos.
 4. Sigue los pasos:
    - Hojas y columnas → Validar datos → **Simular importación**.
    - Comprueba que pone «Correcto» en el coste real (106 de 106) y en el stock (40 de 40).
@@ -124,7 +124,7 @@ Supabase → **Authentication → URL Configuration**:
 
 Para no probar nunca sobre tus datos reales:
 
-1. Repite el **paso 2** con un proyecto llamado `maurinventario-dev`: pega el mismo `instalar-todo.sql` y crea tu usuario.
+1. Repite el **paso 2** con un proyecto llamado `resellap-dev`: pega el mismo `instalar-todo.sql` y crea tu usuario.
 2. En Vercel → **Settings → Environment Variables**, añade las tres variables otra vez, con los valores de **dev**, marcando solo **Preview**.
 3. En las tres variables de producción, deja marcado solo **Production**.
 
@@ -139,7 +139,7 @@ Así, cuando Claude te prepare un cambio en una rama, Vercel crea una dirección
   2. Claude los sube a GitHub, a una rama de prueba.
   3. Vercel crea una dirección **Preview**.
   4. Si te gusta, en GitHub pulsas **Pull request → Merge** y se publica en tu web en 1-3 minutos.
-- **Cambios de base de datos:** Claude te dará un archivo SQL nuevo y corto. Lo pegas en el SQL Editor, **primero en `maurinventario-dev`** y, cuando todo funcione, **en producción**.
+- **Cambios de base de datos:** Claude te dará un archivo SQL nuevo y corto. Lo pegas en el SQL Editor, **primero en `resellap-dev`** y, cuando todo funcione, **en producción**.
 - **Si cambias una variable en Vercel:** Deployments → el último → **Redeploy**. Si no, no se aplica.
 
 ---
@@ -148,9 +148,9 @@ Así, cuando Claude te prepare un cambio en una rama, Vercel crea una dirección
 
 | Lo que ves | Qué hacer |
 |---|---|
-| «MaurInventario no está configurado: faltan…» | Faltan variables en Vercel, o están mal escritas. Añádelas y haz **Redeploy**. |
+| «Resellap no está configurado: faltan…» | Faltan variables en Vercel, o están mal escritas. Añádelas y haz **Redeploy**. |
 | «El email o la contraseña no son correctos» | Revisa en Supabase → Authentication → Users que el usuario existe. |
-| «Tu usuario está desactivado» | Actívalo en MaurInventario → Usuarios → Gestionar. Si eres tú y no puedes entrar, en Supabase → SQL Editor: `update public.profiles set role = 'admin', active = true where email = 'TU@EMAIL';` |
+| «Tu usuario está desactivado» | Actívalo en Resellap → Usuarios → Gestionar. Si eres tú y no puedes entrar, en Supabase → SQL Editor: `update public.profiles set role = 'admin', active = true where email = 'TU@EMAIL';` |
 | «Has entrado, pero no se puede leer tu perfil» | El paso 2.2 no se completó en ese proyecto. Repítelo. |
 | Error al pegar el SQL | Captura del mensaje para Claude. No se ha guardado nada. |
 | La web abre pero tras entrar vuelve al login | Revisa el paso 3.1 (Site URL). |

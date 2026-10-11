@@ -40,7 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# MaurInventario: nunca subir datos reales del negocio ni archivos locales de Supabase
+# Resellap: nunca subir datos reales del negocio ni archivos locales de Supabase
 !.env.example
 /data/
 *.xlsx

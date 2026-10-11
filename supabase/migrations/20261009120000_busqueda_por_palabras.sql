@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 9 · Buscador de productos por palabras
+-- Resellap · Migración 9 · Buscador de productos por palabras
 -- «Oakley Encoder» encuentra «Oakley - Encoder»: cada palabra se busca por
 -- separado en nombre, variante, SKU, marca y categoría, en cualquier orden.
 -- Solo sustituye la función de búsqueda (misma firma y permisos). No toca datos.
