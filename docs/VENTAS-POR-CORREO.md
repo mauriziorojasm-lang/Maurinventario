@@ -1,8 +1,8 @@
 # Ventas por correo (Vinted y Wallapop)
 
-> **Cambio de marca:** la cuenta de ventas pasa a ser **resellap@gmail.com**. Hasta que la crees y pongas `GMAIL_CENTRAL_ACCOUNT=resellap@gmail.com` en Vercel, la app sigue usando `maurinventario@gmail.com` y todo funciona igual.
+> **Cambio de marca:** la cuenta de ventas es ahora **resellap.app@gmail.com**. Si tenías conectada `maurinventario@gmail.com`, sigue leyendo sus correos hasta que pulses «Volver a conectar» y elijas la cuenta nueva. Antes, cambia en Vinted y Wallapop el correo de tu cuenta (o reenvía los correos de venta) para que lleguen a la cuenta nueva.
 
-Resellap lee los correos que llegan a **resellap@gmail.com** y registra las ventas solo. Esta guía explica qué hace y cómo dejarlo funcionando. No hace falta saber programar.
+Resellap lee los correos que llegan a **resellap.app@gmail.com** y registra las ventas solo. Esta guía explica qué hace y cómo dejarlo funcionando. No hace falta saber programar.
 
 ---
 
@@ -45,20 +45,20 @@ Necesitas unos 15 minutos. Hazlo desde un ordenador o iPad.
 
 ### Paso A · Google Cloud (crear el permiso para leer Gmail)
 
-Usa la cuenta **resellap@gmail.com** en todo este paso.
+Usa la cuenta **resellap.app@gmail.com** en todo este paso.
 
-1. Entra en **console.cloud.google.com** con resellap@gmail.com. Si te pide aceptar condiciones, acéptalas.
+1. Entra en **console.cloud.google.com** con resellap.app@gmail.com. Si te pide aceptar condiciones, acéptalas.
 2. Arriba, junto al logo, pulsa el selector de proyectos → **Proyecto nuevo** → nombre `Resellap` → **Crear**. Espera unos segundos y comprueba que arriba aparece «Resellap» seleccionado.
 3. Activa la API de Gmail: en el buscador de arriba escribe **Gmail API** → ábrela → botón **Habilitar**.
 4. Menú ☰ → **APIs y servicios** → **Pantalla de consentimiento de OAuth** (en algunas cuentas se llama **Google Auth Platform**). Pulsa **Comenzar**:
    - Nombre de la aplicación: `Resellap`
-   - Correo de asistencia: resellap@gmail.com
+   - Correo de asistencia: resellap.app@gmail.com
    - Público / Tipo de usuario: **Externo**
-   - Información de contacto: resellap@gmail.com
+   - Información de contacto: resellap.app@gmail.com
    - Acepta la política y pulsa **Crear**.
 5. Ve a **Acceso a los datos** (o «Permisos / Scopes») → **Agregar o quitar permisos** → en el filtro escribe `gmail.readonly` → marca **…/auth/gmail.readonly** («Ver tus mensajes de correo y tu configuración») → **Actualizar** → **Guardar**.
    - Solo lectura: la app nunca podrá enviar, borrar ni cambiar correos.
-6. Ve a **Público** (Audience) → en «Usuarios de prueba» añade **resellap@gmail.com** → Guardar.
+6. Ve a **Público** (Audience) → en «Usuarios de prueba» añade **resellap.app@gmail.com** → Guardar.
 7. En esa misma pantalla, pulsa **Publicar la aplicación** → **Confirmar**. Debe quedar en estado **«En producción»**.
    - Esto es importante: en estado «Prueba» Google caduca el permiso cada 7 días.
    - No hace falta que Google verifique la app: es solo para ti. Al conectar verás un aviso de «aplicación no verificada»; es normal (ver paso D).
@@ -92,7 +92,7 @@ Usa la cuenta **resellap@gmail.com** en todo este paso.
 
 1. Abre **resellap.vercel.app** con tu usuario de administrador.
 2. Menú → **Ventas por correo** → **Conectar Gmail**.
-3. Elige la cuenta **resellap@gmail.com** (si eliges otra, la app no la acepta).
+3. Elige la cuenta **resellap.app@gmail.com** (si eliges otra, la app no la acepta).
 4. Google avisa: «Google no ha verificado esta aplicación». Pulsa **Configuración avanzada** → **Ir a Resellap (no seguro)**. Es tu propia app; el aviso sale porque no se ha pasado la verificación pública de Google.
 5. Marca la casilla de **leer tus correos** y pulsa **Continuar**.
 6. Vuelves a la app con el mensaje «Gmail conectado».

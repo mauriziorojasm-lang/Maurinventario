@@ -327,7 +327,7 @@ Estas son **todas** las variables que usa Resellap. No hay más.
 | `GEMINI_API_KEY` | Opcional | ✅ | 🔴 Secreta | Generador de descripciones (IA de Google Gemini, nivel gratuito). Se crea en aistudio.google.com → *Get API key*. |
 | `GOOGLE_CLIENT_ID` | Opcional | ✅ | 🔴 Secreta | Ventas por correo (Gmail). Ver [docs/VENTAS-POR-CORREO.md](docs/VENTAS-POR-CORREO.md). |
 | `GOOGLE_CLIENT_SECRET` | Opcional | ✅ | 🔴 Secreta | Ventas por correo (Gmail). Mismo sitio que la anterior. |
-| `GMAIL_CENTRAL_ACCOUNT` | Opcional | ✅ | 🟢 No secreta | Cuenta de Gmail que recibe las ventas. Por defecto `maurinventario@gmail.com`; con la marca nueva, `resellap@gmail.com`. |
+| `GMAIL_CENTRAL_ACCOUNT` | Opcional | ✅ | 🟢 No secreta | Cuenta de Gmail que recibe las ventas. Por defecto `resellap.app@gmail.com`. Solo hace falta si usas otra cuenta. |
 | `GEMINI_MODEL` | Opcional | Opcional | 🔴 Secreta | Cambiar el modelo de Gemini. Por defecto se prueban en orden `gemini-3.5-flash`, `gemini-3.8-flash`, `gemini-3.5-flash-lite` y `gemini-3.1-flash-lite` (si uno está saturado o sin cupo, pasa al siguiente). |
 
 > Sin `SUPABASE_SECRET_KEY` la app funciona, pero la pantalla Usuarios no puede crear usuarios. Lo avisa en pantalla.
