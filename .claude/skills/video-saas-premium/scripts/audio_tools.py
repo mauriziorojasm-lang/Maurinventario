@@ -138,7 +138,10 @@ def main():
 
     elif a.cmd == "check":
         html = open(a.html).read(); base = os.path.dirname(os.path.abspath(a.html))
-        tags = re.findall(r'<audio[^>]*data-start="([\d.]+)"[^>]*data-duration="([\d.]+)"[^>]*data-volume="([\d.]+)"[^>]*src="([^"]+)"', html)
+        attr = lambda tag, k: (re.search(rf'\b{k}="([^"]*)"', tag) or [None, None])[1]
+        tags = [(attr(t, "data-start"), attr(t, "data-duration"), attr(t, "data-volume") or "1", attr(t, "src"))
+                for t in re.findall(r"<audio\b[^>]*>", html)]
+        tags = [t for t in tags if t[0] and t[1] and t[3]]
         sfx = [t for t in tags if "sfx" in t[3]]
         dur = a.dur or max(float(s) + float(d) for s, d, _, _ in tags)
         tmp = tempfile.mkdtemp(); bus = os.path.join(tmp, "sfx.wav"); args, fc, mix = [], "", ""
