@@ -72,8 +72,9 @@ html, body { width: 1080px; height: 1920px; overflow: hidden; background: #05070
 #end .wm { font: 700 96px/1 "BC"; margin-top: 34px; text-transform: uppercase; }
 #end .wm b { color: var(--brand); }
 #end .fin { font: 700 66px/1.05 "BC"; text-transform: uppercase; text-align: center; margin-top: 60px; padding: 0 70px; }
-#end .cta { font: 500 32px/1.35 "PS"; color: #cfc8bf; text-align: center; margin-top: 26px; padding: 0 110px; }
-#end .url { margin-top: 44px; height: 76px; padding: 0 38px; border-radius: 20px; background: var(--brand); color: var(--on-brand); display: flex; align-items: center; font: 750 34px "PS"; }
+#end .cta { font: 650 40px/1.35 "PS"; color: #f3efea; text-align: center; margin-top: 34px; padding: 0 90px; }
+#end .cta b { display: inline-block; padding: 2px 16px; border-radius: 10px; background: #f5d547; color: #3d3200; font-weight: 800; letter-spacing: .04em; }
+#end .url { margin-top: 30px; height: 60px; padding: 0 28px; border-radius: 16px; border: 2px solid var(--brand); color: var(--brand); display: flex; align-items: center; font: 700 28px "PS"; }
 
 /* portada */
 body.cover #subs, body.cover #end, body.cover .hideCover { display: none !important; }

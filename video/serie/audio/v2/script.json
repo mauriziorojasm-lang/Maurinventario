@@ -1,8 +1,8 @@
 {
- "H": "Vender mucho no significa ganar mucho. ¿Sabes cuánto te queda de verdad?",
- "L2": "Compras algo por veinte euros y lo vendes por treinta y cinco. Quince de beneficio... ¿o no? ¿Y el transporte o las aduanas de esa compra?",
- "L3": "MaurInventario calcula el beneficio de cada venta con el coste real de su lote: lo que pagaste, más los costes de la compra repartidos entre las unidades.",
- "L4": "En cada venta ves el precio, el coste y lo que te queda. Y en el panel, la rentabilidad de cada artículo.",
- "L5": "Además, te lo dice claro: es beneficio bruto, antes de los gastos generales del negocio.",
- "L6": "Porque lo importante no es cuánto vendes. Es cuánto te queda."
+ "H": "¿Sabes cuánto te queda de verdad de cada venta?",
+ "L2": "Vendes por treinta y cinco lo que te costó veinte. ¿Quince de beneficio? ¿Y el transporte o las aduanas de esa compra?",
+ "L3": "MaurInventario calcula cada venta con el coste real de su lote, incluidos los costes de la compra.",
+ "L4": "Ves el precio, el coste y lo que te queda. Y la rentabilidad de cada artículo.",
+ "L5": "Es beneficio bruto, antes de los gastos generales, y la app te lo dice claro.",
+ "L6": "Lo importante no es cuánto vendes. Es cuánto te queda."
 }
