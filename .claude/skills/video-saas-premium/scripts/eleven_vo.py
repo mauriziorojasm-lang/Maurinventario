@@ -79,6 +79,7 @@ def main():
     l = sub.add_parser("lines"); l.add_argument("--voice", required=True); l.add_argument("--script", required=True); l.add_argument("--out", required=True)
     l.add_argument("--model", default="eleven_multilingual_v2"); l.add_argument("--lang", default="es")
     l.add_argument("--speed", type=float, help="0.7–1.2; <1 = slower read (e.g. 0.88)"); l.add_argument("--only", help="comma-separated keys to (re)generate")
+    l.add_argument("--stability", type=float, help="eleven_v3: 0 creativa · 0.5 natural (por defecto) · 1 estable")
     args = ap.parse_args(); k = key(args)
 
     if args.cmd == "search":
@@ -116,11 +117,12 @@ def main():
         script = json.load(open(args.script)); keys = list(script)
         ap_ = os.path.join(args.out, "align.json"); align = json.load(open(ap_)) if os.path.exists(ap_) else {}
         only = set(args.only.split(",")) if args.only else None
-        vs = {**SETTINGS, **({"speed": args.speed} if args.speed else {})}
+        v3 = args.model.startswith("eleven_v3")   # v3: solo admite stability (0 / 0.5 / 1) y no usa previous/next_text
+        vs = {"stability": args.stability if args.stability is not None else 0.5} if v3 else {**SETTINGS, **({"speed": args.speed} if args.speed else {})}
         for i, kk in enumerate(keys):
             if only and kk not in only: continue
-            body = {"text": script[kk], "model_id": args.model, "language_code": args.lang, "voice_settings": vs,
-                    "previous_text": script[keys[i - 1]] if i else None, "next_text": script[keys[i + 1]] if i + 1 < len(keys) else None}
+            body = {"text": script[kk], "model_id": args.model, "language_code": args.lang, "voice_settings": vs}
+            if not v3: body.update(previous_text=script[keys[i - 1]] if i else None, next_text=script[keys[i + 1]] if i + 1 < len(keys) else None)
             d = call(k, f"/v1/text-to-speech/{args.voice}/with-timestamps?output_format=mp3_44100_128", body)
             open(os.path.join(args.out, f"{kk}.mp3"), "wb").write(base64.b64decode(d["audio_base64"]))
             align[kk] = words_from_alignment(d["alignment"])

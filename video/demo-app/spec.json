@@ -1,0 +1,22 @@
+[
+ {"name":"inicio","path":"/","marks":{"ing":{"text":"Ingresos","exact":true},"ben":{"text":"Beneficio bruto","exact":true},"mar":{"text":"Margen bruto","exact":true},"ven":{"text":"Ventas","exact":true,"nth":1},"sto":{"text":"Stock disponible","exact":true},"val":{"text":"Valor del inventario","exact":true},"tar":{"text":"Ventas por confirmar"},"env":{"text":"Envíos pendientes"},"pers":{"text":"Personalizar panel"},"nav":{"sel":"nav"}}},
+ {"name":"inicio-full","path":"/","full":true,"marks":{"evo":{"text":"Evolución de las ventas"},"top":{"text":"Artículos más vendidos"}}},
+ {"name":"panel","path":"/","actions":[{"click":"text=Personalizar panel","wait":900}]},
+ {"name":"productos","path":"/productos","marks":{"coste":{"text":"Coste medio","exact":true},"stock":{"text":"Stock","exact":true},"first":{"text":"Oakley HSTN","exact":true}}},
+ {"name":"inventario","path":"/inventario","marks":{"uds":{"text":"Unidades","exact":true},"cmp":{"text":"Coste medio ponderado"},"valm":{"text":"Valor del almacén","exact":true},"benp":{"text":"Beneficio potencial","exact":true},"lotes":{"text":"Lotes con stock"}}},
+ {"name":"ventas","path":"/ventas","marks":{"fact":{"text":"Facturación","exact":true},"ben":{"text":"Beneficio","exact":true},"ped":{"text":"Pedidos","exact":true},"benc":{"text":"Beneficio","exact":true,"nth":1}}},
+ {"name":"compras","path":"/compras","marks":{"cex":{"text":"Costes extra"},"ctot":{"text":"Coste total"}}},
+ {"name":"informes","path":"/informes"},
+ {"name":"detectadas","path":"/detectadas","marks":{"card":{"text":"Oakley HSTN","exact":true},"si":{"text":"Sí, es una venta","nth":0},"price":{"text":"55,00 €","exact":true},"todas":{"text":"Confirmar las 3"}}},
+ {"name":"detectadas-ok","path":"/detectadas","actions":[{"click":"text=Sí, es una venta >> nth=0","wait":2500}]},
+ {"name":"correos","path":"/correos","marks":{"gmail":{"text":"Conectado","exact":true},"hist":{"text":"Historial","exact":true}}},
+ {"name":"correos-hist","path":"/correos","actions":[{"click":"text=Historial","wait":1200}]},
+ {"name":"venta","path":"/ventas/35840e3e-3aa0-4819-abbb-795b9d16240a","marks":{"eti":{"text":"Etiqueta de envío"},"ver":{"text":"Ver etiqueta"},"orig":{"text":"Origen","exact":true},"seg":{"text":"Seguimiento","exact":true},"det":{"text":"Detectada en el correo"}}},
+ {"name":"envios","path":"/envios"},
+ {"name":"usuarios","path":"/usuarios"},
+ {"name":"descripciones","path":"/descripciones"},
+ {"name":"anuncios","path":"/anuncios"},
+ {"name":"m-inicio","path":"/","vw":390,"vh":844,"dpr":3,"mobile":true},
+ {"name":"m-ventas","path":"/ventas","vw":390,"vh":844,"dpr":3,"mobile":true},
+ {"name":"m-detectadas","path":"/detectadas","vw":390,"vh":844,"dpr":3,"mobile":true}
+]
