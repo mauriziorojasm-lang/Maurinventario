@@ -1,7 +1,8 @@
 /** Formatos en español de España. */
-const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
-const eur4 = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 4 });
-const int = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 });
+// Separador de miles siempre (1.284,50 €), también con 4 cifras, como en el manual de marca
+const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", useGrouping: "always" });
+const eur4 = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 4, useGrouping: "always" });
+const int = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0, useGrouping: "always" });
 const pct = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 });
 
 export function money(v: number | string | null | undefined, opts?: { precise?: boolean }): string {

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ExportLinks, FilterBar } from "@/components/filter-bar";
-import { Badge, Empty, LinkButton, Notice, PageHeader, Pagination, Panel, StockBadge, Table, Td, Th, Tr } from "@/components/ui";
+import { Badge, Empty, Figures, LinkButton, Notice, PageHeader, Pagination, Panel, StockBadge, Table, Td, Th, Tr, clsx } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { filtersFrom, first, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
-import { money, units } from "@/lib/format";
+import { money, percent, units } from "@/lib/format";
 import { loadCatalogOptions } from "@/lib/options";
 import { must } from "@/lib/db";
 import { PRODUCT_COLUMNS, PRODUCT_SORTS, type ProductSort } from "@/lib/preferences";
@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { type SellableVariant, variantDisplay } from "@/lib/types";
 import { ProductCards, ProductThumb } from "./product-cards";
 
-export const metadata: Metadata = { title: "Productos" };
+export const metadata: Metadata = { title: "Inventario" };
 
 type ProductRow = {
   product_id: string;
@@ -50,7 +50,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     return (
       <>
         <PageHeader
-          title="Productos"
+          title="Inventario"
           description="Stock disponible y precio normal de cada producto."
           actions={
             canCreate ? (
@@ -121,7 +121,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   }
 
   const filters = filtersFrom(sp);
-  const missing = first(sp.missing) === "true";
+  const missing = first(sp.missing) === "true" || first(sp.estado) === "pendientes";
   // Preferencias de la tabla (Ajustes → Tablas): columnas, orden y filas por página
   const tp = (await loadPrefs()).tables.productos;
   const low = Number(first(sp.bajo));
@@ -132,7 +132,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   if (filters.search) q = q.or(`product_name.ilike.%${filters.search.replace(/[%,()]/g, " ")}%,sku.ilike.%${filters.search.replace(/[%,()]/g, " ")}%`);
   if (filters.category_id) q = q.eq("category_id", filters.category_id);
   if (filters.brand_id) q = q.eq("brand_id", filters.brand_id);
-  if (filters.only_in_stock === "true") q = q.gt("stock", 0);
+  const estado = first(sp.estado) ?? "";
+  if (filters.only_in_stock === "true" || estado === "stock") q = q.gt("stock", 0);
+  if (estado === "sin") q = q.lte("stock", 0);
   if (missing) q = q.eq("has_missing_data", true);
   if (lowStock) q = q.gte("stock", 1).lte("stock", lowStock);
   q =
@@ -145,18 +147,43 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           : sortKey === "vendidas"
             ? q.order("units_sold", { ascending: false, nullsFirst: false })
             : q.order("stock", { ascending: false });
-  const [{ data, count, error }, opts] = await Promise.all([q.order("product_name").order("product_id").range(from, to), loadCatalogOptions()]);
+  const head = () => supabase.from("v_product_inventory").select("product_id", { count: "exact", head: true });
+  const [{ data, count, error }, opts, summary, all, inStock, missingN] = await Promise.all([
+    q.order("product_name").order("product_id").range(from, to),
+    loadCatalogOptions(),
+    supabase.rpc("report_inventory_summary", { p_filters: {} }),
+    head(),
+    head().gt("stock", 0),
+    head().eq("has_missing_data", true),
+  ]);
+  const sum = (summary.data ?? null) as { units?: number; stock_value?: number; potential_value?: number; potential_profit?: number } | null;
+  const chips = [
+    { key: "", label: "Todos", n: all.count ?? 0 },
+    { key: "stock", label: "En stock", n: inStock.count ?? 0 },
+    { key: "sin", label: "Sin stock", n: Math.max(0, (all.count ?? 0) - (inStock.count ?? 0)) },
+    { key: "pendientes", label: "Datos pendientes", n: missingN.count ?? 0 },
+  ];
   const cols = tp.columns.filter((c) => c.visible).map((c) => c.key);
   const rows = (data ?? []) as ProductRow[];
   const photos = await signPhotos(rows.map((r) => r.photo_path), { thumbs: true });
   const hrefFor = (p: number) =>
-    `/productos${toQuery({ ...filters, missing: missing ? "true" : undefined, bajo: lowStock ? String(lowStock) : undefined, orden: first(sp.orden), page: p })}`;
+    `/productos${toQuery({ ...filters, missing: first(sp.missing) === "true" ? "true" : undefined, estado: first(sp.estado), bajo: lowStock ? String(lowStock) : undefined, orden: first(sp.orden), page: p })}`;
+  const refPrice = (r: ProductRow) => (r.normal_sale_price !== null ? Number(r.normal_sale_price) : r.avg_sale_price !== null ? Number(r.avg_sale_price) : null);
+  const profitOf = (r: ProductRow) => {
+    const p = refPrice(r);
+    return p !== null && r.weighted_avg_cost !== null ? p - Number(r.weighted_avg_cost) : null;
+  };
+  const marginOf = (r: ProductRow) => {
+    const p = refPrice(r);
+    const b = profitOf(r);
+    return p && b !== null ? (b / p) * 100 : null;
+  };
 
   return (
     <>
       <PageHeader
-        title="Productos"
-        description="Catálogo con stock, costes y ventas. Los productos sin unidades aparecen como «Sin stock»."
+        title="Inventario"
+        description="Todo lo que tienes: stock, lo que te costó, a cuánto lo vendes y lo que ganas con cada producto."
         actions={
           canCreate ? (
             <LinkButton href="/productos/nuevo" variant="primary">
@@ -165,9 +192,39 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           ) : undefined
         }
       />
+      {sum && (
+        <Figures
+          className="mb-4"
+          items={[
+            { label: "Stock disponible", value: `${units(sum.units ?? 0)} uds.`, note: `${inStock.count ?? 0} productos con stock` },
+            { label: "Valor del inventario", value: money(sum.stock_value ?? 0), note: "a lo que te costó" },
+            { label: "Valor de venta", value: money(sum.potential_value ?? 0), note: "a tu precio normal" },
+            { label: "Beneficio potencial", value: money(sum.potential_profit ?? 0), tone: "good" },
+          ]}
+        />
+      )}
+      <nav className="no-scrollbar -mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 lg:mx-0 lg:px-0" aria-label="Estado del stock">
+        {chips.map((c) => {
+          const on = (first(sp.estado) ?? "") === c.key;
+          return (
+            <Link
+              key={c.key || "todos"}
+              href={`/productos${toQuery({ ...filters, only_in_stock: undefined, estado: c.key || undefined, orden: first(sp.orden) })}`}
+              aria-current={on ? "page" : undefined}
+              className={clsx(
+                "press inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-3.5 text-[13.5px] font-medium",
+                on ? "border-ink bg-ink text-paper" : "border-line bg-surface text-muted hover:text-ink",
+              )}
+            >
+              {c.label}
+              <span className={clsx("num text-[12px]", on ? "text-paper/70" : "text-faint")}>{c.n}</span>
+            </Link>
+          );
+        })}
+      </nav>
       <FilterBar
         basePath="/productos"
-        values={{ ...filters, missing: missing ? "true" : undefined, orden: first(sp.orden) }}
+        values={{ ...filters, missing: first(sp.missing) === "true" ? "true" : undefined, orden: first(sp.orden) }}
         fields={[
           { type: "text", name: "search", label: "Buscar", placeholder: "Nombre o SKU" },
           { type: "select", name: "category_id", label: "Categoría", empty: "Todas", options: opts.categories.map((c) => ({ value: c.id, label: c.name })) },
@@ -195,10 +252,11 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             .join(" · "),
           photo: r.photo_path ? photos.get(r.photo_path) : undefined,
           stock: r.stock,
-          price: r.normal_sale_price,
+          price: refPrice(r),
           extra: [
             { label: "Coste", value: money(r.weighted_avg_cost) },
-            { label: "Vendidas", value: units(r.units_sold) },
+            ...(profitOf(r) !== null ? [{ label: "Gana", value: money(profitOf(r)) }] : []),
+            ...(marginOf(r) !== null ? [{ label: "Margen", value: percent(marginOf(r)) }] : []),
           ],
           warn: r.has_missing_data ? "Datos pendientes" : null,
         }))}
@@ -215,6 +273,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                     {PRODUCT_COLUMNS[c]}
                   </Th>
                 ))}
+                <Th num>Beneficio</Th>
+                <Th num>Margen</Th>
               </tr>
             </thead>
             <tbody>
@@ -260,6 +320,10 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                         return <Td key={c} num>{money(r.stock_value)}</Td>;
                     }
                   })}
+                  <Td num className={profitOf(r) !== null && profitOf(r)! < 0 ? "text-danger" : "font-semibold text-good-ink"}>
+                    {profitOf(r) !== null ? money(profitOf(r)) : <span className="font-normal text-faint">—</span>}
+                  </Td>
+                  <Td num>{marginOf(r) !== null ? percent(marginOf(r)) : <span className="text-faint">—</span>}</Td>
                 </Tr>
               ))}
             </tbody>

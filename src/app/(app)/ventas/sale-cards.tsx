@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { PlatformIcon, CarrierIcon } from "@/components/marks";
+import { ProductThumb } from "@/components/thumb";
+import { TrackingBadge } from "@/components/tracking";
 import { Badge, LotTag, clsx } from "@/components/ui";
 import { date, money } from "@/lib/format";
 import { SaleCheckbox, SelectAllCheckbox } from "./bulk-shipping";
@@ -12,12 +15,25 @@ export type CardSale = {
   platform: string;
   responsible?: string;
   shipping: "pendiente" | "enviado" | null;
+  photo?: string | null;
+  buyer?: string | null;
+  carrier?: string | null;
+  tracking?: string | null;
   lines: { text: string; quantity: number; lot?: string | null; returned?: number }[];
 };
 
-function ShipBadge({ s }: { s: CardSale["shipping"] }) {
+function ShipBadge({ s, tracking }: { s: CardSale["shipping"]; tracking?: string | null }) {
   if (!s) return <span className="text-xs text-muted">En mano</span>;
-  return s === "enviado" ? <Badge tone="good">Enviado</Badge> : <Badge tone="warn">Pendiente</Badge>;
+  if (s === "enviado" && tracking) return <TrackingBadge status={tracking} />;
+  return s === "enviado" ? (
+    <Badge tone="info" dot>
+      Enviado
+    </Badge>
+  ) : (
+    <Badge tone="warn" dot>
+      Pendiente
+    </Badge>
+  );
 }
 
 /**
@@ -39,7 +55,7 @@ export function SaleCards({ sales }: { sales: CardSale[] }) {
         {sales.map((s) => (
           <li
             key={s.id}
-            className="press relative rounded-[var(--radius-md)] border border-line bg-surface p-3.5 shadow-[var(--shadow-card)] active:border-brand/60"
+            className="press relative rounded-[var(--radius-md)] border border-line bg-surface p-3 active:border-line-strong"
           >
             <div className="flex items-start gap-3">
               {s.shipping && (
@@ -47,13 +63,14 @@ export function SaleCards({ sales }: { sales: CardSale[] }) {
                   <SaleCheckbox saleId={s.id} status={s.shipping} label={`la venta ${s.number}`} />
                 </span>
               )}
+              {s.photo !== undefined && <ProductThumb src={s.photo} alt="" size={56} rounded={10} />}
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-3">
                   <Link href={`/ventas/${s.id}`} className="font-bold text-ink after:absolute after:inset-0 after:content-['']">
                     {s.number}
                     <span className="num ml-2 text-[12.5px] font-normal text-muted">{date(s.date)}</span>
                   </Link>
-                  <span className="display num text-[22px]">{money(s.total)}</span>
+                  <span className="num text-[17px] font-semibold tracking-[-0.01em]">{money(s.total)}</span>
                 </div>
                 <ul className="mt-1.5 flex flex-col gap-1 text-[14px]">
                   {s.lines.map((l, i) => (
@@ -67,7 +84,11 @@ export function SaleCards({ sales }: { sales: CardSale[] }) {
                   ))}
                 </ul>
                 <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-muted">
-                  <span className="min-w-0 truncate">{[s.platform, s.responsible].filter(Boolean).join(" · ")}</span>
+                  <span className="flex min-w-0 items-center gap-1.5 truncate">
+                    <PlatformIcon name={s.platform} size={15} />
+                    {s.buyer ? <span className="truncate">· {s.buyer}</span> : s.responsible ? <span className="truncate">· {s.responsible}</span> : null}
+                    {s.carrier && <CarrierIcon name={s.carrier} size={15} showName={false} />}
+                  </span>
                   <span className="flex items-center gap-2">
                     {s.profit !== undefined && s.profit !== null && (
                       <span className={clsx("num font-semibold", s.profit < 0 ? "text-danger" : "text-good")}>
@@ -75,7 +96,7 @@ export function SaleCards({ sales }: { sales: CardSale[] }) {
                         {money(s.profit)}
                       </span>
                     )}
-                    <ShipBadge s={s.shipping} />
+                    <ShipBadge s={s.shipping} tracking={s.tracking} />
                   </span>
                 </div>
               </div>

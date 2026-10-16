@@ -13,6 +13,10 @@ import { createClient } from "@/lib/supabase/server";
 import { type SaleLine, variantDisplay } from "@/lib/types";
 import { BulkShippingBar, SaleCheckbox, SelectAllCheckbox, ShippingSelection } from "./bulk-shipping";
 import { SaleCards, type CardSale } from "./sale-cards";
+import { CarrierIcon, PlatformIcon } from "@/components/marks";
+import { ProductThumb } from "@/components/thumb";
+import { TrackingBadge } from "@/components/tracking";
+import { saleThumbs } from "@/lib/storage";
 
 export const metadata: Metadata = { title: "Ventas" };
 
@@ -21,7 +25,15 @@ const shipOf = (status: string | null, requires: boolean): Ship => (requires ? (
 
 function ShippingBadge({ status, requires }: { status: string | null; requires: boolean }) {
   if (!requires) return <span className="text-xs text-muted">En mano</span>;
-  return status === "enviado" ? <Badge tone="good">Enviado</Badge> : <Badge tone="warn">Pendiente</Badge>;
+  return status === "enviado" ? (
+    <Badge tone="info" dot>
+      Enviado
+    </Badge>
+  ) : (
+    <Badge tone="warn" dot>
+      Pendiente
+    </Badge>
+  );
 }
 
 export default async function SalesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -169,6 +181,19 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     loadSaleOptions(),
   ]);
   const rows = (data ?? []) as SaleLine[];
+  // Datos de cada venta para reconocerla de un vistazo: foto, comprador, transportista y seguimiento
+  const saleIds = [...new Set(rows.map((r) => r.sale_id))];
+  const { data: extraRows } = saleIds.length
+    ? await supabase
+        .from("sales")
+        .select("id, buyer_name, image_path, tracking_status, carriers(name), sale_items(product_variants(products(photo_path)))")
+        .in("id", saleIds)
+    : { data: [] };
+  type Extra = { id: string; buyer_name: string | null; image_path: string | null; tracking_status: string | null; carriers: { name: string } | null; sale_items: { product_variants: { products: { photo_path: string | null } | null } | null }[] };
+  const extras = new Map(((extraRows ?? []) as unknown as Extra[]).map((e) => [e.id, e]));
+  const thumbs = await saleThumbs(
+    ((extraRows ?? []) as unknown as Extra[]).map((e) => ({ key: e.id, image_path: e.image_path, product_photo: e.sale_items[0]?.product_variants?.products?.photo_path ?? null })),
+  );
   const sum = summary as {
     orders: number;
     units: number;
@@ -252,7 +277,12 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
       )}
       <ShippingSelection>
         <BulkShippingBar />
-        <SaleCards sales={groupLines(rows)} />
+        <SaleCards
+          sales={groupLines(rows).map((c) => {
+            const e = extras.get(c.id);
+            return { ...c, photo: thumbs.get(c.id) ?? null, buyer: e?.buyer_name ?? null, carrier: e?.carriers?.name ?? null, tracking: e?.tracking_status ?? null };
+          })}
+        />
         <Panel padded={false} className={rows.length ? "max-lg:mt-3 max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none" : undefined}>
           {rows.length === 0 ? (
             <Empty title="No hay ventas con estos filtros" action={can(user, "ventas_crear") ? <LinkButton href="/ventas/nueva">Registrar una venta</LinkButton> : undefined} />
@@ -295,15 +325,21 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                               <Link className="whitespace-nowrap font-semibold text-brand-ink hover:underline" href={`/ventas/${l.sale_id}`}>
                                 {l.sale_number}
                               </Link>
+                              {extras.get(l.sale_id)?.buyer_name && <span className="block max-w-[12ch] truncate text-xs text-faint">{extras.get(l.sale_id)!.buyer_name}</span>}
                             </Td>
                           );
                         case "producto":
                           return (
                             <Td key={c}>
-                              <Link href={`/productos/${l.product_id}`} className="hover:underline">
-                                {variantDisplay(l.product_name, l.variant_name)}
-                              </Link>
-                              {l.line_notes && <span className="block text-xs text-muted">{l.line_notes}</span>}
+                              <div className="flex items-center gap-2.5">
+                                <ProductThumb src={thumbs.get(l.sale_id)} alt="" size={36} rounded={8} />
+                                <div className="min-w-0">
+                                  <Link href={`/productos/${l.product_id}`} className="font-medium hover:underline">
+                                    {variantDisplay(l.product_name, l.variant_name)}
+                                  </Link>
+                                  {l.line_notes && <span className="block text-xs text-muted">{l.line_notes}</span>}
+                                </div>
+                              </div>
                             </Td>
                           );
                         case "lote":
@@ -340,11 +376,26 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                         case "responsable":
                           return <Td key={c}>{l.responsible_name}</Td>;
                         case "plataforma":
-                          return <Td key={c}>{l.platform_name}</Td>;
+                          return (
+                            <Td key={c}>
+                              <PlatformIcon name={l.platform_name} size={18} className="whitespace-nowrap" />
+                            </Td>
+                          );
                         case "envio":
                           return (
                             <Td key={c}>
-                              <ShippingBadge status={l.shipping_status} requires={l.requires_shipping} />
+                              <span className="flex flex-col items-start gap-1">
+                                {l.requires_shipping && l.shipping_status === "enviado" && extras.get(l.sale_id)?.tracking_status ? (
+                                  <Link href={`/seguimiento/${l.sale_id}`}>
+                                    <TrackingBadge status={extras.get(l.sale_id)!.tracking_status} />
+                                  </Link>
+                                ) : (
+                                  <ShippingBadge status={l.shipping_status} requires={l.requires_shipping} />
+                                )}
+                                {l.requires_shipping && extras.get(l.sale_id)?.carriers?.name && (
+                                  <CarrierIcon name={extras.get(l.sale_id)!.carriers!.name} size={14} showName={false} />
+                                )}
+                              </span>
                             </Td>
                           );
                       }

@@ -522,3 +522,23 @@ dialog.mi-lightbox {
     background-position: -100% 0;
   }
 }
+
+/* Bloque destacado en tinta (la cifra principal del panel), como en el manual de marca */
+.rs-ink-tile {
+  --surface: #0b0f0e;
+  --surface-2: #151a18;
+  --subtle: #222927;
+  --ink: #ffffff;
+  --ink-soft: #d5dbd8;
+  --muted: #8a9590;
+  --faint: #8a9590;
+  --line: #222927;
+  --good: #6fdca6;
+  --good-ink: #6fdca6;
+  --danger: #f97066;
+  --brand: #36c784;
+  --brand-ink: #6fdca6;
+  border-color: #0b0f0e;
+  background: #0b0f0e;
+  color: #ffffff;
+}

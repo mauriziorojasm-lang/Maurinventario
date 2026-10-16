@@ -120,15 +120,15 @@ function Frame({ title, sub, href, children, className, accent }: { title: strin
     <section
       aria-label={title}
       className={clsx(
-        "flex min-w-0 flex-col gap-2 overflow-hidden rounded-[var(--radius-md)] border border-line bg-surface p-4 shadow-[var(--shadow-card)]",
-        accent && "border-t-4 border-t-brand",
+        "flex min-w-0 flex-col gap-2 overflow-hidden rounded-[var(--radius-md)] border border-line bg-surface p-4",
+        accent && "rs-ink-tile",
         className,
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-muted">{title}</h3>
-          {sub && <p className="truncate text-[11.5px] text-faint">{sub}</p>}
+          <h3 className="text-[13px] font-medium text-muted">{title}</h3>
+          {sub && <p className="truncate text-[12px] text-faint">{sub}</p>}
         </div>
         {href && (
           <Link href={href} className="-m-1 flex shrink-0 items-center rounded-full p-1 text-faint hover:text-ink" aria-label={`Ver ${title.toLowerCase()}`}>
@@ -154,13 +154,13 @@ function Rank({ items, empty }: { items: { key: string; href: string; name: stri
     <ol className="-mx-4 divide-y divide-line">
       {items.map((it, i) => (
         <li key={it.key}>
-          <Link href={it.href} className="flex items-center gap-3 px-4 py-2 hover:bg-brand-soft/40">
-            <span className="display num w-5 shrink-0 text-[17px] text-muted">{i + 1}</span>
+          <Link href={it.href} className="flex items-center gap-3 px-4 py-2 hover:bg-surface-2">
+            <span className="num w-5 shrink-0 text-[14px] font-semibold text-faint">{i + 1}</span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold">{it.name}</span>
               <span className="block truncate text-[12px] text-muted">{it.sub}</span>
             </span>
-            <span className={clsx("display num shrink-0 text-[18px]", it.tone === "bad" && "text-danger")}>{it.value}</span>
+            <span className={clsx("num shrink-0 text-[15px] font-semibold", it.tone === "bad" && "text-danger")}>{it.value}</span>
           </Link>
         </li>
       ))}
