@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "../supabase/admin";
-import { CARRIER_CODES, changeCarriers, fetchTrackInfo, registerNumbers, trackingConfigured } from "./seventeen";
+import { CARRIER_CODES, fetchTrackInfo, registerNumbers, trackingConfigured } from "./seventeen";
 
 /**
  * Seguimiento automático. Usa la clave del servidor, así que cada consulta
@@ -28,7 +28,7 @@ type OpenSale = {
 };
 
 const carrierName = (s: OpenSale): string => (Array.isArray(s.carrier) ? s.carrier[0]?.name : s.carrier?.name) ?? "";
-const carrierCode = (s: OpenSale): number | null => CARRIER_CODES[carrierName(s).trim().toLowerCase()] ?? null;
+const carrierCodes = (s: OpenSale): number[] => CARRIER_CODES[carrierName(s).trim().toLowerCase()] ?? [];
 
 export type TrackingRun = { configured: boolean; registered: number; checked: number; updated: number; errors: number; alerts: number };
 
@@ -61,7 +61,7 @@ export async function runTracking(opts: { orgId?: string; saleIds?: string[]; fo
     const toRegister = sales.filter((s) => !s.tracking_registered_at);
     if (toRegister.length) {
       try {
-        const res = await registerNumbers(toRegister.map((s) => ({ number: s.tracking_number, tag: s.id, carrier: carrierCode(s) })));
+        const res = await registerNumbers(toRegister.map((s) => ({ number: s.tracking_number, tag: s.id, carriers: carrierCodes(s) })));
         for (const s of toRegister) {
           const err = res.get(s.tracking_number);
           if (err === undefined) continue;
@@ -80,15 +80,6 @@ export async function runTracking(opts: { orgId?: string; saleIds?: string[]; fo
     const registered = sales.filter((s) => s.tracking_registered_at);
     if (registered.length) {
       try {
-        // Siempre le indicamos a 17TRACK el transportista que sabemos (no lo deja a su criterio)
-        const known = registered.filter((s) => carrierCode(s));
-        if (known.length) {
-          try {
-            await changeCarriers(known.map((s) => ({ number: s.tracking_number, carrier: carrierCode(s)! })));
-          } catch {
-            run.errors++;
-          }
-        }
         const info = await fetchTrackInfo([...new Set(registered.map((s) => s.tracking_number))]);
         for (const s of registered) {
           const r = info.get(s.tracking_number);
