@@ -16,6 +16,7 @@ import { testOnlyEnv } from "../test-env";
 /** Código de transportista de 17TRACK, por nombre (en minúsculas) del transportista de Resellap. */
 export const CARRIER_CODES: Record<string, number> = {
   inpost: 100594, // InPost (ES): https://www.17track.net/en/carriers/inpost-es
+  "vinted go": 101020, // Vinted Go: https://www.17track.net/en/carriers/vinted-go (código tomado del logo; verificar con un envío real)
 };
 export const NO_CARRIER_ERROR = "Carrier cannot be detected.";
 
