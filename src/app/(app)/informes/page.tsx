@@ -7,6 +7,7 @@ import { date, money, percent, units } from "@/lib/format";
 import { loadCatalogOptions, loadSaleOptions, loadSuppliers } from "@/lib/options";
 import { REPORTS, type Column, type ReportType } from "@/lib/reports";
 import { createClient } from "@/lib/supabase/server";
+import { ShippingReport } from "./shipping-report";
 
 export const metadata: Metadata = { title: "Informes" };
 
@@ -40,6 +41,26 @@ const TABS: { key: ReportType; label: string }[] = [
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   await requirePerm("costes");
   const sp = await searchParams;
+  if (first(sp.tab) === "envios") {
+    const f = filtersFrom(sp);
+    const d = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+    return (
+      <>
+        <PageHeader title="Informes" description="Envíos y tiempos de entrega por transportista, con los datos del seguimiento." />
+        <Tabs current="envios" items={[...TABS.map((t) => ({ key: t.key as string, label: t.label, href: `/informes?tab=${t.key}` })), { key: "envios", label: "Envíos", href: "/informes?tab=envios" }]} />
+        <FilterBar
+          basePath="/informes?tab=envios"
+          values={f}
+          fields={[
+            { type: "date", name: "from", label: "Enviados desde" },
+            { type: "date", name: "to", label: "Hasta" },
+          ]}
+          extra={<input type="hidden" name="tab" value="envios" />}
+        />
+        <ShippingReport from={d(f.from)} to={d(f.to)} />
+      </>
+    );
+  }
   const tab = (TABS.find((t) => t.key === first(sp.tab))?.key ?? "ventas") as ReportType;
   const filters = filtersFrom(sp);
   const { page, from, to, size } = pageFrom(sp, 100);
@@ -106,7 +127,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHeader title="Informes" description="Todos se pueden exportar a Excel o CSV con los filtros aplicados." />
-      <Tabs current={tab} items={TABS.map((t) => ({ key: t.key, label: t.label, href: `/informes?tab=${t.key}` }))} />
+      <Tabs current={tab} items={[...TABS.map((t) => ({ key: t.key as string, label: t.label, href: `/informes?tab=${t.key}` })), { key: "envios", label: "Envíos", href: "/informes?tab=envios" }]} />
       <FilterBar
         basePath={`/informes?tab=${tab}`}
         values={filters}
