@@ -15,7 +15,7 @@ const B = "M43 55H67L96 96H72Z";
 
 const CSS = `
 #rs-boot{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:var(--paper);
-  animation:rs-boot-failsafe .3s ease 3s forwards}
+  animation:rs-boot-failsafe .3s ease 2.4s forwards}
 #rs-boot svg{width:56px;height:56px;overflow:visible}
 #rs-boot .a{fill:var(--ink)} #rs-boot .b{fill:var(--brand-mark)}
 #rs-boot path{transform-box:fill-box;transform-origin:center;opacity:0;animation:rs-piece .42s cubic-bezier(.2,.7,.2,1) forwards}
@@ -43,7 +43,7 @@ html[data-motion="reduce"].rs-booted #rs-boot svg{animation:none}
 `;
 
 // Se quita cuando la página ha cargado (mínimo 450 ms para que no parpadee).
-const JS = `(function(){var t0=Date.now(),d=document.documentElement;function done(){var w=Math.max(0,450-(Date.now()-t0));setTimeout(function(){d.classList.add("rs-booted");setTimeout(function(){var e=document.getElementById("rs-boot");if(e)e.style.display="none"},700)},w)}if(document.readyState==="complete")done();else{addEventListener("load",done,{once:true});setTimeout(done,2500)}})();`;
+const JS = `(function(){var t0=Date.now(),d=document.documentElement;function done(){var w=Math.max(0,450-(Date.now()-t0));setTimeout(function(){d.classList.add("rs-booted");setTimeout(function(){var e=document.getElementById("rs-boot");if(e)e.style.display="none"},700)},w)}if(document.readyState==="complete")done();else{addEventListener("load",done,{once:true});setTimeout(done,1800)}})();`;
 
 export function BootSplash() {
   return (

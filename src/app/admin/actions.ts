@@ -19,7 +19,7 @@ export async function setOrgStatusAction(org: string, status: "activa" | "suspen
   if (!id.safeParse(org).success) return { ok: false, error: "Datos no válidos." };
   const { error } = await (await createClient()).rpc("platform_set_org_status", { p_org: org, p_status: status, p_reason: reason });
   if (error) return { ok: false, error: friendlyError(error) };
-  revalidatePath("/plataforma");
+  revalidatePath("/admin", "layout");
   return { ok: true, message: status === "suspendida" ? "Espacio suspendido." : "Espacio reactivado." };
 }
 
@@ -28,7 +28,7 @@ export async function setCompedAction(org: string, comped: boolean): Promise<Act
   if (!id.safeParse(org).success) return { ok: false, error: "Datos no válidos." };
   const { error } = await (await createClient()).rpc("platform_set_comped", { p_org: org, p_comped: comped });
   if (error) return { ok: false, error: friendlyError(error) };
-  revalidatePath("/plataforma");
+  revalidatePath("/admin", "layout");
   return { ok: true, message: comped ? "Acceso gratuito concedido." : "Acceso gratuito retirado." };
 }
 
@@ -72,6 +72,6 @@ export async function purgeOrganizationAction(org: string, confirmName: string):
   }
   const { error } = await db.rpc("platform_purge_organization", { p_org: org });
   if (error) return { ok: false, error: friendlyError(error) };
-  revalidatePath("/plataforma");
+  revalidatePath("/admin", "layout");
   return { ok: true, message: `Espacio borrado definitivamente (${files} archivos).` };
 }

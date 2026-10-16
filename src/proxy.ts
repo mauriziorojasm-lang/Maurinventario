@@ -35,6 +35,8 @@ export async function proxy(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims();
   const path = request.nextUrl.pathname;
+  // Panel de administración en su propio subdominio (admin.<dominio>): misma app, solo la parte /admin
+  const adminHost = /^admin\./i.test(request.headers.get("host") ?? "");
   const isLogin = path.startsWith("/login") || path.startsWith("/registro");
   // Páginas públicas: presentación, registro, recuperación, invitaciones y webhooks
   const isPublic = isLogin || PUBLIC.some((p) => path === p || path.startsWith(p + "/"));
@@ -42,7 +44,7 @@ export async function proxy(request: NextRequest) {
   if (!data?.claims && !isPublic) {
     const to = request.nextUrl.clone();
     to.search = "";
-    if (path === "/") {
+    if (path === "/" && !adminHost) {
       to.pathname = "/precios";
     } else {
       to.pathname = "/login";
@@ -55,6 +57,13 @@ export async function proxy(request: NextRequest) {
     to.pathname = "/";
     to.search = "";
     return NextResponse.redirect(to);
+  }
+  if (adminHost && !path.startsWith("/admin") && !isPublic && !path.startsWith("/api/")) {
+    const to = request.nextUrl.clone();
+    to.pathname = path === "/" ? "/admin" : `/admin${path}`;
+    const rewrite = NextResponse.rewrite(to, { request });
+    for (const c of response.cookies.getAll()) rewrite.cookies.set(c);
+    return rewrite;
   }
   return response;
 }
