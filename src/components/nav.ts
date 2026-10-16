@@ -1,26 +1,19 @@
 import type { Perm } from "@/lib/permissions";
+import { IconCompras, IconDetectadas, IconEnvios, IconInformes, IconInicio, IconInventario, IconSeguimiento, IconVentas, type RsIcon } from "@/components/rs-icons";
 import {
   ArrowLeftRight,
   Boxes,
-  ChartColumn,
   CirclePlus,
   CreditCard,
   Factory,
   FileSpreadsheet,
   Handshake,
-  House,
   List,
   ListChecks,
   Mail,
-  MailCheck,
   Megaphone,
-  MapPinned,
-  Receipt,
   ScrollText,
   Settings,
-  ShoppingCart,
-  Tag,
-  Truck,
   Undo2,
   UserCog,
   UserRound,
@@ -34,7 +27,7 @@ export type BadgeKey = "reviews" | "shipments" | "emails" | "detected" | "listin
 export type NavItem = {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: RsIcon | LucideIcon;
   adminOnly?: boolean;
   /** Permiso necesario para verlo (el administrador los tiene todos). */
   perm?: Perm;
@@ -50,20 +43,20 @@ export const NAV: NavGroup[] = [
   {
     label: null,
     items: [
-      { href: "/", label: "Inicio", icon: House },
-      { href: "/productos", label: "Inventario", icon: Tag },
-      { href: "/ventas", label: "Ventas", icon: Receipt },
-      { href: "/detectadas", label: "Ventas detectadas", icon: MailCheck, badgeKey: "detected", perm: "correo" },
-      { href: "/envios", label: "Pendientes de envío", icon: Truck, badgeKey: "shipments" },
-      { href: "/seguimiento", label: "Seguimiento", icon: MapPinned, badgeKey: "alerts" },
-      { href: "/informes", label: "Informes", icon: ChartColumn, perm: "costes" },
+      { href: "/", label: "Inicio", icon: IconInicio },
+      { href: "/productos", label: "Inventario", icon: IconInventario },
+      { href: "/ventas", label: "Ventas", icon: IconVentas },
+      { href: "/detectadas", label: "Ventas detectadas", icon: IconDetectadas, badgeKey: "detected", perm: "correo" },
+      { href: "/envios", label: "Pendientes de envío", icon: IconEnvios, badgeKey: "shipments" },
+      { href: "/seguimiento", label: "Seguimiento", icon: IconSeguimiento, badgeKey: "alerts" },
+      { href: "/informes", label: "Informes", icon: IconInformes, perm: "costes" },
     ],
   },
   {
     label: "Gestión",
     items: [
       { href: "/ventas/nueva", label: "Nueva venta", icon: CirclePlus, perm: "ventas_crear" },
-      { href: "/compras", label: "Compras", icon: ShoppingCart, perm: "compras" },
+      { href: "/compras", label: "Compras", icon: IconCompras, perm: "compras" },
       { href: "/proveedores", label: "Proveedores", icon: Factory, perm: "compras" },
       { href: "/inventario", label: "Lotes y costes", icon: Boxes, perm: "costes" },
       { href: "/anuncios", label: "Anuncios", icon: Megaphone, badgeKey: "listings", perm: "anuncios" },

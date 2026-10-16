@@ -1,9 +1,10 @@
 "use client";
-import { Bell, House, LayoutGrid, LogOut, Plus, Receipt, Settings, Truck, X } from "lucide-react";
+import { Bell, LayoutGrid, LogOut, Plus, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Logo } from "./brand";
+import { IconEnvios, IconInicio, IconVentas, type RsIcon } from "./rs-icons";
 import { RememberList, forgetAllLists, useRememberedHref } from "./list-memory";
 import { NAV, type BadgeKey, type NavItem } from "./nav";
 import { NavProgress } from "./nav-progress";
@@ -162,10 +163,10 @@ export function Shell({
   );
 
   // ---------------- Barra inferior (móvil y iPad en vertical) ----------------
-  const tabs: { href: string; label: string; icon: typeof House; badge?: number }[] = [
-    { href: "/", label: "Inicio", icon: House },
-    { href: "/ventas", label: "Ventas", icon: Receipt },
-    { href: "/envios", label: "Envíos", icon: Truck, badge: badges.shipments },
+  const tabs: { href: string; label: string; icon: RsIcon; badge?: number }[] = [
+    { href: "/", label: "Inicio", icon: IconInicio },
+    { href: "/ventas", label: "Ventas", icon: IconVentas },
+    { href: "/envios", label: "Envíos", icon: IconEnvios, badge: badges.shipments },
   ];
   const inTabs = isActive(pathname, "/") || isActive(pathname, "/ventas") || isActive(pathname, "/envios") || pathname.startsWith("/ventas/nueva");
   const tabClass = (active: boolean) =>
@@ -173,7 +174,10 @@ export function Shell({
   const pendingMore = badges.reviews + badges.emails + badges.detected + badges.listings + badges.alerts;
 
   const tabBar = (
-    <nav aria-label="Accesos rápidos" className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur-md lg:hidden no-print">
+    <nav
+      aria-label="Accesos rápidos"
+      className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur-md lg:hidden no-print"
+    >
       <ul className="mx-auto flex max-w-xl items-end px-1">
         {tabs.slice(0, 2).map((t) => {
           const active = isActive(pathname, t.href);
@@ -242,7 +246,12 @@ export function Shell({
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" aria-hidden />
         <div className="mb-4 flex items-center justify-between">
           <Logo size={24} />
-          <button type="button" onClick={() => setMore(false)} className="press flex h-10 w-10 items-center justify-center rounded-full bg-subtle" aria-label="Cerrar">
+          <button
+            type="button"
+            onClick={() => setMore(false)}
+            className="press flex h-10 w-10 items-center justify-center rounded-full bg-subtle"
+            aria-label="Cerrar"
+          >
             <X size={20} strokeWidth={1.75} />
           </button>
         </div>
@@ -295,25 +304,27 @@ export function Shell({
         <NavProgress />
       </Suspense>
       {/* Barra lateral (ordenador e iPad en horizontal) */}
-      <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto border-r border-line bg-surface lg:flex no-print">
-        <Link href="/" className="px-6 pb-4 pt-6" aria-label="Resellap, inicio">
-          <Logo size={26} />
-        </Link>
-        <div className="px-3 pb-3">{orgSwitcher ?? <p className="truncate px-3 text-[12.5px] font-medium text-faint">{orgName}</p>}</div>
-        {canSell && (
-          <div className="px-3 pb-5">
-            <NavLink
-              href="/ventas/nueva"
-              active={pathname.startsWith("/ventas/nueva")}
-              className="press flex h-10 items-center justify-center gap-2 rounded-[10px] bg-brand text-[14px] font-semibold text-on-brand hover:bg-brand-strong"
-            >
-              <Plus size={18} strokeWidth={2} />
-              Nueva venta
-            </NavLink>
-          </div>
-        )}
-        {sidebar}
-        <div className="mt-auto flex flex-col gap-1 border-t border-line px-3 py-3">
+      <aside className="sticky top-0 hidden h-dvh flex-col overflow-hidden border-r border-line bg-surface lg:flex no-print">
+        <div className="shrink-0">
+          <Link href="/" className="px-6 pb-4 pt-6" aria-label="Resellap, inicio">
+            <Logo size={26} />
+          </Link>
+          <div className="px-3 pb-3">{orgSwitcher ?? <p className="truncate px-3 text-[12.5px] font-medium text-faint">{orgName}</p>}</div>
+          {canSell && (
+            <div className="px-3 pb-5">
+              <NavLink
+                href="/ventas/nueva"
+                active={pathname.startsWith("/ventas/nueva")}
+                className="press flex h-10 items-center justify-center gap-2 rounded-[10px] bg-brand text-[14px] font-semibold text-on-brand hover:bg-brand-strong"
+              >
+                <Plus size={18} strokeWidth={2} />
+                Nueva venta
+              </NavLink>
+            </div>
+          )}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pt-1">{sidebar}</div>
+        <div className="flex shrink-0 flex-col gap-1 border-t border-line bg-surface px-3 py-3">
           {settingsItems.length > 0 && (
             <details className="group/cfg" open={settingsItems.some((i) => isActive(pathname, i.href)) || undefined}>
               <summary className={clsx(itemClass(false), "cursor-pointer list-none [&::-webkit-details-marker]:hidden")}>

@@ -73,7 +73,7 @@ export function Logo({
 }) {
   return (
     <span
-      className={clsx("inline-flex items-center", className)}
+      className={clsx("rs-logo inline-flex items-center", className)}
       style={{ gap: size * 0.3, ...toneVars[tone] }}
       aria-label={compact ? "Resellap" : undefined}
       role={compact ? "img" : undefined}

@@ -1,9 +1,9 @@
 "use client";
-import { Check, Monitor, Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, Panel, clsx } from "@/components/ui";
 import { useServerAction } from "@/components/ui-client";
-import { DEFAULT_PREFS, MODES, PALETTES, type Palette, type Prefs } from "@/lib/preferences";
+import { DEFAULT_PREFS, MODES, type Prefs } from "@/lib/preferences";
 import { resetPreferences, savePreferences } from "../actions";
 import { SaveBar, Toggle } from "../settings-ui";
 
@@ -52,31 +52,6 @@ export function AppearanceEditor({ initial }: { initial: A }) {
                 >
                   <Icon size={22} strokeWidth={2.25} />
                   {m === "auto" ? "Automático" : MODES[m]}
-                </button>
-              );
-            })}
-          </div>
-        </Panel>
-        <Panel title="Tema de color" description="Cambia el color de botones, menús, gráficos e indicadores. Los colores de estado (verde bien, rojo error) no cambian.">
-          <div role="radiogroup" aria-label="Tema de color" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {(Object.keys(PALETTES) as Palette[]).map((p) => {
-              const on = a.palette === p;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  onClick={() => setA({ ...a, palette: p })}
-                  className={clsx(
-                    "press flex min-h-12 items-center gap-2.5 rounded-[var(--radius-sm)] border-2 px-3 text-left text-[13.5px] font-semibold",
-                    on ? "border-ink" : "border-line hover:border-ink/30",
-                  )}
-                >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white" style={{ background: PALETTES[p].swatch }}>
-                    {on && <Check size={14} strokeWidth={3} />}
-                  </span>
-                  {PALETTES[p].label}
                 </button>
               );
             })}
