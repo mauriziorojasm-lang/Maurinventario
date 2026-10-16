@@ -9,8 +9,16 @@ import { testOnlyEnv } from "../test-env";
  *   crear la cuenta). Registrar dos veces el mismo código no gasta más.
  * · /gettrackinfo consulta los movimientos de los códigos ya registrados
  *   (no gasta cuota).
- * El transportista se detecta solo (no se envía el código de transportista).
+ * El transportista se detecta solo; si 17TRACK no lo consigue, se le indica
+ * el código de transportista (CARRIER_CODES) con /register o /changecarrier.
  */
+
+/** Código de transportista de 17TRACK, por nombre (en minúsculas) del transportista de Resellap. */
+export const CARRIER_CODES: Record<string, number> = {
+  inpost: 100594, // InPost (ES): https://www.17track.net/en/carriers/inpost-es
+};
+export const NO_CARRIER_ERROR = "Carrier cannot be detected.";
+
 
 export type TrackStatus = "enviado" | "en_transito" | "en_reparto" | "entregado" | "incidencia" | "devuelto" | "desconocido";
 export type TrackEvent = { at: string; status: TrackStatus; description: string; location: string | null };
@@ -48,11 +56,14 @@ const QUOTA_MESSAGES: Record<number, string> = {
 };
 
 /** Da de alta códigos. Devuelve, por código, null si está bien o el motivo del error. */
-export async function registerNumbers(numbers: { number: string; tag: string }[]): Promise<Map<string, string | null>> {
+export async function registerNumbers(numbers: { number: string; tag: string; carrier?: number | null }[]): Promise<Map<string, string | null>> {
   const out = new Map<string, string | null>();
   for (let i = 0; i < numbers.length; i += 40) {
     const chunk = numbers.slice(i, i + 40);
-    const data = await call<{ accepted?: { number: string }[]; rejected?: Rejected[] }>("/register", chunk.map((n) => ({ number: n.number, tag: n.tag })));
+    const data = await call<{ accepted?: { number: string }[]; rejected?: Rejected[] }>(
+      "/register",
+      chunk.map((n) => (n.carrier ? { number: n.number, tag: n.tag, carrier: n.carrier } : { number: n.number, tag: n.tag })),
+    );
     for (const a of data.accepted ?? []) out.set(a.number, null);
     for (const r of data.rejected ?? []) {
       const code = r.error?.code ?? 0;
@@ -60,6 +71,13 @@ export async function registerNumbers(numbers: { number: string; tag: string }[]
     }
   }
   return out;
+}
+
+/** Indica el transportista a códigos ya registrados que 17TRACK no ha sabido identificar. */
+export async function changeCarriers(items: { number: string; carrier: number }[]): Promise<void> {
+  for (let i = 0; i < items.length; i += 40) {
+    await call<unknown>("/changecarrier", items.slice(i, i + 40));
+  }
 }
 
 type Raw17Event = { time_iso?: string | null; time_utc?: string | null; description?: string | null; location?: string | null; stage?: string | null; sub_status?: string | null };

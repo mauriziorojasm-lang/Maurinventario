@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "../supabase/admin";
-import { fetchTrackInfo, registerNumbers, trackingConfigured } from "./seventeen";
+import { CARRIER_CODES, NO_CARRIER_ERROR, changeCarriers, fetchTrackInfo, registerNumbers, trackingConfigured } from "./seventeen";
 
 /**
  * Seguimiento automático. Usa la clave del servidor, así que cada consulta
@@ -18,14 +18,24 @@ import { fetchTrackInfo, registerNumbers, trackingConfigured } from "./seventeen
 const RECHECK_MS = 3 * 60 * 60 * 1000; // cada envío, como mucho cada 3 horas
 const MAX_PER_RUN = 120;
 
-type OpenSale = { id: string; organization_id: string; tracking_number: string; tracking_registered_at: string | null };
+type OpenSale = {
+  id: string;
+  organization_id: string;
+  tracking_number: string;
+  tracking_registered_at: string | null;
+  tracking_error: string | null;
+  carrier: { name: string }[] | { name: string } | null;
+};
+
+const carrierName = (s: OpenSale): string => (Array.isArray(s.carrier) ? s.carrier[0]?.name : s.carrier?.name) ?? "";
+const carrierCode = (s: OpenSale): number | null => CARRIER_CODES[carrierName(s).trim().toLowerCase()] ?? null;
 
 export type TrackingRun = { configured: boolean; registered: number; checked: number; updated: number; errors: number; alerts: number };
 
 async function openSales(db: SupabaseClient, opts: { orgId?: string; saleIds?: string[]; force?: boolean }): Promise<OpenSale[]> {
   let q = db
     .from("sales")
-    .select("id, organization_id, tracking_number, tracking_registered_at, tracking_checked_at")
+    .select("id, organization_id, tracking_number, tracking_registered_at, tracking_checked_at, tracking_error, carrier:carriers(name)")
     .eq("status", "activa")
     .not("shipped_at", "is", null)
     .is("delivered_at", null)
@@ -51,7 +61,7 @@ export async function runTracking(opts: { orgId?: string; saleIds?: string[]; fo
     const toRegister = sales.filter((s) => !s.tracking_registered_at);
     if (toRegister.length) {
       try {
-        const res = await registerNumbers(toRegister.map((s) => ({ number: s.tracking_number, tag: s.id })));
+        const res = await registerNumbers(toRegister.map((s) => ({ number: s.tracking_number, tag: s.id, carrier: carrierCode(s) })));
         for (const s of toRegister) {
           const err = res.get(s.tracking_number);
           if (err === undefined) continue;
@@ -70,6 +80,9 @@ export async function runTracking(opts: { orgId?: string; saleIds?: string[]; fo
     const registered = sales.filter((s) => s.tracking_registered_at);
     if (registered.length) {
       try {
+        // Códigos que 17TRACK no reconoce y de los que sabemos el transportista: se lo indicamos
+        const lost = registered.filter((s) => s.tracking_error === NO_CARRIER_ERROR && carrierCode(s));
+        if (lost.length) await changeCarriers(lost.map((s) => ({ number: s.tracking_number, carrier: carrierCode(s)! })));
         const info = await fetchTrackInfo([...new Set(registered.map((s) => s.tracking_number))]);
         for (const s of registered) {
           const r = info.get(s.tracking_number);
