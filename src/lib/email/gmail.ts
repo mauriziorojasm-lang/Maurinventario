@@ -168,6 +168,8 @@ export interface MailMessage {
   from: string;
   subject: string;
   text: string;
+  /** HTML original (solo en memoria: no se guarda). Sirve para la foto del anuncio y enlaces. */
+  html: string;
   attachments: MailAttachment[];
 }
 
@@ -208,6 +210,7 @@ export function toMail(m: GmailMessage): MailMessage {
     from: h("from"),
     subject: h("subject"),
     text,
+    html,
     attachments,
   };
 }

@@ -9,7 +9,7 @@ import { createClient } from "./supabase/server";
  * en vez de volver a descargarla en cada pantalla. Las etiquetas no se
  * reutilizan entre usuarios (cada vendedor solo puede ver las suyas).
  */
-type Bucket = "product-photos" | "shipping-labels";
+type Bucket = "product-photos" | "shipping-labels" | "sale-images";
 
 const TTL = 60 * 60; // validez de cada enlace: 1 hora
 const REUSE_MARGIN = 10 * 60 * 1000; // se reutiliza mientras le queden >10 min
@@ -20,7 +20,7 @@ export async function signUrls(bucket: Bucket, paths: (string | null | undefined
   const unique = [...new Set(paths.filter((p): p is string => !!p))];
   const out = new Map<string, string>();
   if (!unique.length) return out;
-  const reuse = bucket === "product-photos";
+  const reuse = bucket !== "shipping-labels";
   const now = Date.now();
   const missing: string[] = [];
   for (const p of unique) {
@@ -65,4 +65,23 @@ export async function signPhotos(paths: (string | null | undefined)[], opts: { t
 /** Etiquetas de envío (las que el usuario tiene permiso para ver). */
 export function signLabels(paths: (string | null | undefined)[]): Promise<Map<string, string>> {
   return signUrls("shipping-labels", paths);
+}
+
+/** Fotos de los anuncios guardadas desde los correos de venta. */
+export function signSaleImages(paths: (string | null | undefined)[]): Promise<Map<string, string>> {
+  return signUrls("sale-images", paths);
+}
+
+/**
+ * Foto que representa una venta: la del anuncio (si llegó en el correo) o,
+ * si no, la miniatura del producto vendido.
+ */
+export async function saleThumbs(rows: { key: string; image_path?: string | null; product_photo?: string | null }[]): Promise<Map<string, string>> {
+  const [imgs, photos] = await Promise.all([signSaleImages(rows.map((r) => r.image_path)), signPhotos(rows.map((r) => r.product_photo), { thumbs: true })]);
+  const out = new Map<string, string>();
+  for (const r of rows) {
+    const u = (r.image_path && imgs.get(r.image_path)) || (r.product_photo && photos.get(r.product_photo));
+    if (u) out.set(r.key, u);
+  }
+  return out;
 }

@@ -1,5 +1,7 @@
 "use server";
+import { after } from "next/server";
 import { callRpc } from "@/lib/rpc";
+import { runTracking } from "@/lib/tracking/service";
 import { friendlyError, type ActionResult } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import type { AvailableLot } from "@/lib/types";
@@ -43,11 +45,15 @@ export async function updateSale(patch: Record<string, unknown> & { id: string }
 
 export async function setShippingStatusBulk(saleIds: string[], status: "pendiente" | "enviado"): Promise<ActionResult<number>> {
   const res = await callRpc<number>("set_sales_shipping_status", { p_sale_ids: saleIds, p_status: status }, ["/ventas", "/"]);
+  if (res.ok && status === "enviado") {
+    // El seguimiento empieza ya (la base de datos guarda la hora); si hay servicio de seguimiento, se da de alta el código
+    after(() => runTracking({ saleIds, force: true }).catch(() => undefined));
+  }
   if (res.ok) {
     const n = res.data;
     res.message =
       status === "enviado"
-        ? `${n} ${n === 1 ? "venta marcada como enviada" : "ventas marcadas como enviadas"}.`
+        ? `${n} ${n === 1 ? "venta marcada como enviada" : "ventas marcadas como enviadas"}. Seguimiento iniciado.`
         : `${n} ${n === 1 ? "venta marcada como pendiente" : "ventas marcadas como pendientes"}.`;
   }
   return res;

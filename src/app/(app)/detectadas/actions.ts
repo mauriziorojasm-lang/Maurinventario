@@ -24,6 +24,8 @@ const confirmSchema = z.object({
   variantId: z.uuid(),
   price: z.number().positive().max(100000).nullable(),
   remember: z.boolean(),
+  carrierId: z.uuid().nullable().optional(),
+  responsibleId: z.uuid().nullable().optional(),
 });
 
 /** «Sí, es una venta»: se registra y se descuenta el stock. */
@@ -44,6 +46,8 @@ export async function confirmDetected(input: z.input<typeof confirmSchema>): Pro
     p_alias: remember ? (p.product ?? null) : null,
     p_alias_norm: remember ? (p.product_norm ?? null) : null,
     p_price: priceChanged ? v.data.price : null,
+    p_carrier_id: v.data.carrierId ?? null,
+    p_responsible_id: v.data.responsibleId ?? null,
   });
   if (error) return { ok: false, error: friendlyError(error) };
   await afterChange();
@@ -51,15 +55,23 @@ export async function confirmDetected(input: z.input<typeof confirmSchema>): Pro
 }
 
 /** Confirma de una vez las que tienen producto identificado, stock y ninguna duda. */
-export async function confirmMany(items: { emailId: string; variantId: string }[]): Promise<ActionResult> {
+export async function confirmMany(items: { emailId: string; variantId: string; carrierId?: string | null; responsibleId?: string | null }[]): Promise<ActionResult> {
   await admin();
-  const list = z.array(z.object({ emailId: z.uuid(), variantId: z.uuid() })).max(100).safeParse(items);
+  const list = z
+    .array(z.object({ emailId: z.uuid(), variantId: z.uuid(), carrierId: z.uuid().nullable().optional(), responsibleId: z.uuid().nullable().optional() }))
+    .max(100)
+    .safeParse(items);
   if (!list.success) return { ok: false, error: "Datos no válidos." };
   const supabase = await createClient();
   let ok = 0;
   const failed: string[] = [];
   for (const it of list.data) {
-    const { error } = await supabase.rpc("email_register_sale", { p_email_id: it.emailId, p_variant_id: it.variantId });
+    const { error } = await supabase.rpc("email_register_sale", {
+      p_email_id: it.emailId,
+      p_variant_id: it.variantId,
+      p_carrier_id: it.carrierId ?? null,
+      p_responsible_id: it.responsibleId ?? null,
+    });
     if (error) failed.push(friendlyError(error));
     else ok++;
   }

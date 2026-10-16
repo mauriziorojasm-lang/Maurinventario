@@ -3,7 +3,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "../supabase/admin";
 import { decryptSecret } from "./secret";
 import { Gmail, GmailAuthError, pdfAttachments, refreshAccessToken, validatePdf, type MailMessage } from "./gmail";
-import { classify, normalizeName, parseVintedLabel, parseVintedSale, parseWallapopSale, type EmailKind } from "./parse";
+import { detectCarrier } from "../carriers";
+import { matchProduct, type MatchResult, type MatchVariant } from "./matching";
+import { pdfText, storeListingImage } from "./images";
+import { classify, extractProductImage, extractTransactionId, findTrackingCodes, normalizeName, parseVintedLabel, parseVintedSale, parseWallapopSale, type EmailKind } from "./parse";
 
 /**
  * Sincronización con Gmail: lee los correos nuevos, los guarda (sin el
@@ -208,7 +211,17 @@ async function storeEmail(db: Admin, org: string, mail: MailMessage): Promise<"n
     row = { ...base, from_address: senderAddress(mail.from), subject: mail.subject.slice(0, 200), status: "ignorado", review_reason: "Primer aviso de Wallapop (sin importe): no crea venta." };
   } else {
     const parsed = parseFor(kind, mail.text);
-    const extra = kind === "vinted_etiqueta" ? { pdf: pdfs[0] ? { filename: pdfs[0].filename, size: pdfs[0].size } : null } : {};
+    let extra: Record<string, unknown> = kind === "vinted_etiqueta" ? { pdf: pdfs[0] ? { filename: pdfs[0].filename, size: pdfs[0].size } : null } : {};
+    if (parsed && platform && (kind === "vinted_venta" || kind === "wallapop_venta")) {
+      // Más datos para que confirmar sea solo revisar: transportista, nº de transacción y foto del anuncio
+      const carrier = detectCarrier(mail.text);
+      const p = parsed as { transaction_id?: string | null; order_id?: string | null };
+      extra = {
+        carrier_name: carrier?.name ?? null,
+        transaction_id: p.transaction_id ?? p.order_id ?? extractTransactionId(mail.html),
+        image_path: await storeListingImage(db, org, mail.id, extractProductImage(mail.html, platform)),
+      };
+    }
     row = {
       ...base,
       from_address: senderAddress(mail.from),
@@ -313,16 +326,20 @@ async function processSale(db: Admin, org: string, catalog: Catalog, e: EmailRow
     await db.from("email_messages").update({ status: "procesado", review_reason: null, last_error: null, updated_at: new Date().toISOString() }).eq("organization_id", org).eq("id", e.id);
     return "noop";
   }
-  // No se registra sola: queda en «Ventas detectadas» con el producto sugerido
-  // para que el administrador la confirme, la marque como duplicado o la descarte.
-  const match = await catalog.match(String(e.parsed.product ?? ""));
-  const notes = [e.parsed.doubt ? `${e.parsed.doubt} Revisa el precio antes de confirmar.` : null, "reason" in match ? match.reason : null].filter(Boolean);
+  // No se registra sola: queda en «Ventas detectadas» con el producto propuesto
+  // para que el administrador la revise y confirme (o la marque como duplicado o la descarte).
+  const m = await catalog.match(String(e.parsed.product ?? ""), {
+    price: typeof e.parsed.price === "number" ? e.parsed.price : null,
+    platform: e.platform,
+  });
+  const notes = [e.parsed.doubt ? `${e.parsed.doubt} Revisa el precio antes de confirmar.` : null, m.doubt].filter(Boolean);
   await db
     .from("email_messages")
     .update({
       status: "detectada",
-      variant_id: match.variantId,
-      candidates: match.candidates.length ? match.candidates : null,
+      variant_id: m.variantId,
+      candidates: m.candidates.length ? m.candidates : null,
+      parsed: { ...e.parsed, match: { confidence: m.confidence, reasons: m.reasons, at: new Date().toISOString() } },
       review_reason: notes.length ? notes.join(" ") : null,
       last_error: null,
       updated_at: new Date().toISOString(),
@@ -332,18 +349,9 @@ async function processSale(db: Admin, org: string, catalog: Catalog, e: EmailRow
   return "detected";
 }
 
-interface VariantInfo {
-  id: string;
-  label: string;
-  keysExact: string[];
-  keysNorm: string[];
-  tokens: Set<string>;
-}
-
-/** Catálogo de productos para identificar el artículo del correo. */
+/** Catálogo de productos (con anuncios, stock y nombres recordados) para identificar el artículo del correo. */
 export class Catalog {
-  private variants: VariantInfo[] | null = null;
-  private aliases: Map<string, string> | null = null;
+  private variants: MatchVariant[] | null = null;
   constructor(
     private db: Admin,
     private org: string,
@@ -351,86 +359,56 @@ export class Catalog {
 
   private async load() {
     if (this.variants) return;
-    const all: { id: string; name: string; sku: string | null; products: { id: string; name: string; sku: string | null; deleted_at: string | null } }[] = [];
+    type Row = { id: string; name: string; sku: string | null; normal_sale_price: number | null; products: { id: string; name: string; sku: string | null; normal_sale_price: number | null } };
+    const all: Row[] = [];
     for (let from = 0; ; from += 1000) {
       const { data, error } = await this.db
         .from("product_variants")
-        .select("id, name, sku, products!inner(id, name, sku, deleted_at)")
+        .select("id, name, sku, normal_sale_price, products!inner(id, name, sku, normal_sale_price, deleted_at)")
         .eq("organization_id", this.org)
         .is("deleted_at", null)
         .is("products.deleted_at", null)
         .range(from, from + 999);
       if (error) throw new Error(`No se ha podido leer el catálogo: ${error.message}`);
-      all.push(...((data ?? []) as unknown as typeof all));
+      all.push(...((data ?? []) as unknown as Row[]));
       if (!data || data.length < 1000) break;
+    }
+    const [{ data: al }, { data: lots }, { data: ls }] = await Promise.all([
+      this.db.from("product_aliases").select("alias_norm, variant_id").eq("organization_id", this.org),
+      this.db.from("inventory_lots").select("variant_id, quantity_available").eq("organization_id", this.org).gt("quantity_available", 0),
+      this.db.from("listings").select("product_id, platform, title, price, status").eq("organization_id", this.org).not("title", "is", null),
+    ]);
+    const aliases = new Map<string, string[]>();
+    for (const a of al ?? []) aliases.set(a.variant_id as string, [...(aliases.get(a.variant_id as string) ?? []), a.alias_norm as string]);
+    const stock = new Map<string, number>();
+    for (const l of lots ?? []) stock.set(l.variant_id as string, (stock.get(l.variant_id as string) ?? 0) + Number(l.quantity_available));
+    const listings = new Map<string, MatchVariant["listings"]>();
+    for (const l of ls ?? []) {
+      const k = l.product_id as string;
+      listings.set(k, [...(listings.get(k) ?? []), { platform: String(l.platform ?? "").toLowerCase(), title: String(l.title), price: l.price === null ? null : Number(l.price), active: l.status !== "retirado" }]);
     }
     const perProduct = new Map<string, number>();
     for (const v of all) perProduct.set(v.products.id, (perProduct.get(v.products.id) ?? 0) + 1);
     this.variants = all.map((v) => {
       const single = perProduct.get(v.products.id) === 1;
-      const full = `${v.products.name} ${v.name}`;
-      const exact = [full, `${v.products.name} - ${v.name}`, `${v.products.name} · ${v.name}`];
-      if (single) exact.push(v.products.name);
-      const skus = [v.sku, single ? v.products.sku : null].filter((s): s is string => !!s);
       return {
         id: v.id,
         label: single ? v.products.name : `${v.products.name} · ${v.name}`,
-        keysExact: [...exact, ...skus].map((s) => s.trim()),
-        keysNorm: [...new Set([...exact, ...skus].map(normalizeName))],
-        tokens: new Set(normalizeName(single ? v.products.name : full).split(" ").filter((t) => t.length > 1)),
+        productName: v.products.name,
+        variantName: v.name,
+        single,
+        skus: [v.sku, single ? v.products.sku : null].filter((x): x is string => !!x),
+        normalPrice: v.normal_sale_price !== null ? Number(v.normal_sale_price) : v.products.normal_sale_price !== null ? Number(v.products.normal_sale_price) : null,
+        stock: stock.get(v.id) ?? 0,
+        listings: listings.get(v.products.id) ?? [],
+        aliases: aliases.get(v.id) ?? [],
       };
     });
-    const { data: al } = await this.db.from("product_aliases").select("alias_norm, variant_id").eq("organization_id", this.org);
-    this.aliases = new Map((al ?? []).map((a) => [a.alias_norm as string, a.variant_id as string]));
   }
 
-  /**
-   * 1) nombre exacto · 2) alias guardado · 3) nombre normalizado.
-   * Si no hay una única coincidencia, se manda a revisión con sugerencias.
-   */
-  async match(name: string): Promise<{ variantId: string; candidates: Candidate[] } | { variantId: null; reason: string; candidates: Candidate[] }> {
+  async match(name: string, opts: { price: number | null; platform: string | null }): Promise<MatchResult> {
     await this.load();
-    const vs = this.variants!;
-    const trimmed = name.trim();
-    const norm = normalizeName(name);
-    if (!norm) return { variantId: null, reason: "El correo no trae el nombre del artículo.", candidates: [] };
-
-    const exact = vs.filter((v) => v.keysExact.includes(trimmed));
-    if (exact.length === 1) return { variantId: exact[0].id, candidates: [] };
-
-    const alias = this.aliases!.get(norm);
-    if (alias && vs.some((v) => v.id === alias)) return { variantId: alias, candidates: [] };
-
-    const normalized = vs.filter((v) => v.keysNorm.includes(norm));
-    if (normalized.length === 1) return { variantId: normalized[0].id, candidates: [] };
-
-    const several = exact.length > 1 ? exact : normalized;
-    if (several.length > 1) {
-      return {
-        variantId: null,
-        reason: `«${trimmed}» coincide con ${several.length} productos. Elige cuál es.`,
-        candidates: several.slice(0, 8).map((v) => ({ variant_id: v.id, label: v.label })),
-      };
-    }
-    return {
-      variantId: null,
-      reason: `No hay ningún producto que se llame exactamente «${trimmed}». Elige el producto (y marca «recordar» para las próximas veces).`,
-      candidates: this.suggest(norm),
-    };
-  }
-
-  /** Productos parecidos (solo sugerencias: nunca se asignan solos). */
-  private suggest(norm: string): Candidate[] {
-    const words = new Set(norm.split(" ").filter((t) => t.length > 1));
-    return this.variants!.map((v) => {
-      let common = 0;
-      for (const t of v.tokens) if (words.has(t)) common++;
-      return { v, score: v.tokens.size ? common / (v.tokens.size + words.size - common) : 0 };
-    })
-      .filter((x) => x.score >= 0.2)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5)
-      .map((x) => ({ variant_id: x.v.id, label: x.v.label }));
+    return matchProduct({ name, price: opts.price, platform: opts.platform }, this.variants!);
   }
 }
 
@@ -438,6 +416,8 @@ export interface Candidate {
   variant_id?: string;
   sale_id?: string;
   label: string;
+  score?: number;
+  reasons?: string[];
 }
 
 // --- Etiqueta de Vinted -----------------------------------------------
@@ -581,9 +561,17 @@ export async function attachLabel(
   const up = await db.storage.from("shipping-labels").upload(path, buf, { contentType: "application/pdf", upsert: true });
   if (up.error) throw new Error(`No se ha podido guardar el PDF: ${up.error.message}`);
 
-  const carrierId = await carrierFromText(db, org, (e.parsed.carrier_text as string | null) ?? null);
+  // La etiqueta también dice el transportista y el código (texto del PDF)
+  let carrierText = (e.parsed.carrier_text as string | null) ?? null;
+  let tracking = (e.parsed.tracking_number as string | null) ?? null;
+  if (!carrierText || !tracking) {
+    const text = await pdfText(buf);
+    carrierText = carrierText ?? detectCarrier(text)?.name ?? null;
+    tracking = tracking ?? findTrackingCodes(text)[0] ?? null;
+  }
+  const carrierId = await carrierFromText(db, org, carrierText);
   const meta = {
-    tracking_number: e.parsed.tracking_number ?? null,
+    tracking_number: tracking,
     transaction_id: e.parsed.transaction_id ?? null,
     deadline: e.parsed.deadline ?? null,
     carrier_id: carrierId,

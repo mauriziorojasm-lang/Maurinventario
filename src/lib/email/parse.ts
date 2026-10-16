@@ -1,3 +1,5 @@
+import { detectCarrier } from "../carriers";
+
 /**
  * Lectura de los correos de Vinted y Wallapop.
  *
@@ -459,17 +461,8 @@ export function parseVintedLabel(text: string): VintedLabel {
   const trx = field(ls, F_TRANSACCION);
   const transaction = trx.value?.match(/[A-Za-z0-9-]{4,}/)?.[0] ?? null;
   const date = limit ? parseSpanishDate(limit) : null;
-  // El transportista suele venir justo después de los datos de envío
-  let carrier: string | null = null;
-  if (trx.index >= 0) {
-    for (let k = trx.index + 1; k < Math.min(ls.length, trx.index + 4); k++) {
-      if (/^(tu equipo|el equipo|gracias|saludos|instrucciones)/i.test(ls[k])) break;
-      if (ls[k].length <= 200) {
-        carrier = ls[k];
-        break;
-      }
-    }
-  }
+  // Transportista: el que se nombre en el correo (InPost, Correos, Seur…), si es uno solo
+  const carrier = detectCarrier(ls.join("\n"))?.name ?? null;
   return {
     account,
     account_norm: account ? normalizeName(account) : null,
@@ -568,4 +561,67 @@ export function parseWallapopSale(text: string): WallapopSale | null {
     order_id: order?.match(/[A-Za-z0-9-]{4,}/)?.[0] ?? null,
     doubt,
   };
+}
+
+// ---------------------------------------------------------------------
+// Datos extra del HTML: foto del anuncio y nº de transacción
+// ---------------------------------------------------------------------
+
+/** Dominios de las fotos de anuncios (CDN de cada plataforma). */
+const IMAGE_HOSTS: Record<Platform, RegExp> = {
+  vinted: /^https:\/\/images\d*\.vinted\.net\//i,
+  wallapop: /^https:\/\/(cdn\.wallapop\.com|es\.wallapop\.com\/images|cdn\d*\.wallapop\.com)\//i,
+};
+
+/**
+ * Primera foto del artículo en el correo (la que muestra la plataforma).
+ * Solo se aceptan imágenes del CDN de la plataforma; se descartan logos,
+ * iconos y píxeles de seguimiento.
+ */
+export function extractProductImage(html: string, platform: Platform): string | null {
+  if (!html) return null;
+  const re = /<img\b[^>]*>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    const tag = m[0];
+    const src = decodeEntities(tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i)?.[1] ?? "").trim();
+    if (!IMAGE_HOSTS[platform].test(src)) continue;
+    if (/logo|icon|avatar|badge|pixel|tracking|emoji|app-store|google-play|social/i.test(src + " " + (tag.match(/\balt\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""))) continue;
+    const w = Number(tag.match(/\bwidth\s*=\s*["']?(\d+)/i)?.[1] ?? 0);
+    const h = Number(tag.match(/\bheight\s*=\s*["']?(\d+)/i)?.[1] ?? 0);
+    if ((w && w < 48) || (h && h < 48)) continue;
+    return src;
+  }
+  return null;
+}
+
+/** Nº de transacción o pedido en los enlaces del correo («…/transactions/123456789»). */
+export function extractTransactionId(html: string): string | null {
+  if (!html) return null;
+  const m =
+    html.match(/vinted\.[a-z.]+\/(?:inbox\/|transactions?\/|transaction\/)(\d{6,})/i) ??
+    html.match(/[?&](?:transaction_id|transactionId|order_id|orderId)=(\d{6,})/i);
+  return m?.[1] ?? null;
+}
+
+/**
+ * Códigos de seguimiento que aparecen en un texto (etiqueta en PDF o correo),
+ * de más a menos probable. Solo formatos habituales de los transportistas
+ * de España; si no hay ninguno claro, devuelve una lista vacía.
+ */
+export function findTrackingCodes(text: string): string[] {
+  if (!text) return [];
+  const t = text.toUpperCase();
+  const out: string[] = [];
+  const add = (s: string | undefined) => {
+    const c = (s ?? "").replace(/\s+/g, "");
+    if (c.length >= 8 && c.length <= 34 && !out.includes(c)) out.push(c);
+  };
+  // Con etiqueta delante: «Nº de seguimiento: XXX», «Tracking: XXX», «Envío: XXX»
+  for (const m of t.matchAll(/(?:SEGUIMIENTO|TRACKING(?:\s*(?:NUMBER|NO\.?|ID))?|N[º°O]\.?\s*DE\s*ENV[IÍ]O|LOCALIZADOR|REFERENCIA DE ENV[IÍ]O)\s*[:#]?\s*([A-Z0-9][A-Z0-9 -]{6,34}[A-Z0-9])/g)) add(m[1].split(/\s{2,}/)[0]);
+  // Formatos conocidos: Correos (PQ…ES, 2 letras + 9 cifras + ES), UPS (1Z…), InPost/genéricos largos
+  for (const m of t.matchAll(/\b([A-Z]{2}\d{9}[A-Z]{2})\b/g)) add(m[1]);
+  for (const m of t.matchAll(/\b(PQ[A-Z0-9]{14,20})\b/g)) add(m[1]);
+  for (const m of t.matchAll(/\b(1Z[A-Z0-9]{16})\b/g)) add(m[1]);
+  return out;
 }

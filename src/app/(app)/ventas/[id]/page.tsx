@@ -11,6 +11,8 @@ import { createClient } from "@/lib/supabase/server";
 import { variantDisplay } from "@/lib/types";
 import { LinePriceEditor, SaleHeaderEditor, ShippingEditor, VoidSaleButton } from "./sale-editors";
 import { RemovedButton } from "../../anuncios/listing-buttons";
+import { TrackingPanel } from "../../seguimiento/tracking-panel";
+import { loadShipment } from "@/lib/tracking/data";
 
 export const metadata: Metadata = { title: "Venta" };
 
@@ -103,6 +105,7 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
   const gross = lines.reduce((a, l) => a + l.quantity * Number(l.unit_price), 0);
   const cost = lines.reduce((a, l) => a + l.quantity * Number(lotMap.get(l.lot_id)?.unit_cost ?? 0), 0);
   const active = s.status === "activa";
+  const shipment = s.platforms?.requires_shipping ? await loadShipment(s.id) : null;
   // Anuncios que siguen publicados de productos que se han quedado sin stock
   const productIds = [...new Set((items ?? []).map((i) => (i.product_variants as unknown as { product_id: string } | null)?.product_id).filter((x): x is string => !!x))];
   const toRemove =
@@ -348,6 +351,13 @@ export default async function SaleDetail({ params, searchParams }: PageProps<"/v
           </Panel>
         </div>
       </div>
+
+      {s.platforms?.requires_shipping && shipment && (
+        <section id="seguimiento" className="mt-6 scroll-mt-20">
+          <h2 className="display mb-3 text-[22px]">Seguimiento</h2>
+          <TrackingPanel shipment={shipment} />
+        </section>
+      )}
     </>
   );
 }

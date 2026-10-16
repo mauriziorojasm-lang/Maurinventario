@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LabelButton } from "@/components/label-viewer";
-import { Badge, LinkButton, Notice, PageHeader } from "@/components/ui";
-import { date } from "@/lib/format";
+import { CarrierIcon, PlatformIcon } from "@/components/marks";
+import { ProductThumb } from "@/components/thumb";
+import { Badge, Empty, LinkButton, Notice, PageHeader } from "@/components/ui";
+import { date, dateTime, money } from "@/lib/format";
 import { signLabels } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 import { BulkShippingBar, SaleCheckbox, SelectAllCheckbox, ShippingSelection } from "../../ventas/bulk-shipping";
@@ -35,7 +37,12 @@ export default async function CarrierShipments({ params }: PageProps<"/envios/[c
     <>
       <PageHeader
         back={{ href: "/envios", label: "Pendientes de envío" }}
-        title={carrierName}
+        title={
+          <span className="flex items-center gap-3">
+            {carrier !== NO_CARRIER && <CarrierIcon name={carrierName} size={36} showName={false} />}
+            {carrierName}
+          </span>
+        }
         description={
           rows.length > 0
             ? `${rows.length} ${rows.length === 1 ? "paquete" : "paquetes"} por enviar, del más antiguo al más reciente.${withoutLabel ? ` ${withoutLabel} sin etiqueta.` : ""}`
@@ -45,13 +52,9 @@ export default async function CarrierShipments({ params }: PageProps<"/envios/[c
       {error && <Notice tone="bad">{error}</Notice>}
 
       {!error && rows.length === 0 && (
-        <section className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-good/30 bg-good-soft px-6 py-12 text-center">
-          <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full bg-good text-[24px] font-bold text-on-good">
-            ✓
-          </span>
-          <h2 className="text-[20px] font-bold text-good-ink">Todo enviado con {carrierName}</h2>
-          <LinkButton href="/envios">Ver otras paqueterías</LinkButton>
-        </section>
+        <div className="rounded-[var(--radius-md)] border border-line bg-surface">
+          <Empty title={`Todo enviado con ${carrierName}`} action={<LinkButton href="/envios">Ver otros transportistas</LinkButton>} />
+        </div>
       )}
 
       {rows.length > 0 && (
@@ -63,32 +66,43 @@ export default async function CarrierShipments({ params }: PageProps<"/envios/[c
           </div>
           <ul className="flex flex-col gap-2.5">
             {rows.map((r) => (
-              <li key={r.id} className="flex gap-3 rounded-[var(--radius-md)] border border-line bg-surface p-3.5 sm:p-4">
-                <div className="pt-0.5">
+              <li key={r.id} className="flex gap-3 rounded-[var(--radius-md)] border border-line bg-surface p-3 sm:p-4">
+                <div className="flex items-center self-stretch sm:items-start sm:pt-1">
                   <SaleCheckbox saleId={r.id} status="pendiente" label={`la venta ${r.sale_number}`} />
                 </div>
-                <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
+                <Link href={`/ventas/${r.id}?desde=${carrier}`} className="shrink-0" aria-hidden tabIndex={-1}>
+                  <ProductThumb src={r.photo} alt="" size={72} rounded={12} className="max-sm:h-16 max-sm:w-16" />
+                </Link>
+                <div className="flex min-w-0 flex-1 flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0">
-                    <p className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                      <Link href={`/ventas/${r.id}?desde=${carrier}`} className="font-bold text-brand-ink hover:underline">
-                        {r.sale_number}
-                      </Link>
-                      <span className="num text-[13px] text-muted">{date(r.sale_date)}</span>
+                    <Link href={`/ventas/${r.id}?desde=${carrier}`} className="block text-[15.5px] font-semibold leading-snug text-ink hover:underline">
+                      {r.items.map((i) => (i.quantity > 1 ? `${i.quantity} × ${i.text}` : i.text)).join(", ")}
+                    </Link>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted">
+                      <PlatformIcon name={r.platform_name} size={16} />
+                      {r.buyer && <span>· {r.buyer}</span>}
+                      <span className="num font-semibold text-ink">· {money(r.total)}</span>
+                    </p>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-faint">
+                      <span className="num">{r.sale_number}</span>
+                      <span className="num">· {date(r.sale_date)}</span>
+                      {r.responsible_name && <span>· {r.responsible_name}</span>}
+                      {r.mobile && <span>· {r.mobile}</span>}
+                      {r.external_reference && <span>· Ref. {r.external_reference}</span>}
+                    </p>
+                    <p className="mt-1.5 flex flex-wrap gap-1.5">
+                      <Badge tone="neutral" dot>
+                        Pendiente de envío
+                      </Badge>
                       {!r.label_path && <Badge tone="warn">Sin etiqueta</Badge>}
+                      {r.deadline && (
+                        <Badge tone={Date.parse(r.deadline) - Date.now() < 36 * 3600_000 ? "warn" : "neutral"}>Enviar antes del {dateTime(r.deadline)}</Badge>
+                      )}
+                      {r.tracking_number && <Badge tone="neutral">Código {r.tracking_number}</Badge>}
                     </p>
-                    <ul className="mt-1 text-[14.5px] font-medium">
-                      {r.items.map((i, k) => (
-                        <li key={k}>
-                          <span className="num">{i.quantity}</span> × {i.text}
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="mt-1 text-[13px] text-muted">
-                      {[r.platform_name, r.responsible_name, r.mobile, r.external_reference && `Ref. ${r.external_reference}`].filter(Boolean).join(" · ")}
-                    </p>
-                    {r.notes && <p className="mt-0.5 text-[13px] text-ink-soft">{r.notes}</p>}
+                    {r.notes && <p className="mt-1 text-[13px] text-ink-soft">{r.notes}</p>}
                   </div>
-                  <div className="flex shrink-0 flex-wrap gap-2">
+                  <div className="flex shrink-0 flex-wrap gap-2 [&>*]:max-sm:flex-1">
                     {r.label_path ? (
                       <LabelButton url={urls.get(r.label_path)} path={r.label_path} title={`Etiqueta · ${r.sale_number}`} size="sm" />
                     ) : (

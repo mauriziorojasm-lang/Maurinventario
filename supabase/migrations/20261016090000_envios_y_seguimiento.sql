@@ -407,11 +407,11 @@ begin
            count(*) filter (where (b.delivered_at is not null and b.delivered_at - b.shipped_at > interval '5 days')
                              or (b.tracking_eta is not null and coalesce(b.delivered_at::date, current_date) > b.tracking_eta)
                              or (b.delivered_at is null and b.tracking_status not in ('devuelto', 'cancelado') and now() - b.shipped_at > interval '5 days')) as delayed,
-           avg(extract(epoch from b.delivered_at - b.shipped_at) / 86400.0) filter (where b.delivered_at is not null) as avg_days,
-           percentile_cont(0.5) within group (order by extract(epoch from b.delivered_at - b.shipped_at) / 86400.0)
+           avg(greatest(0, extract(epoch from b.delivered_at - b.shipped_at)) / 86400.0) filter (where b.delivered_at is not null) as avg_days,
+           percentile_cont(0.5) within group (order by greatest(0, extract(epoch from b.delivered_at - b.shipped_at)) / 86400.0)
              filter (where b.delivered_at is not null) as median_days,
-           min(extract(epoch from b.delivered_at - b.shipped_at) / 86400.0) filter (where b.delivered_at is not null) as min_days,
-           max(extract(epoch from b.delivered_at - b.shipped_at) / 86400.0) filter (where b.delivered_at is not null) as max_days
+           min(greatest(0, extract(epoch from b.delivered_at - b.shipped_at)) / 86400.0) filter (where b.delivered_at is not null) as min_days,
+           max(greatest(0, extract(epoch from b.delivered_at - b.shipped_at)) / 86400.0) filter (where b.delivered_at is not null) as max_days
       from base b
      group by b.carrier_id
   ), transit as (
@@ -441,8 +441,8 @@ begin
         'shipments', coalesce(sum(shipments), 0), 'delivered', coalesce(sum(delivered), 0),
         'incidents', coalesce(sum(incidents), 0), 'returned', coalesce(sum(returned), 0), 'delayed', coalesce(sum(delayed), 0)) from per),
     'overall', (select jsonb_build_object(
-        'avg_days', round(avg(extract(epoch from delivered_at - shipped_at) / 86400.0)::numeric, 2),
-        'median_days', round((percentile_cont(0.5) within group (order by extract(epoch from delivered_at - shipped_at) / 86400.0))::numeric, 2))
+        'avg_days', round(avg(greatest(0, extract(epoch from delivered_at - shipped_at)) / 86400.0)::numeric, 2),
+        'median_days', round((percentile_cont(0.5) within group (order by greatest(0, extract(epoch from delivered_at - shipped_at)) / 86400.0))::numeric, 2))
         from base where delivered_at is not null),
     'legacy_shipped', (select count(*) from public.sales s where s.status = 'activa' and s.shipping_status = 'enviado' and s.shipped_at is null
                          and (v_all or s.responsible_id = v_resp))

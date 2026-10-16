@@ -1,195 +1,304 @@
 "use client";
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
+import { CarrierIcon, PlatformIcon } from "@/components/marks";
 import { ProductPicker } from "@/components/product-picker";
-import { Button, Field, Input, Notice, clsx } from "@/components/ui";
+import { ProductThumb } from "@/components/thumb";
+import { Badge, Button, Field, Input, Notice, Select, clsx } from "@/components/ui";
 import { ActionMessages, ConfirmAction, Modal, useServerAction } from "@/components/ui-client";
 import { money } from "@/lib/format";
 import { variantDisplay, type SellableVariant } from "@/lib/types";
 import { confirmDetected, confirmMany, discardDetected, markDuplicate } from "./actions";
-import type { DetectedSale } from "./data";
+import type { DetectedSale, ExistingOption, Option, ProductGuess } from "./data";
 
-export function ConfirmAllButton({ items }: { items: { emailId: string; variantId: string }[] }) {
+const PLATFORM_NAME = { vinted: "Vinted", wallapop: "Wallapop" } as const;
+
+/** Grado de confianza de la identificación del producto. */
+export function ConfidenceBadge({ score }: { score: number | null }) {
+  if (score === null) return null;
+  const pct = Math.round(score * 100);
+  if (score >= 0.9) return <Badge tone="good">Seguro · {pct} %</Badge>;
+  if (score >= 0.75) return <Badge tone="good">Muy probable · {pct} %</Badge>;
+  return <Badge tone="warn">Revisa · {pct} %</Badge>;
+}
+
+export function ConfirmAllButton({ items }: { items: { emailId: string; variantId: string; carrierId: string | null; responsibleId: string | null }[] }) {
   return (
     <ConfirmAction
       variant="primary"
       label={
         <>
-          <Check size={17} strokeWidth={2.75} />
+          <Check size={17} strokeWidth={2.5} />
           Confirmar las {items.length} sin dudas
         </>
       }
       title="Confirmar varias ventas"
-      description={`Se registrarán ${items.length} ventas con el producto y el precio del correo, y se descontará 1 unidad de cada una. Solo se incluyen las que tienen el producto identificado, stock y ninguna duda ni posible duplicado.`}
+      description={`Se registrarán ${items.length} ventas con el producto, el precio y el transportista detectados, y se descontará 1 unidad de cada una. Solo se incluyen las que tienen el producto identificado con seguridad, stock y ninguna duda ni posible duplicado.`}
       confirmLabel="Confirmar todas"
       action={() => confirmMany(items)}
     />
   );
 }
 
-export function DetectedActions({ sale }: { sale: DetectedSale }) {
-  const quick = useServerAction(confirmDetected);
-  const canQuick = !!sale.suggestion && sale.suggestion.stock > 0 && !sale.doubt && sale.price !== null && sale.duplicates.length === 0;
+export function DetectedActions({ sale, carriers, responsibles }: { sale: DetectedSale; carriers: Option[]; responsibles: Option[] }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
   return (
-    <div>
-      <div className="flex flex-wrap gap-2">
-        {canQuick ? (
-          <Button
-            variant="primary"
-            disabled={quick.pending}
-            onClick={() => quick.run({ emailId: sale.id, variantId: sale.suggestion!.id, price: null, remember: false })}
-          >
-            <Check size={17} strokeWidth={2.75} />
-            {quick.pending ? "Registrando…" : "Sí, es una venta"}
-          </Button>
-        ) : (
-          <ConfirmDialog sale={sale} primary />
-        )}
-        <DuplicateDialog sale={sale} />
-        <ConfirmAction
-          variant="secondary"
-          label="No es una venta"
-          title="Descartar"
-          description="No se registrará nada con este correo."
-          confirmLabel="Descartar"
-          action={() => discardDetected(sale.id)}
-        />
-        {canQuick && <ConfirmDialog sale={sale} />}
-      </div>
-      <ActionMessages error={quick.error} message={quick.message} />
+    <div className="flex flex-wrap gap-2 [&>*]:max-sm:flex-1">
+      <Button variant={sale.likelyDuplicate ? "secondary" : "primary"} onClick={() => setConfirmOpen(true)}>
+        <Check size={17} strokeWidth={2.5} />
+        Confirmar venta
+      </Button>
+      <DuplicateDialog sale={sale} onNotDuplicate={() => setConfirmOpen(true)} />
+      <ConfirmAction
+        variant="secondary"
+        label="No es una venta"
+        title="Descartar"
+        description="No se registrará nada con este correo. Desaparecerá de esta lista."
+        confirmLabel="Descartar"
+        action={() => discardDetected(sale.id)}
+      />
+      <ConfirmDialog sale={sale} carriers={carriers} responsibles={responsibles} open={confirmOpen} onClose={() => setConfirmOpen(false)} />
     </div>
   );
 }
 
-/** Confirmar eligiendo o cambiando el producto y el precio. */
-function ConfirmDialog({ sale, primary }: { sale: DetectedSale; primary?: boolean }) {
-  const [open, setOpen] = useState(false);
-  const [picked, setPicked] = useState<{ id: string; label: string; stock: number | null } | null>(sale.suggestion);
+/** Ventana de confirmación: todo lo detectado, ya rellenado y editable. */
+function ConfirmDialog({
+  sale,
+  carriers,
+  responsibles,
+  open,
+  onClose,
+}: {
+  sale: DetectedSale;
+  carriers: Option[];
+  responsibles: Option[];
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [picked, setPicked] = useState<ProductGuess | null>(sale.suggestion);
+  const [changing, setChanging] = useState(!sale.suggestion);
   const [price, setPrice] = useState(sale.price !== null ? String(sale.price).replace(".", ",") : "");
+  const [carrierId, setCarrierId] = useState(sale.carrier?.id ?? "");
+  const [respId, setRespId] = useState(sale.responsibleId ?? (responsibles.length === 1 ? responsibles[0].id : ""));
   const [remember, setRemember] = useState(true);
   const { run, pending, error } = useServerAction(confirmDetected);
   const priceNum = Number(price.replace(/\./g, "").replace(",", "."));
   const validPrice = price.trim() !== "" && Number.isFinite(priceNum) && priceNum > 0;
   const changedProduct = !!picked && picked.id !== sale.suggestion?.id;
-  const options = [sale.suggestion, ...sale.alternatives].filter((x): x is NonNullable<typeof x> => !!x);
+  const options = [sale.suggestion, ...sale.alternatives].filter((x): x is ProductGuess => !!x);
+  const carrierName = carriers.find((c) => c.id === carrierId)?.name ?? null;
+
   return (
-    <>
-      <Button variant={primary ? "primary" : "secondary"} onClick={() => setOpen(true)}>
-        {primary ? (
-          <>
-            <Check size={17} strokeWidth={2.75} />
-            {sale.suggestion ? "Revisar y confirmar" : "Elegir producto y confirmar"}
-          </>
-        ) : (
-          "Cambiar producto o precio"
-        )}
-      </Button>
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Confirmar la venta"
-        footer={
-          <>
-            <Button onClick={() => setOpen(false)} disabled={pending}>
-              Volver
-            </Button>
-            <Button
-              variant="primary"
-              disabled={!picked || !validPrice || pending}
-              onClick={async () => {
-                if (!picked) return;
-                const r = await run({ emailId: sale.id, variantId: picked.id, price: priceNum, remember });
-                if (r.ok) setOpen(false);
-              }}
-            >
-              {pending ? "Registrando…" : "Registrar la venta"}
-            </Button>
-          </>
-        }
-      >
-        <div className="rounded-[var(--radius-sm)] bg-ink/5 p-3 text-sm">
-          <p className="text-muted">En el correo:</p>
-          <p className="font-semibold">{sale.product}</p>
-          <p className="num text-ink-soft">
-            {sale.price !== null ? money(sale.price) : "sin precio"}
-            {sale.buyer ? ` · ${sale.buyer}` : ""}
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Confirmar venta"
+      wide
+      footer={
+        <>
+          <Button onClick={onClose} disabled={pending}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            disabled={!picked || !validPrice || !respId || pending}
+            onClick={async () => {
+              if (!picked) return;
+              const r = await run({ emailId: sale.id, variantId: picked.id, price: priceNum, remember, carrierId: carrierId || null, responsibleId: respId || null });
+              if (r.ok) onClose();
+            }}
+          >
+            <Check size={17} strokeWidth={2.5} />
+            {pending ? "Registrando…" : "Confirmar venta"}
+          </Button>
+        </>
+      }
+    >
+      <div className="flex gap-4">
+        <ProductThumb src={sale.image ?? picked?.photo} alt={sale.product} size={104} rounded={14} className="max-sm:h-[84px] max-sm:w-[84px]" />
+        <div className="min-w-0 flex-1">
+          <PlatformIcon name={PLATFORM_NAME[sale.platform]} size={18} className="text-[13px] font-medium" />
+          <p className="mt-1.5 line-clamp-2 text-[17px] font-semibold leading-snug">{sale.product}</p>
+          <p className="mt-1 text-[13px] text-muted">
+            {sale.buyer ? `Comprador: ${sale.buyer} · ` : ""}
+            <span className="num">{sale.saleDate.split("-").reverse().join("/")}</span>
+            {sale.reference ? <span className="num"> · Ref. {sale.reference}</span> : null}
           </p>
         </div>
-        {sale.doubt && sale.note && (
-          <Notice tone="warn" className="mt-3">
-            {sale.note}
-          </Notice>
-        )}
+      </div>
 
-        <p className="mb-1.5 mt-4 text-[13px] font-semibold text-ink-soft">Producto</p>
-        {options.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-2">
-            {options.map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => setPicked(o)}
-                className={clsx(
-                  "press rounded-full border px-3 py-1.5 text-[13px] font-semibold",
-                  picked?.id === o.id ? "border-brand bg-brand text-on-brand" : "border-line-strong bg-surface hover:border-brand",
-                )}
-              >
-                {o.label} <span className="font-normal opacity-75">({o.stock})</span>
-              </button>
-            ))}
+      <p className="mt-4 flex items-start gap-2 rounded-[10px] bg-brand-soft px-3 py-2 text-[13px] text-brand-ink">
+        <Sparkles size={15} strokeWidth={2} className="mt-0.5 shrink-0" />
+        Resellap lo ha rellenado con lo que dice el correo. Revisa y cambia lo que haga falta.
+      </p>
+
+      {sale.doubt && sale.note && (
+        <Notice tone="warn" className="mt-3">
+          {sale.note}
+        </Notice>
+      )}
+
+      {/* Producto */}
+      <div className="mt-5">
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <p className="text-[13px] font-medium text-muted">Producto de tu inventario</p>
+          {picked && !changing && (
+            <button type="button" className="min-h-10 text-[13px] font-semibold text-brand-ink hover:underline" onClick={() => setChanging(true)}>
+              Cambiar
+            </button>
+          )}
+        </div>
+        {picked && (
+          <div className="flex items-center gap-3 rounded-[12px] border border-line p-2.5">
+            <ProductThumb src={picked.photo} alt="" size={48} rounded={10} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14.5px] font-semibold">{picked.label}</p>
+              <p className={clsx("text-[12.5px]", picked.stock > 0 ? "text-faint" : "font-semibold text-danger")}>
+                {picked.stock > 0 ? `${picked.stock} en stock · se descuenta 1 del lote más antiguo` : "Sin stock: no se puede registrar"}
+              </p>
+              {picked.reasons.length > 0 && picked.id === sale.suggestion?.id && (
+                <p className="mt-0.5 truncate text-[12px] text-faint">{picked.reasons.filter((x) => !/stock/i.test(x)).join(" · ")}</p>
+              )}
+            </div>
+            {picked.id === sale.suggestion?.id && <ConfidenceBadge score={picked.score} />}
           </div>
         )}
-        <ProductPicker
-          onlyInStock
-          placeholder={options.length ? "O busca otro producto" : "Busca el producto"}
-          onSelect={(v: SellableVariant) => setPicked({ id: v.variant_id, label: variantDisplay(v.product_name, v.variant_name, v.variant_count), stock: v.stock })}
-        />
-        {picked && (
-          <p className="mt-2 text-sm">
-            Elegido: <strong>{picked.label}</strong>
-          </p>
+        {changing && (
+          <div className="mt-2 flex flex-col gap-2">
+            {options.length > 0 && (
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {options.map((o) => (
+                  <li key={o.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPicked(o);
+                        setChanging(false);
+                      }}
+                      className={clsx(
+                        "press flex w-full items-center gap-2.5 rounded-[12px] border p-2 text-left",
+                        picked?.id === o.id ? "border-brand bg-brand-soft" : "border-line hover:border-line-strong",
+                      )}
+                    >
+                      <ProductThumb src={o.photo} alt="" size={40} rounded={8} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[13.5px] font-semibold">{o.label}</span>
+                        <span className="block truncate text-[12px] text-faint">
+                          {o.score !== null ? `${Math.round(o.score * 100)} % · ` : ""}
+                          {o.stock > 0 ? `${o.stock} en stock` : "sin stock"}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <ProductPicker
+              onlyInStock
+              allowCreate
+              placeholder={options.length ? "O busca otro producto" : "Busca el producto"}
+              onSelect={(v: SellableVariant) => {
+                setPicked({ id: v.variant_id, label: variantDisplay(v.product_name, v.variant_name, v.variant_count), stock: v.stock, photo: v.photo_url ?? null, score: null, reasons: [] });
+                setChanging(false);
+              }}
+            />
+          </div>
         )}
-
-        <Field label="Precio de venta (€)" className="mt-4" hint="El del artículo, sin el envío.">
-          <Input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} className="num max-w-40" />
-        </Field>
-
         {changedProduct && (
-          <label className="mt-3 flex items-start gap-2 text-sm">
-            <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--color-brand)]" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-            <span>Recordar que «{sale.product}» es este producto (la próxima vez saldrá ya elegido)</span>
+          <label className="mt-2 flex items-start gap-2 text-[13.5px]">
+            <input type="checkbox" className="mt-0.5 h-5 w-5 accent-[var(--color-brand)]" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+            <span>Recordar que «{sale.product}» es este producto (la próxima vez se elegirá solo)</span>
           </label>
         )}
-        <p className="mt-3 text-[13px] text-muted">Se descontará 1 unidad del lote más antiguo.</p>
-        {error && (
-          <Notice tone="bad" className="mt-3">
-            {error}
-          </Notice>
-        )}
-      </Modal>
-    </>
+      </div>
+
+      {/* Datos editables */}
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <Field label="Precio de venta (€)" hint="El del artículo, sin el envío.">
+          <Input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} className="num" />
+        </Field>
+        <Field label="Transportista" hint={sale.carrier ? `Detectado en ${sale.carrier.source === "etiqueta" ? "la etiqueta" : "el correo"}` : "No se ha podido detectar"}>
+          <Select value={carrierId} onChange={(e) => setCarrierId(e.target.value)}>
+            <option value="">Sin transportista</option>
+            {carriers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Responsable" required error={!respId ? "Elige quién la ha vendido." : undefined}>
+          <Select value={respId} onChange={(e) => setRespId(e.target.value)}>
+            <option value="">Elige…</option>
+            {responsibles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[13px] font-medium text-muted">Envío</span>
+          <div className="flex min-h-11 items-center rounded-[10px] border border-line bg-surface-2 px-3 text-[14px]">
+            <CarrierIcon name={carrierName} size={20} />
+            {sale.tracking && <span className="num ml-auto text-[12.5px] text-faint">{sale.tracking}</span>}
+          </div>
+        </div>
+      </div>
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-[12px] bg-surface-2 px-3.5 py-3 text-[13px] sm:grid-cols-4">
+        <div>
+          <dt className="text-faint">Plataforma</dt>
+          <dd className="font-medium">{PLATFORM_NAME[sale.platform]}</dd>
+        </div>
+        <div>
+          <dt className="text-faint">Comprador</dt>
+          <dd className="truncate font-medium">{sale.buyer ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-faint">Fecha</dt>
+          <dd className="num font-medium">{sale.saleDate.split("-").reverse().join("/")}</dd>
+        </div>
+        <div>
+          <dt className="text-faint">Referencia</dt>
+          <dd className="num truncate font-medium">{sale.reference ?? "—"}</dd>
+        </div>
+      </dl>
+      {error && (
+        <Notice tone="bad" className="mt-3">
+          {error}
+        </Notice>
+      )}
+    </Modal>
   );
 }
 
-/** «Ya estaba apuntada»: elegir la venta que ya existe. */
-function DuplicateDialog({ sale }: { sale: DetectedSale }) {
+/** «Ya estaba apuntada»: tarjetas visuales de las ventas parecidas, la más probable primero. */
+function DuplicateDialog({ sale, onNotDuplicate }: { sale: DetectedSale; onNotDuplicate: () => void }) {
   const [open, setOpen] = useState(false);
-  const [picked, setPicked] = useState<string | null>(sale.duplicates.length === 1 ? sale.duplicates[0].id : null);
-  const { run, pending, error } = useServerAction(markDuplicate);
-  const all = [...sale.duplicates.map((d) => ({ ...d, likely: true })), ...sale.otherSales.map((d) => ({ ...d, likely: false }))];
+  const best = sale.existing[0];
+  const [picked, setPicked] = useState<string | null>(best && best.score >= 0.55 ? best.id : null);
+  const { run, pending, error, message } = useServerAction(markDuplicate);
   return (
     <>
-      <Button variant={sale.duplicates.length ? "primary" : "secondary"} onClick={() => setOpen(true)}>
+      <Button variant={sale.likelyDuplicate ? "primary" : "secondary"} onClick={() => setOpen(true)}>
         Ya estaba apuntada
       </Button>
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title="¿Cuál es la venta?"
+        title="¿Esta venta ya estaba registrada?"
+        wide
         footer={
           <>
-            <Button onClick={() => setOpen(false)} disabled={pending}>
-              Volver
+            <Button
+              onClick={() => {
+                setOpen(false);
+                onNotDuplicate();
+              }}
+              disabled={pending}
+            >
+              No, es otra venta
             </Button>
             <Button
               variant="primary"
@@ -200,43 +309,63 @@ function DuplicateDialog({ sale }: { sale: DetectedSale }) {
                 if (r.ok) setOpen(false);
               }}
             >
-              {pending ? "Guardando…" : "Es esta, no crear otra"}
+              <Check size={17} strokeWidth={2.5} />
+              {pending ? "Guardando…" : "Sí, es esta venta"}
             </Button>
           </>
         }
       >
-        <p className="text-sm text-ink-soft">
-          Elige la venta de {sale.platform === "vinted" ? "Vinted" : "Wallapop"} que ya apuntaste a mano. No se creará otra venta ni se tocará el stock.
-          {sale.platform === "vinted" && " La etiqueta de Vinted, cuando llegue, se pondrá en esa venta."}
+        <div className="flex items-center gap-3 rounded-[12px] bg-surface-2 p-2.5">
+          <ProductThumb src={sale.image} alt="" size={44} rounded={8} />
+          <div className="min-w-0 text-[13px]">
+            <p className="truncate font-semibold">{sale.product}</p>
+            <p className="text-muted">
+              {PLATFORM_NAME[sale.platform]} · {sale.buyer ?? "comprador sin nombre"} · <span className="num">{sale.price !== null ? money(sale.price) : "—"}</span> ·{" "}
+              <span className="num">{sale.saleDate.split("-").reverse().join("/")}</span>
+            </p>
+          </div>
+        </div>
+        <p className="mt-3 text-[13.5px] text-ink-soft">
+          Elige la venta que ya apuntaste. No se creará otra ni se tocará el stock; se le añadirán la foto, el comprador y la referencia si le faltan.
+          {sale.platform === "vinted" && " Cuando llegue la etiqueta de Vinted, se pondrá en esa venta."}
         </p>
-        {all.length === 0 ? (
+        {sale.existing.length === 0 ? (
           <Notice tone="info" className="mt-3">
-            No hay ventas de {sale.platform === "vinted" ? "Vinted" : "Wallapop"} apuntadas a mano en las fechas cercanas. Si no la tienes apuntada, pulsa «Sí, es una venta».
+            No hay ventas de {PLATFORM_NAME[sale.platform]} apuntadas a mano en fechas cercanas. Si no la tienes apuntada, pulsa «No, es otra venta» y confírmala.
           </Notice>
         ) : (
-          <ul className="mt-3 flex flex-col gap-2">
-            {all.map((d) => (
+          <ul className="mt-3 grid gap-2">
+            {sale.existing.map((d, i) => (
               <li key={d.id}>
-                <label
-                  className={clsx(
-                    "press flex cursor-pointer items-center gap-3 rounded-[var(--radius-sm)] border px-3 py-2.5 text-sm",
-                    picked === d.id ? "border-brand bg-brand-soft" : "border-line hover:border-line-strong",
-                  )}
-                >
-                  <input type="radio" name={`dup-${sale.id}`} checked={picked === d.id} onChange={() => setPicked(d.id)} className="accent-[var(--color-brand)]" />
-                  <span className="num flex-1">{d.label}</span>
-                  {d.likely && <span className="text-[12px] font-semibold text-warn">Parecida</span>}
-                </label>
+                <ExistingCard d={d} best={i === 0 && d.score >= 0.55} checked={picked === d.id} onPick={() => setPicked(d.id)} name={`dup-${sale.id}`} />
               </li>
             ))}
           </ul>
         )}
-        {error && (
-          <Notice tone="bad" className="mt-3">
-            {error}
-          </Notice>
-        )}
+        <ActionMessages error={error} message={message} />
       </Modal>
     </>
+  );
+}
+
+function ExistingCard({ d, best, checked, onPick, name }: { d: ExistingOption; best: boolean; checked: boolean; onPick: () => void; name: string }) {
+  return (
+    <label className={clsx("press flex cursor-pointer items-center gap-3 rounded-[12px] border p-2.5", checked ? "border-brand bg-brand-soft" : "border-line hover:border-line-strong")}>
+      <input type="radio" name={name} checked={checked} onChange={onPick} className="h-5 w-5 shrink-0 accent-[var(--color-brand)]" />
+      <ProductThumb src={d.photo} alt="" size={52} rounded={10} />
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-x-2">
+          <span className="truncate text-[14px] font-semibold">{d.product}</span>
+          {best && <Badge tone="good">Más probable</Badge>}
+        </span>
+        <span className="mt-0.5 block text-[12.5px] text-muted">
+          <span className="num">{d.number}</span> · <span className="num">{d.date.split("-").reverse().join("/")}</span>
+          {d.buyer ? ` · ${d.buyer}` : ""}
+          {d.carrier ? ` · ${d.carrier}` : ""}
+        </span>
+        {d.reasons.length > 0 && <span className="mt-0.5 block truncate text-[12px] text-faint">{d.reasons.join(" · ")}</span>}
+      </span>
+      <span className="num shrink-0 text-[15px] font-semibold">{money(d.price)}</span>
+    </label>
   );
 }

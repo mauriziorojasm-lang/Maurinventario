@@ -1,7 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
 import { safeEqual } from "@/lib/email/secret";
 import { runSync } from "@/lib/email/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { runTracking } from "@/lib/tracking/service";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -19,5 +20,7 @@ export async function POST(request: NextRequest) {
   const { data } = await db.from("email_integration").select("cron_token").not("refresh_token_enc", "is", null).limit(500);
   if (!(data ?? []).some((r) => r.cron_token && safeEqual(r.cron_token, token))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const summary = await runSync("auto");
+  // Aprovecha el mismo aviso para el seguimiento de envíos (cada envío se consulta como mucho cada 3 horas)
+  after(() => runTracking().catch(() => undefined));
   return NextResponse.json(summary);
 }
