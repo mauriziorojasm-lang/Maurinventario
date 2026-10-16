@@ -306,7 +306,7 @@ export function Shell({
       {/* Barra lateral (ordenador e iPad en horizontal) */}
       <aside className="sticky top-0 hidden h-dvh flex-col overflow-hidden border-r border-line bg-surface lg:flex no-print">
         <div className="shrink-0">
-          <Link href="/" className="px-6 pb-4 pt-6" aria-label="Resellap, inicio">
+          <Link href="/" className="block px-6 pb-4 pt-8" aria-label="Resellap, inicio">
             <Logo size={26} />
           </Link>
           <div className="px-3 pb-3">{orgSwitcher ?? <p className="truncate px-3 text-[12.5px] font-medium text-faint">{orgName}</p>}</div>
