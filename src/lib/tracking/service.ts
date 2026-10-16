@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "../supabase/admin";
-import { CARRIER_CODES, NO_CARRIER_ERROR, changeCarriers, fetchTrackInfo, registerNumbers, trackingConfigured } from "./seventeen";
+import { CARRIER_CODES, changeCarriers, fetchTrackInfo, registerNumbers, trackingConfigured } from "./seventeen";
 
 /**
  * Seguimiento automático. Usa la clave del servidor, así que cada consulta
@@ -80,9 +80,15 @@ export async function runTracking(opts: { orgId?: string; saleIds?: string[]; fo
     const registered = sales.filter((s) => s.tracking_registered_at);
     if (registered.length) {
       try {
-        // Códigos que 17TRACK no reconoce y de los que sabemos el transportista: se lo indicamos
-        const lost = registered.filter((s) => s.tracking_error === NO_CARRIER_ERROR && carrierCode(s));
-        if (lost.length) await changeCarriers(lost.map((s) => ({ number: s.tracking_number, carrier: carrierCode(s)! })));
+        // Siempre le indicamos a 17TRACK el transportista que sabemos (no lo deja a su criterio)
+        const known = registered.filter((s) => carrierCode(s));
+        if (known.length) {
+          try {
+            await changeCarriers(known.map((s) => ({ number: s.tracking_number, carrier: carrierCode(s)! })));
+          } catch {
+            run.errors++;
+          }
+        }
         const info = await fetchTrackInfo([...new Set(registered.map((s) => s.tracking_number))]);
         for (const s of registered) {
           const r = info.get(s.tracking_number);
