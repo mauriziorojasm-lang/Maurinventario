@@ -18,14 +18,14 @@ type Size = "sm" | "md";
 const buttonBase =
   "press inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-sm)] font-semibold disabled:cursor-not-allowed disabled:opacity-55 whitespace-nowrap select-none [&_svg]:shrink-0";
 const buttonVariants: Record<Variant, string> = {
-  primary: "bg-brand text-on-brand hover:bg-brand-strong shadow-[0_6px_16px_-8px_var(--brand)]",
-  secondary: "bg-surface text-ink border border-line-strong hover:border-ink/45",
-  ghost: "text-ink-soft hover:bg-ink/6",
-  danger: "bg-surface text-danger border border-danger/40 hover:bg-danger-soft",
+  primary: "bg-brand text-on-brand hover:bg-brand-strong",
+  secondary: "bg-surface text-ink border border-line hover:border-line-strong hover:bg-paper",
+  ghost: "text-ink-soft hover:bg-subtle hover:text-ink",
+  danger: "bg-surface text-danger border border-danger/35 hover:bg-danger-soft",
 };
 const buttonSizes: Record<Size, string> = {
-  sm: "h-11 px-3.5 text-[14px] sm:h-8 sm:px-2.5 sm:text-[13px]",
-  md: "h-11 px-4 text-sm sm:h-10 sm:px-3.5",
+  sm: "h-11 px-3.5 text-[14px] sm:h-9 sm:px-3 sm:text-[13px]",
+  md: "h-11 px-4 text-[14px] sm:h-10",
 };
 
 export function buttonClass(variant: Variant = "secondary", size: Size = "md", className?: string) {
@@ -45,7 +45,7 @@ export function LinkButton({ variant = "secondary", size = "md", className, ...p
 // ---------------------------------------------------------------------
 // Texto a 16px en el móvil: así el iPhone no hace zoom al escribir
 const control =
-  "w-full rounded-[var(--radius-sm)] border border-line-strong bg-surface px-3 text-base text-ink placeholder:text-faint transition-[border-color,box-shadow] focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/20 disabled:bg-paper disabled:text-muted sm:text-sm";
+  "w-full rounded-[var(--radius-sm)] border border-line-strong bg-surface px-3 text-base text-ink placeholder:text-faint transition-[border-color,box-shadow] hover:border-field focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/20 disabled:bg-paper disabled:text-muted sm:text-[14px]";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input {...props} className={clsx(control, "h-11 sm:h-10", props.type === "number" && "num", className)} />;
@@ -82,7 +82,7 @@ export function Field({
   required?: boolean;
 }) {
   const text = (
-    <span className="text-[13px] font-semibold text-ink-soft">
+    <span className="text-[13px] font-medium text-muted">
       {label}
       {required && <span className="text-danger"> *</span>}
     </span>
@@ -126,11 +126,11 @@ export function PageHeader({
   back?: { href: string; label: string };
 }) {
   return (
-    <header className="mb-5 flex animate-rise flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+    <header className="mb-5 flex animate-rise flex-col gap-3 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {back && <BackLink href={back.href} label={back.label} />}
-        <h1 className="display text-[34px] uppercase text-ink text-balance sm:text-[40px]">{title}</h1>
-        {description && <p className="mt-1.5 max-w-[70ch] text-sm text-muted">{description}</p>}
+        <h1 className="display text-[28px] text-ink text-balance sm:text-[34px]">{title}</h1>
+        {description && <p className="mt-1.5 max-w-[70ch] text-[14.5px] leading-relaxed text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -153,17 +153,17 @@ export function Panel({
   padded?: boolean;
 }) {
   return (
-    <section className={clsx("overflow-hidden rounded-[var(--radius-md)] border border-line bg-surface shadow-[var(--shadow-card)]", className)}>
+    <section className={clsx("overflow-hidden rounded-[var(--radius-md)] border border-line bg-surface", className)}>
       {(title || actions) && (
-        <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-4 py-3">
-          <div>
-            {title && <h2 className="display text-[19px] uppercase text-ink">{title}</h2>}
+        <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-4 py-3 sm:px-5">
+          <div className="min-w-0">
+            {title && <h2 className="text-[15px] font-semibold text-ink">{title}</h2>}
             {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
           </div>
           {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
         </div>
       )}
-      <div className={clsx(padded && "p-4")}>{children}</div>
+      <div className={clsx(padded && "p-4 sm:p-5")}>{children}</div>
     </section>
   );
 }
@@ -184,15 +184,15 @@ export function Figures({
   return (
     <dl
       className={clsx(
-        "grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-md)] border border-line bg-line shadow-[var(--shadow-card)] max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]",
+        "grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-md)] border border-line bg-line max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-[repeat(auto-fit,minmax(160px,1fr))]",
         className,
       )}
     >
       {items.map((it, i) => (
-        <div key={i} className="bg-surface px-4 py-3">
-          <dt className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-muted">{it.label}</dt>
-          <dd className={clsx("display num mt-1 text-[28px]", it.tone === "good" && "text-good", it.tone === "bad" && "text-danger")}>{it.value}</dd>
-          {it.note && <p className="mt-0.5 text-xs text-muted">{it.note}</p>}
+        <div key={i} className="bg-surface px-4 py-3.5">
+          <dt className="text-[13px] text-faint">{it.label}</dt>
+          <dd className={clsx("num mt-1 text-[24px] font-semibold tracking-[-0.02em] sm:text-[26px]", it.tone === "good" && "text-good", it.tone === "bad" && "text-danger")}>{it.value}</dd>
+          {it.note && <p className="mt-0.5 text-[12.5px] text-faint">{it.note}</p>}
         </div>
       ))}
     </dl>
@@ -215,7 +215,7 @@ export function Th({ children, num, className }: { children?: ReactNode; num?: b
     <th
       scope="col"
       className={clsx(
-        "sticky top-0 border-b border-line bg-surface-2 px-3 py-2.5 text-left text-[11.5px] font-semibold uppercase tracking-[0.05em] text-muted",
+        "sticky top-0 border-b border-line bg-surface-2 px-3 py-2.5 text-left text-[11.5px] font-semibold uppercase tracking-[0.05em] text-faint",
         num && "text-right",
         className,
       )}
@@ -234,7 +234,7 @@ export function Td({ children, num, className, colSpan }: { children?: ReactNode
 }
 
 export function Tr({ children, className, muted }: { children: ReactNode; className?: string; muted?: boolean }) {
-  return <tr className={clsx("transition-colors hover:bg-brand-soft/40", muted && "text-muted", className)}>{children}</tr>;
+  return <tr className={clsx("transition-colors hover:bg-surface-2", muted && "text-muted", className)}>{children}</tr>;
 }
 
 // ---------------------------------------------------------------------
@@ -242,16 +242,17 @@ export function Tr({ children, className, muted }: { children: ReactNode; classN
 // ---------------------------------------------------------------------
 type Tone = "neutral" | "good" | "warn" | "bad" | "info";
 const tones: Record<Tone, string> = {
-  neutral: "bg-ink/6 text-ink-soft",
+  neutral: "bg-subtle text-muted",
   good: "bg-good-soft text-good-ink",
   warn: "bg-warn-soft text-warn",
   bad: "bg-danger-soft text-danger",
-  info: "bg-info-soft text-info",
+  info: "bg-subtle text-ink-soft",
 };
 
-export function Badge({ tone = "neutral", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
+export function Badge({ tone = "neutral", children, className, dot }: { tone?: Tone; children: ReactNode; className?: string; /** Punto de estado delante del texto. */ dot?: boolean }) {
   return (
-    <span className={clsx("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap", tones[tone], className)}>
+    <span className={clsx("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap", tones[tone], className)}>
+      {dot && <span aria-hidden className="h-1.5 w-1.5 rounded-[2px] bg-current" />}
       {children}
     </span>
   );
@@ -277,12 +278,12 @@ export function Notice({ tone = "info", title, children, className }: { tone?: T
     <div
       role={tone === "bad" ? "alert" : "status"}
       className={clsx(
-        "animate-rise rounded-[var(--radius-sm)] border-l-4 px-3.5 py-2.5 text-sm",
-        tone === "bad" && "border-danger bg-danger-soft text-danger",
-        tone === "warn" && "border-warn bg-warn-soft text-warn",
-        tone === "good" && "border-good bg-good-soft text-good-ink",
-        tone === "info" && "border-info bg-info-soft text-info",
-        tone === "neutral" && "border-line-strong bg-paper text-ink-soft",
+        "animate-rise rounded-[var(--radius-sm)] border px-3.5 py-2.5 text-sm",
+        tone === "bad" && "border-danger/25 bg-danger-soft text-danger",
+        tone === "warn" && "border-warn/25 bg-warn-soft text-warn",
+        tone === "good" && "border-good/20 bg-good-soft text-good-ink",
+        tone === "info" && "border-line bg-surface text-ink-soft",
+        tone === "neutral" && "border-line bg-paper text-ink-soft",
         className,
       )}
     >
@@ -294,10 +295,13 @@ export function Notice({ tone = "info", title, children, className }: { tone?: T
 
 export function Empty({ title, children, action }: { title: ReactNode; children?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-start gap-2 px-4 py-10 sm:items-center sm:text-center">
+    <div className="flex flex-col items-start gap-2 px-4 py-12 sm:items-center sm:text-center">
+      <span aria-hidden className="mb-1 flex h-11 w-11 items-center justify-center rounded-[12px] border border-line bg-surface-2">
+        <svg viewBox="0 0 96 96" width="20" height="20"><path fill="var(--line-strong)" d="M0 0H36V48H0ZM44 0H72A24 24 0 0 1 72 48H44ZM0 56H36V96H0Z" /><path fill="var(--brand-mark)" d="M44 56H68L96 96H72Z" /></svg>
+      </span>
       <p className="font-semibold text-ink">{title}</p>
       {children && <p className="max-w-[60ch] text-sm text-muted">{children}</p>}
-      {action}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }
@@ -351,8 +355,8 @@ export function Tabs({ items, current }: { items: { href: string; label: string;
           href={t.href}
           aria-current={t.key === current ? "page" : undefined}
           className={clsx(
-            "-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-semibold",
-            t.key === current ? "border-brand text-ink" : "border-transparent text-muted hover:text-ink",
+            "-mb-px min-h-10 whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium",
+            t.key === current ? "border-ink text-ink" : "border-transparent text-faint hover:text-ink",
           )}
         >
           {t.label}

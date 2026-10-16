@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 17 · Varias organizaciones (SaaS)
+-- Resellap · Migración 17 · Varias organizaciones (SaaS)
 --
 -- Cada cliente tiene su ORGANIZACIÓN con sus usuarios, datos y archivos.
 -- Cómo se garantiza el aislamiento (en la base de datos, no en pantalla):
@@ -17,7 +17,7 @@
 --   5. Nombres, SKU y numeración (V-000001, pedido nº 1…) son por
 --      organización.
 -- Datos existentes: si ya hay usuarios, todo pasa a una organización
--- «MaurInventario» cuyo propietario es el primer administrador. No se
+-- «Resellap» cuyo propietario es el primer administrador. No se
 -- borra ningún dato.
 -- =====================================================================
 
@@ -143,7 +143,7 @@ begin
   if v_owner is null then
     select id into v_owner from public.profiles order by created_at limit 1;
   end if;
-  insert into public.organizations (name, created_by) values ('MaurInventario', v_owner) returning id into v_org;
+  insert into public.organizations (name, created_by) values ('Resellap', v_owner) returning id into v_org;
   insert into public.memberships (organization_id, user_id, role)
   select v_org, p.id, case when p.role = 'admin' then 'admin' else 'vendedor' end from public.profiles p;
   perform set_config('maurinventario.skip_row_audit', 'on', false);

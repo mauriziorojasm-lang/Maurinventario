@@ -11,6 +11,12 @@ export async function siteUrl(): Promise<string> {
   return `${proto}://${host}`;
 }
 
+/** Dirección base fija (metadatos, imágenes para compartir). */
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000")
+).replace(/\/$/, "");
+
 export const PRICE_LABEL = "4,99 €";
 export const TRIAL_DAYS = 7;
 

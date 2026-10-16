@@ -47,7 +47,7 @@ export default async function ShipmentsPage() {
                 className="group flex h-full flex-col gap-3 rounded-[var(--radius-md)] border border-line bg-surface p-4 transition-colors hover:border-brand focus-visible:border-brand"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <h2 className="display text-[26px] uppercase text-ink">{g.name}</h2>
+                  <h2 className="display text-[26px] text-ink">{g.name}</h2>
                   <span className="display num flex h-10 min-w-10 items-center justify-center rounded-full bg-brand px-2 text-[22px] text-on-brand">
                     {g.count}
                   </span>

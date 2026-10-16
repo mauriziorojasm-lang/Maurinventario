@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Ventas por correo: el estado de Gmail salía como
+-- Resellap · Ventas por correo: el estado de Gmail salía como
 -- «Sin conectar» en la versión SaaS. La función que lo lee ya no tiene
 -- privilegios especiales y no podía consultar el aviso automático de
 -- Supabase (pg_cron). Ahora lo pregunta a una función de confianza que

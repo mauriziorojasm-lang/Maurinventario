@@ -28,7 +28,7 @@ export function stripe(): Stripe {
     client = new Stripe(key, {
       maxNetworkRetries: 2,
       timeout: 20_000,
-      appInfo: { name: "MaurInventario" },
+      appInfo: { name: "Resellap" },
       ...(u ? { host: u.hostname, port: Number(u.port || 80), protocol: u.protocol.replace(":", "") as "http" | "https" } : {}),
     });
   }

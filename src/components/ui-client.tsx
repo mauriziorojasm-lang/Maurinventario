@@ -54,7 +54,7 @@ export function Modal({
         <div className="flex max-h-[88dvh] flex-col">
           <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-line-strong sm:hidden" aria-hidden />
           <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-3.5">
-            <h2 className="display text-[22px] uppercase">{title}</h2>
+            <h2 className="display text-[22px]">{title}</h2>
             <button
               type="button"
               onClick={onClose}

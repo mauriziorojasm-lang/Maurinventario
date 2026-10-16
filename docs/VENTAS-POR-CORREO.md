@@ -1,6 +1,6 @@
 # Ventas por correo (Vinted y Wallapop)
 
-MaurInventario lee los correos que llegan a **maurinventario@gmail.com** y registra las ventas solo. Esta guía explica qué hace y cómo dejarlo funcionando. No hace falta saber programar.
+Resellap lee los correos que llegan a **maurinventario@gmail.com** y registra las ventas solo. Esta guía explica qué hace y cómo dejarlo funcionando. No hace falta saber programar.
 
 ---
 
@@ -46,10 +46,10 @@ Necesitas unos 15 minutos. Hazlo desde un ordenador o iPad.
 Usa la cuenta **maurinventario@gmail.com** en todo este paso.
 
 1. Entra en **console.cloud.google.com** con maurinventario@gmail.com. Si te pide aceptar condiciones, acéptalas.
-2. Arriba, junto al logo, pulsa el selector de proyectos → **Proyecto nuevo** → nombre `MaurInventario` → **Crear**. Espera unos segundos y comprueba que arriba aparece «MaurInventario» seleccionado.
+2. Arriba, junto al logo, pulsa el selector de proyectos → **Proyecto nuevo** → nombre `Resellap` → **Crear**. Espera unos segundos y comprueba que arriba aparece «Resellap» seleccionado.
 3. Activa la API de Gmail: en el buscador de arriba escribe **Gmail API** → ábrela → botón **Habilitar**.
 4. Menú ☰ → **APIs y servicios** → **Pantalla de consentimiento de OAuth** (en algunas cuentas se llama **Google Auth Platform**). Pulsa **Comenzar**:
-   - Nombre de la aplicación: `MaurInventario`
+   - Nombre de la aplicación: `Resellap`
    - Correo de asistencia: maurinventario@gmail.com
    - Público / Tipo de usuario: **Externo**
    - Información de contacto: maurinventario@gmail.com
@@ -62,7 +62,7 @@ Usa la cuenta **maurinventario@gmail.com** en todo este paso.
    - No hace falta que Google verifique la app: es solo para ti. Al conectar verás un aviso de «aplicación no verificada»; es normal (ver paso D).
 8. Ve a **Clientes** (o «Credenciales» → **Crear credenciales** → **ID de cliente de OAuth**):
    - Tipo de aplicación: **Aplicación web**
-   - Nombre: `MaurInventario web`
+   - Nombre: `Resellap web`
    - **URIs de redireccionamiento autorizados** → Agregar URI → pega exactamente:
      `https://maurinventario.vercel.app/api/correo/oauth`
    - Pulsa **Crear**.
@@ -91,7 +91,7 @@ Usa la cuenta **maurinventario@gmail.com** en todo este paso.
 1. Abre **maurinventario.vercel.app** con tu usuario de administrador.
 2. Menú → **Ventas por correo** → **Conectar Gmail**.
 3. Elige la cuenta **maurinventario@gmail.com** (si eliges otra, la app no la acepta).
-4. Google avisa: «Google no ha verificado esta aplicación». Pulsa **Configuración avanzada** → **Ir a MaurInventario (no seguro)**. Es tu propia app; el aviso sale porque no se ha pasado la verificación pública de Google.
+4. Google avisa: «Google no ha verificado esta aplicación». Pulsa **Configuración avanzada** → **Ir a Resellap (no seguro)**. Es tu propia app; el aviso sale porque no se ha pasado la verificación pública de Google.
 5. Marca la casilla de **leer tus correos** y pulsa **Continuar**.
 6. Vuelves a la app con el mensaje «Gmail conectado».
 7. En esa pantalla elige el **Responsable por defecto** (a quién se apuntan las ventas si no se sabe de quién son).

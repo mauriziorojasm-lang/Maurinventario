@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 11 · Ventas automáticas por correo (Gmail)
+-- Resellap · Migración 11 · Ventas automáticas por correo (Gmail)
 --
 -- Lee los correos de Vinted y Wallapop que llegan a la cuenta centralizada
 -- y registra las ventas sin duplicarlas:

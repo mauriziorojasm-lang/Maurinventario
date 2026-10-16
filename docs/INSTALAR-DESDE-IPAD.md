@@ -1,4 +1,4 @@
-# Instalar MaurInventario desde un iPad
+# Instalar Resellap desde un iPad
 
 Todo se hace en **Safari**, sin terminal ni ordenador. Lo que en el README se hace con comandos aquí lo sustituyen dos cosas:
 
@@ -103,7 +103,7 @@ Supabase → **Authentication → URL Configuration**:
 
 1. Abre tu dirección de Vercel → entra con el usuario del paso 2.3.
 2. Guarda `INVENTARIO.xlsx` en la app **Archivos** del iPad (desde el correo, Drive…).
-3. En MaurInventario → **Importar Excel** → elige el archivo en Archivos.
+3. En Resellap → **Importar Excel** → elige el archivo en Archivos.
 4. Sigue los pasos:
    - Hojas y columnas → Validar datos → **Simular importación**.
    - Comprueba que pone «Correcto» en el coste real (106 de 106) y en el stock (40 de 40).
@@ -148,9 +148,9 @@ Así, cuando Claude te prepare un cambio en una rama, Vercel crea una dirección
 
 | Lo que ves | Qué hacer |
 |---|---|
-| «MaurInventario no está configurado: faltan…» | Faltan variables en Vercel, o están mal escritas. Añádelas y haz **Redeploy**. |
+| «Resellap no está configurado: faltan…» | Faltan variables en Vercel, o están mal escritas. Añádelas y haz **Redeploy**. |
 | «El email o la contraseña no son correctos» | Revisa en Supabase → Authentication → Users que el usuario existe. |
-| «Tu usuario está desactivado» | Actívalo en MaurInventario → Usuarios → Gestionar. Si eres tú y no puedes entrar, en Supabase → SQL Editor: `update public.profiles set role = 'admin', active = true where email = 'TU@EMAIL';` |
+| «Tu usuario está desactivado» | Actívalo en Resellap → Usuarios → Gestionar. Si eres tú y no puedes entrar, en Supabase → SQL Editor: `update public.profiles set role = 'admin', active = true where email = 'TU@EMAIL';` |
 | «Has entrado, pero no se puede leer tu perfil» | El paso 2.2 no se completó en ese proyecto. Repítelo. |
 | Error al pegar el SQL | Captura del mensaje para Claude. No se ha guardado nada. |
 | La web abre pero tras entrar vuelve al login | Revisa el paso 3.1 (Site URL). |

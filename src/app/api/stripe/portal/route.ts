@@ -38,17 +38,17 @@ export async function POST(request: NextRequest) {
  */
 async function portalConfiguration(): Promise<string> {
   const list = await stripe().billingPortal.configurations.list({ active: true, limit: 20 });
-  const found = list.data.find((c) => c.is_default) ?? list.data.find((c) => c.metadata?.app === "maurinventario");
+  const found = list.data.find((c) => c.is_default) ?? list.data.find((c) => c.metadata?.app === "resellap" || c.metadata?.app === "maurinventario");
   if (found) return found.id;
   const created = await stripe().billingPortal.configurations.create({
-    business_profile: { headline: "MaurInventario: gestiona tu suscripción" },
+    business_profile: { headline: "Resellap: gestiona tu suscripción" },
     features: {
       payment_method_update: { enabled: true },
       invoice_history: { enabled: true },
       customer_update: { enabled: true, allowed_updates: ["email", "address", "tax_id"] },
       subscription_cancel: { enabled: true, mode: "at_period_end" },
     },
-    metadata: { app: "maurinventario" },
+    metadata: { app: "resellap" },
   });
   return created.id;
 }

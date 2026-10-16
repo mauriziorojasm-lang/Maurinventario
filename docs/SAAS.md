@@ -1,4 +1,4 @@
-# MaurInventario SaaS (varias empresas)
+# Resellap SaaS (varias empresas)
 
 Rama `saas`. La app personal (rama `main`, proyecto Supabase actual) no se toca.
 
@@ -26,7 +26,7 @@ Rama `saas`. La app personal (rama `main`, proyecto Supabase actual) no se toca.
 2. **Vercel: proyecto nuevo** desde este repositorio, rama de producción `saas`. Variables (ver `.env.example`):
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (del proyecto nuevo), `NEXT_PUBLIC_SITE_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, `LEGAL_NAME`, `LEGAL_TAX_ID`, `LEGAL_ADDRESS`, `LEGAL_EMAIL`. Opcionales: `RESEND_API_KEY` + `MAIL_FROM` (invitaciones por email), `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`.
 3. **Stripe** (empieza en modo prueba):
-   - Producto «MaurInventario» con precio recurrente mensual de 4,99 € → copia el `price_…` a `STRIPE_PRICE_ID`.
+   - Producto «Resellap» con precio recurrente mensual de 4,99 € → copia el `price_…` a `STRIPE_PRICE_ID`.
    - Developers → Webhooks → endpoint `https://TU-WEB/api/stripe/webhook` con los eventos `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed` → copia el `whsec_…` a `STRIPE_WEBHOOK_SECRET`.
    - Settings → Billing → Customer portal: activa cambiar tarjeta, ver facturas y cancelar (al final del periodo).
    - Prueba con la tarjeta 4242 4242 4242 4242. Para cobrar de verdad, cambia a claves `sk_live_…` y repite precio y webhook en modo real.

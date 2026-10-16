@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 13 · Fotos por producto y anuncios
+-- Resellap · Migración 13 · Fotos por producto y anuncios
 --
 --   · product_photos: varias fotos por producto, con orden. La primera es
 --     la portada (se copia a products.photo_path para las miniaturas).

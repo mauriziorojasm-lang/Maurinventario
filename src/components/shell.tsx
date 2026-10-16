@@ -1,12 +1,15 @@
 "use client";
-import { House, LayoutGrid, LogOut, Plus, Receipt, Truck, UserRound, X } from "lucide-react";
+import { Bell, House, LayoutGrid, LogOut, Plus, Receipt, Settings, Truck, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
+import { Logo } from "./brand";
 import { RememberList, forgetAllLists, useRememberedHref } from "./list-memory";
-import { NAV, type NavItem } from "./nav";
+import { NAV, type BadgeKey, type NavItem } from "./nav";
 import { NavProgress } from "./nav-progress";
 import { clsx } from "./ui";
+
+export { Logo };
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -33,37 +36,15 @@ function NavLink({ href, active, onClick, ...props }: Omit<React.ComponentProps<
   );
 }
 
-/** Logo: cuadro «MI» + Maur (verde) Inventario. */
-export function Logo({ compact = false, className }: { compact?: boolean; className?: string }) {
-  return (
-    <span className={clsx("flex items-center gap-2.5", className)}>
-      <span className="display flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-brand text-[19px] text-on-brand shadow-[0_0_0_2px_var(--chrome),0_0_0_3px_rgb(255_255_255/0.12)]">
-        MI
-      </span>
-      {!compact && (
-        <span className="display text-[23px] uppercase tracking-[0.02em] text-chrome-ink">
-          <span className="text-brand-bright">Maur</span>Inventario
-        </span>
-      )}
-    </span>
-  );
-}
-
-function Counter({ n, tone }: { n: number; tone: "brand" | "tag" }) {
+/** Contador: verde para lo que espera una acción tuya, rojo para alertas, neutro para lo demás. */
+function Counter({ n, k }: { n: number; k?: BadgeKey }) {
   if (n <= 0) return null;
-  return (
-    <span
-      className={clsx(
-        "num inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[11.5px] font-bold leading-5",
-        tone === "brand" ? "bg-brand text-on-brand" : "bg-tag text-tag-ink",
-      )}
-    >
-      {n}
-    </span>
-  );
+  const tone = k === "alerts" ? "bg-danger text-white" : k === "shipments" || k === "detected" ? "bg-brand text-on-brand" : "bg-subtle text-ink-soft";
+  return <span className={clsx("num inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11.5px] font-semibold", tone)}>{n}</span>;
 }
 
 const ROLE_LABEL = { admin: "Administrador", vendedor: "Vendedor", almacen: "Almacén" } as const;
+type Badges = Record<BadgeKey, number>;
 
 export function Shell({
   children,
@@ -73,26 +54,23 @@ export function Shell({
   orgName,
   orgSwitcher,
   banner,
-  isPlatformAdmin = false,
   permissions = [],
 }: {
   children: ReactNode;
   role: "admin" | "vendedor" | "almacen";
   userLabel: string;
-  badges: { reviews: number; shipments: number; emails: number; detected: number; listings: number };
+  badges: Badges;
   orgName: string;
   /** Selector de espacio (solo si el usuario pertenece a varios). */
   orgSwitcher?: ReactNode;
   /** Aviso fijo (prueba, pago pendiente, suscripción inactiva…). */
   banner?: ReactNode;
-  isPlatformAdmin?: boolean;
   /** Permisos efectivos (qué apartados ve). */
   permissions?: string[];
 }) {
   const pathname = usePathname();
   const [more, setMore] = useState(false);
-  const visible = (i: NavItem) =>
-    (!i.adminOnly || role === "admin") && (!i.platformOnly || isPlatformAdmin) && (!i.perm || role === "admin" || permissions.includes(i.perm));
+  const visible = (i: NavItem) => (!i.adminOnly || role === "admin") && (!i.perm || role === "admin" || permissions.includes(i.perm));
   const canSell = role === "admin" || permissions.includes("ventas_crear");
   const badgeOf = (i: NavItem) => (i.badgeKey ? badges[i.badgeKey] : 0);
 
@@ -111,115 +89,114 @@ export function Shell({
     if (!more && d.open) d.close();
   }, [more]);
 
+  const initials = userLabel
+    .split(/[\s@.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+
   const account = (
-    <div className="flex items-center gap-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-chrome-2 text-chrome-ink/80">
-        <UserRound size={18} strokeWidth={2.25} />
-      </span>
-      <div className="min-w-0 flex-1 text-[13px]">
-        <p className="truncate font-semibold text-chrome-ink">{userLabel}</p>
-        <p className="text-chrome-ink/55">
-          {ROLE_LABEL[role]} ·{" "}
-          <Link href="/cuenta" className="underline-offset-2 hover:text-chrome-ink hover:underline">
-            Mi cuenta
-          </Link>
-        </p>
-      </div>
+    <div className="flex items-center gap-2">
+      <Link href="/cuenta" className="flex min-w-0 flex-1 items-center gap-3 rounded-[10px] p-1 hover:bg-subtle/70">
+        <span aria-hidden className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-subtle text-[13px] font-semibold text-ink-soft">
+          {initials || "·"}
+        </span>
+        <span className="min-w-0 flex-1 text-[13px] leading-tight">
+          <span className="block truncate font-semibold text-ink">{userLabel}</span>
+          <span className="block truncate text-faint">{ROLE_LABEL[role]} · Mi cuenta</span>
+        </span>
+      </Link>
       <form action="/auth/salir" method="post">
         <button
-          className="press flex h-11 w-11 items-center justify-center rounded-full text-chrome-ink/60 hover:bg-chrome-2 hover:text-chrome-ink"
+          className="press flex h-10 w-10 items-center justify-center rounded-[10px] text-faint hover:bg-subtle hover:text-ink"
           aria-label="Cerrar sesión"
           title="Cerrar sesión"
         >
-          <LogOut size={17} strokeWidth={2.25} />
+          <LogOut size={17} strokeWidth={1.75} />
         </button>
       </form>
     </div>
   );
 
-  // ---------------- Barra lateral (ordenador) ----------------
+  const itemClass = (active: boolean) =>
+    clsx(
+      "press group flex min-h-10 items-center gap-3 rounded-[10px] px-3 text-[14px] font-medium",
+      active ? "bg-subtle text-ink" : "text-muted hover:bg-subtle/70 hover:text-ink",
+    );
+
+  const renderGroup = (items: NavItem[]) => (
+    <ul className="flex flex-col gap-0.5">
+      {items.map((it) => {
+        const active = isActive(pathname, it.href);
+        const Icon = it.icon;
+        return (
+          <li key={it.href}>
+            <NavLink href={it.href} active={active} className={itemClass(active)}>
+              <Icon size={19} strokeWidth={1.75} className={active ? "text-brand" : "text-faint group-hover:text-ink"} />
+              <span className="flex-1 truncate">{it.label}</span>
+              <Counter n={badgeOf(it)} k={it.badgeKey} />
+            </NavLink>
+          </li>
+        );
+      })}
+    </ul>
+  );
+
+  // ---------------- Barra lateral (ordenador e iPad en horizontal) ----------------
+  const sideGroups = NAV.filter((g) => !g.footer);
+  const settingsItems = (NAV.find((g) => g.footer)?.items ?? []).filter(visible).filter((i) => i.href !== "/cuenta");
   const sidebar = (
-    <nav aria-label="Principal" className="flex flex-col gap-5 px-3 pb-6">
-      {NAV.map((g, gi) => {
+    <nav aria-label="Principal" className="flex flex-col gap-5 px-3 pb-4">
+      {sideGroups.map((g, gi) => {
         const items = g.items.filter(visible).filter((i) => i.href !== "/ventas/nueva");
         if (!items.length) return null;
         return (
           <div key={gi}>
-            {g.label && <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-chrome-ink/40">{g.label}</p>}
-            <ul className="flex flex-col gap-0.5">
-              {items.map((it) => {
-                const active = isActive(pathname, it.href);
-                const Icon = it.icon;
-                return (
-                  <li key={it.href}>
-                    <NavLink
-                      href={it.href}
-                      active={active}
-                      className={clsx(
-                        "press group relative flex items-center gap-3 rounded-[10px] px-3 py-2 text-[14px]",
-                        active ? "bg-chrome-2 font-semibold text-chrome-ink" : "text-chrome-ink/70 hover:bg-chrome-2/70 hover:text-chrome-ink",
-                      )}
-                    >
-                      <span
-                        aria-hidden
-                        className={clsx(
-                          "absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-brand transition-transform duration-200",
-                          active ? "scale-y-100" : "scale-y-0",
-                        )}
-                      />
-                      <Icon size={18} strokeWidth={2.25} className={active ? "text-brand-bright" : "text-chrome-ink/55 group-hover:text-chrome-ink/90"} />
-                      <span className="flex-1">{it.label}</span>
-                      <Counter n={badgeOf(it)} tone={it.badgeKey === "shipments" || it.badgeKey === "detected" ? "brand" : "tag"} />
-                    </NavLink>
-                  </li>
-                );
-              })}
-            </ul>
+            {g.label && <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-faint">{g.label}</p>}
+            {renderGroup(items)}
           </div>
         );
       })}
     </nav>
   );
 
-  // ---------------- Barra inferior (móvil y iPad) ----------------
-  const shipments = badges.shipments;
+  // ---------------- Barra inferior (móvil y iPad en vertical) ----------------
   const tabs: { href: string; label: string; icon: typeof House; badge?: number }[] = [
     { href: "/", label: "Inicio", icon: House },
     { href: "/ventas", label: "Ventas", icon: Receipt },
-    { href: "/envios", label: "Envíos", icon: Truck, badge: shipments },
+    { href: "/envios", label: "Envíos", icon: Truck, badge: badges.shipments },
   ];
   const inTabs = isActive(pathname, "/") || isActive(pathname, "/ventas") || isActive(pathname, "/envios") || pathname.startsWith("/ventas/nueva");
   const tabClass = (active: boolean) =>
-    clsx("press relative flex flex-1 flex-col items-center gap-0.5 pt-2 text-[11px] font-semibold", active ? "text-brand-bright" : "text-chrome-ink/60");
+    clsx("press relative flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium", active ? "text-ink" : "text-faint");
+  const pendingMore = badges.reviews + badges.emails + badges.detected + badges.listings + badges.alerts;
 
   const tabBar = (
-    <nav
-      aria-label="Accesos rápidos"
-      className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-white/8 bg-chrome/95 backdrop-blur-md md:hidden no-print"
-    >
-      <ul className="mx-auto flex max-w-xl items-end">
+    <nav aria-label="Accesos rápidos" className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur-md lg:hidden no-print">
+      <ul className="mx-auto flex max-w-xl items-end px-1">
         {tabs.slice(0, 2).map((t) => {
           const active = isActive(pathname, t.href);
           return (
             <li key={t.href} className="flex flex-1">
               <NavLink href={t.href} active={active} className={tabClass(active)}>
-                <t.icon size={23} strokeWidth={2.25} />
+                <t.icon size={23} strokeWidth={1.75} className={active ? "text-brand" : undefined} />
                 {t.label}
               </NavLink>
             </li>
           );
         })}
         {canSell && (
-        <li className="flex flex-1 justify-center">
-          <NavLink
-            href="/ventas/nueva"
-            active={pathname.startsWith("/ventas/nueva")}
-            aria-label="Nueva venta"
-            className="press -mt-5 flex h-[58px] w-[58px] items-center justify-center rounded-full bg-brand text-on-brand shadow-[0_10px_24px_-8px_var(--brand),0_0_0_5px_var(--chrome)]"
-          >
-            <Plus size={30} strokeWidth={2.75} />
-          </NavLink>
-        </li>
+          <li className="flex flex-1 justify-center">
+            <NavLink
+              href="/ventas/nueva"
+              active={pathname.startsWith("/ventas/nueva")}
+              aria-label="Nueva venta"
+              className="press -mt-4 mb-1 flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-brand text-on-brand shadow-[0_0_0_4px_var(--surface)]"
+            >
+              <Plus size={26} strokeWidth={2} />
+            </NavLink>
+          </li>
         )}
         {tabs.slice(2).map((t) => {
           const active = isActive(pathname, t.href);
@@ -227,9 +204,9 @@ export function Shell({
             <li key={t.href} className="flex flex-1">
               <NavLink href={t.href} active={active} className={tabClass(active)}>
                 <span className="relative">
-                  <t.icon size={23} strokeWidth={2.25} />
+                  <t.icon size={23} strokeWidth={1.75} className={active ? "text-brand" : undefined} />
                   {!!t.badge && (
-                    <span className="num absolute -right-2.5 -top-1.5 min-w-[18px] rounded-full bg-brand px-1 text-center text-[10.5px] font-bold leading-[18px] text-on-brand ring-2 ring-chrome">
+                    <span className="num absolute -right-2.5 -top-1.5 min-w-[18px] rounded-full bg-brand px-1 text-center text-[10.5px] font-semibold leading-[18px] text-on-brand ring-2 ring-surface">
                       {t.badge}
                     </span>
                   )}
@@ -242,8 +219,8 @@ export function Shell({
         <li className="flex flex-1">
           <button type="button" onClick={() => setMore(true)} className={tabClass(!inTabs || more)} aria-expanded={more} aria-controls="menu-mas">
             <span className="relative">
-              <LayoutGrid size={23} strokeWidth={2.25} />
-              {badges.reviews + badges.emails + badges.detected + badges.listings > 0 && <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-tag ring-2 ring-chrome" />}
+              <LayoutGrid size={23} strokeWidth={1.75} className={!inTabs || more ? "text-brand" : undefined} />
+              {pendingMore > 0 && <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-brand ring-2 ring-surface" />}
             </span>
             Más
           </button>
@@ -259,19 +236,14 @@ export function Shell({
       aria-label="Menú"
       onClose={() => setMore(false)}
       onClick={(e) => e.target === e.currentTarget && setMore(false)}
-      className="mi-sheet max-h-[88dvh] overflow-hidden rounded-t-[var(--radius-lg)] bg-chrome p-0 text-chrome-ink md:hidden"
+      className="mi-sheet max-h-[88dvh] overflow-hidden rounded-t-[var(--radius-lg)] bg-surface p-0 text-ink lg:hidden"
     >
       <div className="safe-bottom max-h-[88dvh] overflow-y-auto px-4 pt-3">
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" aria-hidden />
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" aria-hidden />
         <div className="mb-4 flex items-center justify-between">
-          <Logo />
-          <button
-            type="button"
-            onClick={() => setMore(false)}
-            className="press flex h-10 w-10 items-center justify-center rounded-full bg-chrome-2"
-            aria-label="Cerrar"
-          >
-            <X size={20} strokeWidth={2.5} />
+          <Logo size={24} />
+          <button type="button" onClick={() => setMore(false)} className="press flex h-10 w-10 items-center justify-center rounded-full bg-subtle" aria-label="Cerrar">
+            <X size={20} strokeWidth={1.75} />
           </button>
         </div>
         <div className="flex flex-col gap-5 pb-4">
@@ -280,7 +252,7 @@ export function Shell({
             if (!items.length) return null;
             return (
               <section key={gi}>
-                <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-chrome-ink/40">{g.label ?? "General"}</p>
+                <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-faint">{g.label ?? "Día a día"}</p>
                 <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                   {items.map((it) => {
                     const active = isActive(pathname, it.href);
@@ -291,15 +263,15 @@ export function Shell({
                           href={it.href}
                           active={active}
                           className={clsx(
-                            "press relative flex h-full min-h-[86px] flex-col items-start justify-between gap-2 rounded-[14px] p-3 text-[12.5px] font-semibold leading-tight",
-                            active ? "bg-brand text-on-brand" : "bg-chrome-2 text-chrome-ink/90",
+                            "press relative flex h-full min-h-[84px] flex-col items-start justify-between gap-2 rounded-[14px] border p-3 text-[12.5px] font-medium leading-tight",
+                            active ? "border-ink bg-subtle text-ink" : "border-line bg-surface text-ink-soft",
                           )}
                         >
-                          <it.icon size={22} strokeWidth={2.25} className={active ? "" : "text-brand-bright"} />
+                          <it.icon size={21} strokeWidth={1.75} className={active ? "text-brand" : "text-faint"} />
                           <span>{it.label}</span>
                           {n > 0 && (
                             <span className="absolute right-2 top-2">
-                              <Counter n={n} tone={it.badgeKey === "shipments" || it.badgeKey === "detected" ? "brand" : "tag"} />
+                              <Counter n={n} k={it.badgeKey} />
                             </span>
                           )}
                         </NavLink>
@@ -310,47 +282,72 @@ export function Shell({
               </section>
             );
           })}
-          {orgSwitcher && <div className="rounded-[14px] bg-chrome-2/60 p-3">{orgSwitcher}</div>}
-          <div className="rounded-[14px] bg-chrome-2/60 p-3">{account}</div>
+          {orgSwitcher && <div className="rounded-[14px] border border-line p-3">{orgSwitcher}</div>}
+          <div className="rounded-[14px] border border-line p-2">{account}</div>
         </div>
       </div>
     </dialog>
   );
 
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[236px_1fr] lg:grid-cols-[264px_1fr]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)] 2xl:grid-cols-[264px_minmax(0,1fr)]">
       <Suspense fallback={null}>
         <NavProgress />
       </Suspense>
-      {/* Barra lateral (iPad y ordenador) */}
-      <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto bg-chrome md:flex">
-        <Link href="/" className="px-5 pb-3 pt-5" aria-label="Inicio">
-          <Logo />
+      {/* Barra lateral (ordenador e iPad en horizontal) */}
+      <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto border-r border-line bg-surface lg:flex no-print">
+        <Link href="/" className="px-6 pb-4 pt-6" aria-label="Resellap, inicio">
+          <Logo size={26} />
         </Link>
-        {/* Espacio de trabajo activo */}
-        <div className="px-3 pb-3">{orgSwitcher ?? <p className="truncate px-2 text-[13px] font-semibold text-chrome-ink/70">{orgName}</p>}</div>
+        <div className="px-3 pb-3">{orgSwitcher ?? <p className="truncate px-3 text-[12.5px] font-medium text-faint">{orgName}</p>}</div>
         {canSell && (
-        <div className="px-3 pb-5">
-          <NavLink
-            href="/ventas/nueva"
-            active={pathname.startsWith("/ventas/nueva")}
-            className="press flex h-11 items-center justify-center gap-2 rounded-[12px] bg-brand text-[15px] font-bold text-on-brand shadow-[0_8px_22px_-10px_var(--brand)] hover:bg-brand-strong"
-          >
-            <Plus size={19} strokeWidth={2.75} />
-            Nueva venta
-          </NavLink>
-        </div>
+          <div className="px-3 pb-5">
+            <NavLink
+              href="/ventas/nueva"
+              active={pathname.startsWith("/ventas/nueva")}
+              className="press flex h-10 items-center justify-center gap-2 rounded-[10px] bg-brand text-[14px] font-semibold text-on-brand hover:bg-brand-strong"
+            >
+              <Plus size={18} strokeWidth={2} />
+              Nueva venta
+            </NavLink>
+          </div>
         )}
         {sidebar}
-        <div className="mt-auto border-t border-white/8 px-4 py-4">{account}</div>
+        <div className="mt-auto flex flex-col gap-1 border-t border-line px-3 py-3">
+          {settingsItems.length > 0 && (
+            <details className="group/cfg" open={settingsItems.some((i) => isActive(pathname, i.href)) || undefined}>
+              <summary className={clsx(itemClass(false), "cursor-pointer list-none [&::-webkit-details-marker]:hidden")}>
+                <Settings size={19} strokeWidth={1.75} className="text-faint" />
+                <span className="flex-1">Configuración</span>
+                <span aria-hidden className="text-faint transition-transform group-open/cfg:rotate-90">
+                  ›
+                </span>
+              </summary>
+              <div className="pb-1 pl-2 pt-0.5">{renderGroup(settingsItems)}</div>
+            </details>
+          )}
+          <div className="pt-1">{account}</div>
+        </div>
       </aside>
 
-      {/* Barra superior (iPhone) */}
-      <header className="sticky top-0 z-30 flex items-center justify-between bg-chrome/95 px-4 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-md md:hidden no-print">
-        <Link href="/" aria-label="Inicio">
-          <Logo />
+      {/* Barra superior (móvil y iPad en vertical) */}
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-surface/95 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md lg:hidden no-print">
+        <Link href="/" aria-label="Resellap, inicio" className="flex min-h-10 items-center">
+          <Logo size={22} />
         </Link>
-        <span className="ml-3 min-w-0 truncate text-[12.5px] font-semibold text-chrome-ink/60">{orgName}</span>
+        <div className="flex min-w-0 items-center gap-1">
+          <span className="min-w-0 truncate text-[12.5px] font-medium text-faint">{orgName}</span>
+          {badges.alerts > 0 && (
+            <Link
+              href="/seguimiento?vista=alertas"
+              className="press relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-subtle"
+              aria-label={`${badges.alerts} ${badges.alerts === 1 ? "alerta" : "alertas"} de envíos`}
+            >
+              <Bell size={20} strokeWidth={1.75} />
+              <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-danger ring-2 ring-surface" />
+            </Link>
+          )}
+        </div>
       </header>
       {moreSheet}
 
@@ -358,8 +355,8 @@ export function Shell({
         <RememberList />
       </Suspense>
 
-      <main className="min-w-0 px-4 pb-32 pt-5 sm:px-6 md:py-7 md:pl-7 md:pr-5 lg:py-8 lg:pl-9 xl:pr-6">
-        <div className="mx-auto max-w-[1720px]">
+      <main className="min-w-0 px-4 pb-32 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pb-12 lg:pt-8 2xl:px-10">
+        <div className="mx-auto w-full max-w-[1440px]">
           {banner}
           {children}
         </div>

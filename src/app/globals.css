@@ -1,279 +1,170 @@
 @import "tailwindcss";
 
 /*
- * MaurInventario · sistema visual «tienda de calle»
- * Negro + verde Vinted. Claro u oscuro según el dispositivo.
- * Títulos y cifras en letra estrecha (Barlow Condensed), texto en Public Sans.
- * La pegatina amarilla de los lotes se mantiene como sello de la casa.
+ * Resellap · sistema visual (manual de marca v1.0)
+ * Tinta #0B0F0E + Verde Resellap #0F9D63 sobre Niebla #F4F6F5.
+ * Instrument Sans para marca, titulares y cifras grandes; Inter para la
+ * interfaz y los datos (cifras tabulares). Verde solo para la acción
+ * principal y lo que suma. Bordes de 1 px; sombras solo en lo flotante.
+ * Claro u oscuro según el dispositivo (o lo elegido en Ajustes → Aspecto).
+ *
+ * Rampas: tinta 50 #F4F6F5 · 100 #E9EDEB · 200 #D5DBD8 · 300 #B4BDB9 ·
+ *   400 #8A9590 · 500 #66716C · 600 #4B5551 · 700 #343C39 · 800 #222927 ·
+ *   900 #151A18 · 950 #0B0F0E
+ * verde 50 #ECFBF3 · 100 #D2F5E3 · 300 #6FDCA6 · 400 #36C784 · 500 #0F9D63 ·
+ *   600 #0B8253 · 700 #0A6845 · 950 #052419
  */
 
 :root {
   color-scheme: light;
-  --paper: #f4f2ee;
+  /* Superficies */
+  --paper: #f4f6f5;
   --surface: #ffffff;
-  --surface-2: #faf8f5;
-  --ink: #141210;
-  --ink-soft: #2e2a26;
-  --muted: #6b645d;
-  --faint: #9a928a;
-  --line: #e8e3dc;
-  --line-strong: #d4cdc4;
+  --surface-2: #f4f6f5;
+  --subtle: #e9edeb;
+  /* Texto */
+  --ink: #0b0f0e;
+  --ink-soft: #343c39;
+  --muted: #4b5551;
+  --faint: #66716c;
+  /* Bordes */
+  --line: #d5dbd8;
+  --line-strong: #b4bdb9;
+  --field: #8a9590;
 
-  --brand: #007782;
-  --brand-strong: #00626b;
-  --brand-ink: #005a62;
-  --brand-soft: #dff1f2;
+  /* Acción y marca: Verde 600 en claro (4,85:1 con blanco) */
+  --brand: #0b8253;
+  --brand-strong: #0a6845;
+  --brand-ink: #0a6845;
+  --brand-soft: #ecfbf3;
   --on-brand: #ffffff;
-  /* Verde claro para textos e iconos sobre las barras negras (contraste ≥ 7:1) */
-  --brand-bright: #2bb3bd;
+  --brand-mark: #0f9d63;
+  --brand-bright: #36c784;
 
-  --chrome: #121110;
-  --chrome-2: #1f1c1a;
-  --chrome-ink: #f4f1ec;
+  /* Superficie oscura (bloques destacados, avisos tinta) */
+  --chrome: #0b0f0e;
+  --chrome-2: #151a18;
+  --chrome-ink: #f4f6f5;
 
-  --good: #2f7d32;
-  --good-soft: #e6f3e4;
-  --good-ink: #1f5a22;
+  --good: #0a6845;
+  --good-soft: #ecfbf3;
+  --good-ink: #0a6845;
   --on-good: #ffffff;
-  --danger: #c62a1c;
-  --danger-soft: #fce8e6;
-  --warn: #b45309;
-  --warn-soft: #fef0dd;
-  --info: #2f5d8a;
-  --info-soft: #e6eef6;
+  --danger: #d92d20;
+  --danger-soft: #fef0ee;
+  --warn: #a15c00;
+  --warn-soft: #fff6e5;
+  --info: #343c39;
+  --info-soft: #e9edeb;
 
-  --tag: #f5d547;
-  --tag-ink: #4a3d00;
-  --tag-adjust: #ece6c8;
+  /* Antigua «pegatina» del lote: ahora una ficha neutra */
+  --tag: #e9edeb;
+  --tag-ink: #343c39;
+  --tag-adjust: #f4f6f5;
 
-  --shadow-card: 0 1px 0 rgba(20, 18, 16, 0.04), 0 8px 24px -18px rgba(20, 18, 16, 0.35);
-  --shadow-pop: 0 24px 60px -24px rgba(20, 18, 16, 0.5);
+  --shadow-card: 0 1px 0 rgb(11 15 14 / 0.03);
+  --shadow-pop: 0 1px 0 rgb(11 15 14 / 0.04), 0 24px 48px -24px rgb(11 15 14 / 0.38);
 }
 
-/* Modo oscuro: automático (según el dispositivo) salvo que el usuario elija
-   «Claro» en Ajustes → Aspecto; o forzado si elige «Oscuro». */
 @media (prefers-color-scheme: dark) {
   :root:not([data-mode="light"]) {
     color-scheme: dark;
-    --paper: #121110;
-    --surface: #1b1917;
-    --surface-2: #221f1d;
-    --ink: #f3efea;
-    --ink-soft: #ddd6ce;
-    --muted: #a69e95;
-    --faint: #7c746c;
-    --line: #2d2926;
-    --line-strong: #403a36;
+    --paper: #0b0f0e;
+    --surface: #151a18;
+    --surface-2: #1a201e;
+    --subtle: #222927;
+    --ink: #f4f6f5;
+    --ink-soft: #d5dbd8;
+    --muted: #b4bdb9;
+    --faint: #8a9590;
+    --line: #222927;
+    --line-strong: #343c39;
+    --field: #4b5551;
 
-    --brand: #2bb3bd;
-    --brand-strong: #4cc4cd;
-    --brand-ink: #7dd6dc;
-    --brand-soft: #0d2a2d;
-    --on-brand: #04191b;
-    --brand-bright: #2bb3bd;
+    --brand: #36c784;
+    --brand-strong: #6fdca6;
+    --brand-ink: #6fdca6;
+    --brand-soft: #052419;
+    --on-brand: #0b0f0e;
+    --brand-mark: #36c784;
+    --brand-bright: #36c784;
 
-    --chrome: #0b0a09;
-    --chrome-2: #1a1816;
-    --chrome-ink: #f4f1ec;
+    --chrome: #050807;
+    --chrome-2: #151a18;
+    --chrome-ink: #f4f6f5;
 
-    --good: #6cc070;
-    --good-soft: #15291a;
-    --good-ink: #9ad89c;
-    --on-good: #07140c;
-    --danger: #ff6b5e;
-    --danger-soft: #3a1714;
+    --good: #6fdca6;
+    --good-soft: #052419;
+    --good-ink: #6fdca6;
+    --on-good: #0b0f0e;
+    --danger: #f97066;
+    --danger-soft: #3b1512;
     --warn: #f5a524;
-    --warn-soft: #33240c;
-    --info: #85b4e3;
-    --info-soft: #142536;
+    --warn-soft: #3a2a0b;
+    --info: #d5dbd8;
+    --info-soft: #222927;
 
-    --tag: #f5d547;
-    --tag-ink: #3d3200;
-    --tag-adjust: #d9d0a5;
+    --tag: #222927;
+    --tag-ink: #d5dbd8;
+    --tag-adjust: #1a201e;
 
-    --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.3);
-    --shadow-pop: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+    --shadow-card: 0 0 0 transparent;
+    --shadow-pop: 0 24px 60px -20px rgb(0 0 0 / 0.8);
   }
 }
 :root[data-mode="dark"] {
-    color-scheme: dark;
-    --paper: #121110;
-    --surface: #1b1917;
-    --surface-2: #221f1d;
-    --ink: #f3efea;
-    --ink-soft: #ddd6ce;
-    --muted: #a69e95;
-    --faint: #7c746c;
-    --line: #2d2926;
-    --line-strong: #403a36;
+  color-scheme: dark;
+  --paper: #0b0f0e;
+  --surface: #151a18;
+  --surface-2: #1a201e;
+  --subtle: #222927;
+  --ink: #f4f6f5;
+  --ink-soft: #d5dbd8;
+  --muted: #b4bdb9;
+  --faint: #8a9590;
+  --line: #222927;
+  --line-strong: #343c39;
+  --field: #4b5551;
 
-    --brand: #2bb3bd;
-    --brand-strong: #4cc4cd;
-    --brand-ink: #7dd6dc;
-    --brand-soft: #0d2a2d;
-    --on-brand: #04191b;
-    --brand-bright: #2bb3bd;
+  --brand: #36c784;
+  --brand-strong: #6fdca6;
+  --brand-ink: #6fdca6;
+  --brand-soft: #052419;
+  --on-brand: #0b0f0e;
+  --brand-mark: #36c784;
+  --brand-bright: #36c784;
 
-    --chrome: #0b0a09;
-    --chrome-2: #1a1816;
-    --chrome-ink: #f4f1ec;
+  --chrome: #050807;
+  --chrome-2: #151a18;
+  --chrome-ink: #f4f6f5;
 
-    --good: #6cc070;
-    --good-soft: #15291a;
-    --good-ink: #9ad89c;
-    --on-good: #07140c;
-    --danger: #ff6b5e;
-    --danger-soft: #3a1714;
-    --warn: #f5a524;
-    --warn-soft: #33240c;
-    --info: #85b4e3;
-    --info-soft: #142536;
+  --good: #6fdca6;
+  --good-soft: #052419;
+  --good-ink: #6fdca6;
+  --on-good: #0b0f0e;
+  --danger: #f97066;
+  --danger-soft: #3b1512;
+  --warn: #f5a524;
+  --warn-soft: #3a2a0b;
+  --info: #d5dbd8;
+  --info-soft: #222927;
 
-    --tag: #f5d547;
-    --tag-ink: #3d3200;
-    --tag-adjust: #d9d0a5;
+  --tag: #222927;
+  --tag-ink: #d5dbd8;
+  --tag-adjust: #1a201e;
 
-    --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.3);
-    --shadow-pop: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
-}
-
-/* Temas de color (Ajustes → Aspecto). Solo cambian los tonos de marca. */
-:root[data-palette="oceano"] {
-  --brand: #1d5fa8;
-  --brand-strong: #174d89;
-  --brand-ink: #134177;
-  --brand-soft: #e3edf8;
-  --on-brand: #ffffff;
-  --brand-bright: #5aa2ea;
-}
-@media (prefers-color-scheme: dark) {
-  :root[data-palette="oceano"]:not([data-mode="light"]) {
-    --brand: #5aa2ea;
-    --brand-strong: #7bb6f0;
-    --brand-ink: #a3cdf5;
-    --brand-soft: #10243b;
-    --on-brand: #061322;
-    --brand-bright: #5aa2ea;
-  }
-}
-:root[data-palette="oceano"][data-mode="dark"] {
-  --brand: #5aa2ea;
-  --brand-strong: #7bb6f0;
-  --brand-ink: #a3cdf5;
-  --brand-soft: #10243b;
-  --on-brand: #061322;
-  --brand-bright: #5aa2ea;
-}
-:root[data-palette="bosque"] {
-  --brand: #2f6b3f;
-  --brand-strong: #26573a;
-  --brand-ink: #1f4a2c;
-  --brand-soft: #e4f0e6;
-  --on-brand: #ffffff;
-  --brand-bright: #5fb877;
-}
-@media (prefers-color-scheme: dark) {
-  :root[data-palette="bosque"]:not([data-mode="light"]) {
-    --brand: #5fb877;
-    --brand-strong: #7cc78f;
-    --brand-ink: #a5dbb2;
-    --brand-soft: #12261a;
-    --on-brand: #06140b;
-    --brand-bright: #5fb877;
-  }
-}
-:root[data-palette="bosque"][data-mode="dark"] {
-  --brand: #5fb877;
-  --brand-strong: #7cc78f;
-  --brand-ink: #a5dbb2;
-  --brand-soft: #12261a;
-  --on-brand: #06140b;
-  --brand-bright: #5fb877;
-}
-:root[data-palette="ciruela"] {
-  --brand: #7a3e8f;
-  --brand-strong: #653276;
-  --brand-ink: #572a66;
-  --brand-soft: #f2e7f5;
-  --on-brand: #ffffff;
-  --brand-bright: #c48ad6;
-}
-@media (prefers-color-scheme: dark) {
-  :root[data-palette="ciruela"]:not([data-mode="light"]) {
-    --brand: #c48ad6;
-    --brand-strong: #d2a3e0;
-    --brand-ink: #e2c3eb;
-    --brand-soft: #2a1631;
-    --on-brand: #1a0b20;
-    --brand-bright: #c48ad6;
-  }
-}
-:root[data-palette="ciruela"][data-mode="dark"] {
-  --brand: #c48ad6;
-  --brand-strong: #d2a3e0;
-  --brand-ink: #e2c3eb;
-  --brand-soft: #2a1631;
-  --on-brand: #1a0b20;
-  --brand-bright: #c48ad6;
-}
-:root[data-palette="teja"] {
-  --brand: #b5471b;
-  --brand-strong: #973a15;
-  --brand-ink: #8a3412;
-  --brand-soft: #fbe8df;
-  --on-brand: #ffffff;
-  --brand-bright: #f0875a;
-}
-@media (prefers-color-scheme: dark) {
-  :root[data-palette="teja"]:not([data-mode="light"]) {
-    --brand: #f0875a;
-    --brand-strong: #f4a07c;
-    --brand-ink: #f7bfa3;
-    --brand-soft: #3a1a0e;
-    --on-brand: #1f0b04;
-    --brand-bright: #f0875a;
-  }
-}
-:root[data-palette="teja"][data-mode="dark"] {
-  --brand: #f0875a;
-  --brand-strong: #f4a07c;
-  --brand-ink: #f7bfa3;
-  --brand-soft: #3a1a0e;
-  --on-brand: #1f0b04;
-  --brand-bright: #f0875a;
-}
-:root[data-palette="grafito"] {
-  --brand: #3d4650;
-  --brand-strong: #2f363e;
-  --brand-ink: #2b3239;
-  --brand-soft: #e8ebee;
-  --on-brand: #ffffff;
-  --brand-bright: #aab6c2;
-}
-@media (prefers-color-scheme: dark) {
-  :root[data-palette="grafito"]:not([data-mode="light"]) {
-    --brand: #aab6c2;
-    --brand-strong: #c3ccd5;
-    --brand-ink: #d9e0e6;
-    --brand-soft: #1f2429;
-    --on-brand: #0d1013;
-    --brand-bright: #aab6c2;
-  }
-}
-:root[data-palette="grafito"][data-mode="dark"] {
-  --brand: #aab6c2;
-  --brand-strong: #c3ccd5;
-  --brand-ink: #d9e0e6;
-  --brand-soft: #1f2429;
-  --on-brand: #0d1013;
-  --brand-bright: #aab6c2;
+  --shadow-card: 0 0 0 transparent;
+  --shadow-pop: 0 24px 60px -20px rgb(0 0 0 / 0.8);
 }
 
 @theme inline {
-  --font-sans: "Public Sans Variable", "Public Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Barlow Condensed", "Arial Narrow", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Instrument Sans Variable", "Instrument Sans", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
   --color-paper: var(--paper);
+  --color-subtle: var(--subtle);
+  --color-field: var(--field);
+  --color-brand-mark: var(--brand-mark);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-ink: var(--ink);
@@ -308,9 +199,10 @@
   --color-tag: var(--tag);
   --color-tag-ink: var(--tag-ink);
 
+  --radius-xs: 6px;
   --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
 
   --shadow-card: var(--shadow-card);
   --shadow-pop: var(--shadow-pop);
@@ -367,14 +259,17 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  text-rendering: optimizeLegibility;
 }
 
-/* Títulos y cifras: letra estrecha y alta */
+/* Titulares y cifras grandes: Instrument Sans SemiBold, tracking negativo */
 .display {
   font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  line-height: 1.02;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Las columnas de una rejilla nunca se ensanchan por una tabla: la tabla
@@ -432,7 +327,7 @@ main .grid > * {
   animation-delay: 150ms;
 }
 
-/* La pegatina del lote: el elemento característico de la aplicación */
+/* Ficha del lote de procedencia (pedido de compra o ajuste) */
 .lot-tag {
   --notch: 6px;
   display: inline-flex;

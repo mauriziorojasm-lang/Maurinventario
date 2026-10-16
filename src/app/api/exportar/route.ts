@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   await supabase.rpc("log_user_event", { p_action: "exportar", p_summary: `${report.title} exportado (${format.toUpperCase()}, ${rows.length} filas)` });
 
   const stamp = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date());
-  const name = `maurinventario-${report.fileName}-${stamp}`;
+  const name = `resellap-${report.fileName}-${stamp}`;
 
   if (format === "csv") {
     const body = toCsv(report.columns, rows);
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
   }
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = "MaurInventario";
+  wb.creator = "Resellap";
   const ws = wb.addWorksheet(report.title.slice(0, 31));
   ws.columns = report.columns.map((c) => ({ header: c.label, key: c.key, width: Math.max(12, c.label.length + 2) }));
   for (const r of rows) {

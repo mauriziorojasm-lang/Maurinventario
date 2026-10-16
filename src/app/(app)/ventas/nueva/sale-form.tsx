@@ -199,7 +199,7 @@ export function SaleForm({
 
       <div className="flex min-w-0 flex-col gap-5">
         <section className={clsx("rounded-[var(--radius-md)] border border-line bg-surface p-4 shadow-[var(--shadow-card)]", stepHidden(1))}>
-          <h2 className="display mb-3 text-[22px] uppercase">
+          <h2 className="display mb-3 text-[22px]">
             <span className="md:hidden">¿Qué vendes?</span>
             <span className="max-md:hidden">Productos</span>
           </h2>
@@ -271,7 +271,7 @@ export function SaleForm({
         </section>
 
         <section className={clsx("rounded-[var(--radius-md)] border border-line bg-surface p-4 shadow-[var(--shadow-card)]", stepHidden(2))}>
-          <h2 className="display mb-3 text-[22px] uppercase">Datos de la venta</h2>
+          <h2 className="display mb-3 text-[22px]">Datos de la venta</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5 sm:col-span-2">
               <span className="text-[13px] font-semibold text-ink-soft">
@@ -372,7 +372,7 @@ export function SaleForm({
 
       <aside className={clsx("lg:sticky lg:top-6 lg:self-start", stepHidden(3))}>
         <section className="rounded-[var(--radius-md)] border border-line bg-surface p-4 shadow-[var(--shadow-card)]">
-          <h2 className="display text-[22px] uppercase">Resumen</h2>
+          <h2 className="display text-[22px]">Resumen</h2>
           {/* Repaso de todo (solo móvil, en el paso 3) */}
           <div className="mt-3 flex flex-col gap-3 md:hidden">
             <ul className="flex flex-col gap-2">

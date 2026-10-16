@@ -1,26 +1,39 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
+import { BootSplash } from "@/components/boot-splash";
 import { APPEARANCE_COOKIE, parseAppearanceCookie } from "@/lib/preferences";
-import "@fontsource-variable/public-sans";
-import "@fontsource/barlow-condensed/600.css";
-import "@fontsource/barlow-condensed/700.css";
+import { SITE_URL } from "@/lib/site";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/instrument-sans";
 import "./globals.css";
 
+const DESCRIPTION = "Inventario, ventas detectadas, envíos y beneficio real para quien revende en Vinted, Wallapop y más.";
+
 export const metadata: Metadata = {
-  title: { default: "MaurInventario", template: "%s · MaurInventario" },
-  description: "Inventario, ventas, compras y rentabilidad.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: "Resellap", template: "%s · Resellap" },
+  description: DESCRIPTION,
   robots: { index: false, follow: false },
   // Instalada desde Safari («Añadir a pantalla de inicio») se abre como una app
-  applicationName: "MaurInventario",
-  appleWebApp: { capable: true, title: "MaurInventario", statusBarStyle: "black-translucent" },
+  applicationName: "Resellap",
+  appleWebApp: { capable: true, title: "Resellap", statusBarStyle: "default" },
   icons: { apple: [{ url: "/icons/apple-icon-180.png", sizes: "180x180" }] },
   formatDetection: { telephone: false },
+  openGraph: {
+    type: "website",
+    siteName: "Resellap",
+    title: "Resellap",
+    description: DESCRIPTION,
+    locale: "es_ES",
+    images: [{ url: "/brand/og.png", width: 1200, height: 630, alt: "Resellap" }],
+  },
+  twitter: { card: "summary_large_image", title: "Resellap", description: DESCRIPTION, images: ["/brand/og.png"] },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#121110" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0a09" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f6f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0f0e" },
   ],
   viewportFit: "cover",
   width: "device-width",
@@ -35,11 +48,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       lang="es"
       className="h-full antialiased"
       data-mode={a.mode === "auto" ? undefined : a.mode}
-      data-palette={a.palette === "vinted" ? undefined : a.palette}
       data-motion={a.reduceMotion ? "reduce" : undefined}
       suppressHydrationWarning
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <BootSplash />
+        {children}
+      </body>
     </html>
   );
 }

@@ -21,7 +21,7 @@ export default async function WelcomePage() {
     <AuthLayout
       title={`Hola${user.fullName ? `, ${user.fullName.split(" ")[0]}` : ""}`}
       subtitle={suspended ? undefined : `Crea tu espacio de trabajo: ahí estarán tu inventario, tus ventas y tu equipo. Tienes ${TRIAL_DAYS} días gratis.`}
-      aside={<p className="display text-[44px] uppercase leading-[0.95] lg:text-[60px]">Tu negocio, <span className="text-brand-bright">tus datos</span>. Solo los ve tu equipo.</p>}
+      aside={<p className="font-[family-name:var(--font-display)] text-[30px] font-semibold leading-[1.08] tracking-[-0.025em] text-white sm:text-[40px] lg:text-[52px]">Tu negocio, <span className="text-[#36C784]">tus datos</span>. Solo los ve tu equipo.</p>}
     >
       {suspended && (
         <p className="mb-5 rounded-[var(--radius-sm)] bg-warn-soft px-3 py-2 text-sm text-ink">

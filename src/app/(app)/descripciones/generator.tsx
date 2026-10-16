@@ -94,7 +94,7 @@ function Chip({ active, onClick, children, title }: { active: boolean; onClick: 
 function Section({ n, title, children, className }: { n: number; title: string; children: React.ReactNode; className?: string }) {
   return (
     <section className={clsx("rounded-[var(--radius-md)] border border-line bg-surface p-4 shadow-[var(--shadow-card)]", className)}>
-      <h2 className="display mb-3 flex items-center gap-2.5 text-[22px] uppercase">
+      <h2 className="display mb-3 flex items-center gap-2.5 text-[22px]">
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink text-[15px] text-paper">{n}</span>
         {title}
       </h2>
@@ -396,7 +396,7 @@ export function DescriptionGenerator({ configured }: { configured: boolean }) {
       {/* 5-6 · Resultados */}
       <div ref={resultsRef} className="flex min-w-0 scroll-mt-20 flex-col gap-5">
         <section className="rounded-[var(--radius-md)] border border-line bg-surface p-4 shadow-[var(--shadow-card)]" aria-live="polite">
-          <h2 className="display mb-3 text-[22px] uppercase">Resultado</h2>
+          <h2 className="display mb-3 text-[22px]">Resultado</h2>
           {pending && !busyKey && (
             <div className="flex flex-col gap-2.5" aria-label="Generando">
               {(selected.length ? selected : [null]).map((_, i) => (
@@ -472,7 +472,7 @@ export function DescriptionGenerator({ configured }: { configured: boolean }) {
         {history.length > 0 && (
           <details className="group rounded-[var(--radius-md)] border border-line bg-surface shadow-[var(--shadow-card)]">
             <summary className="press flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3">
-              <span className="display flex items-center gap-2 text-[20px] uppercase">
+              <span className="display flex items-center gap-2 text-[20px]">
                 <History size={18} strokeWidth={2.25} className="text-brand" />
                 Historial
                 <span className="num text-[15px] text-muted">({history.length})</span>

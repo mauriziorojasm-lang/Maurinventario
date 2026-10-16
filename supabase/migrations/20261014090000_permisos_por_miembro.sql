@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 19 · Permisos por miembro del equipo
+-- Resellap · Migración 19 · Permisos por miembro del equipo
 -- El administrador elige, persona por persona, qué ve y qué puede hacer
 -- cada miembro. Lo aplica la base de datos (reglas de acceso y funciones),
 -- no solo la pantalla. Si a alguien no se le cambia nada, tiene los

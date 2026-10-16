@@ -4,6 +4,9 @@ import { Notice, Table, Td, Th, Tr } from "@/components/ui";
 import { dateTime } from "@/lib/format";
 import { currentCounts } from "./actions";
 
+/** Formato actual y el anterior al cambio de marca: las dos copias son válidas. */
+const BACKUP_FORMATS = ["resellap-copia", "maurinventario-copia"];
+
 type Check = { generated: string; by: string; counts: Record<string, number>; now: Record<string, number> };
 
 /** Lee el archivo en el dispositivo, comprueba que es una copia válida y lo compara con los datos actuales. */
@@ -16,7 +19,7 @@ export function BackupChecker() {
     setCheck(null);
     setError(null);
     if (!f) return;
-    if (f.size > 200 * 1024 * 1024) return setError("El archivo es demasiado grande para ser una copia de MaurInventario.");
+    if (f.size > 200 * 1024 * 1024) return setError("El archivo es demasiado grande para ser una copia de Resellap.");
     setBusy(true);
     try {
       let j: { formato?: string; version?: number; generado?: string; generado_por?: string; recuentos?: Record<string, number>; tablas?: Record<string, unknown[]> };
@@ -25,8 +28,8 @@ export function BackupChecker() {
       } catch {
         return setError("Este archivo no es una copia válida (no se puede leer).");
       }
-      if (j.formato !== "maurinventario-copia" || typeof j.version !== "number" || !j.tablas || !j.recuentos) {
-        return setError("Este archivo no es una copia de seguridad de MaurInventario.");
+      if (typeof j.formato !== "string" || !BACKUP_FORMATS.includes(j.formato) || typeof j.version !== "number" || !j.tablas || !j.recuentos) {
+        return setError("Este archivo no es una copia de seguridad de Resellap.");
       }
       if (j.version > 1) return setError("Esta copia es de una versión más nueva de la app.");
       // Los recuentos deben cuadrar con las filas que trae

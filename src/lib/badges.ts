@@ -2,8 +2,8 @@ import "server-only";
 import { cache } from "react";
 import { createClient } from "./supabase/server";
 
-export type Badges = { reviews: number; shipments: number; emails: number; detected: number; listings: number };
-const ZERO: Badges = { reviews: 0, shipments: 0, emails: 0, detected: 0, listings: 0 };
+export type Badges = { reviews: number; shipments: number; emails: number; detected: number; listings: number; alerts: number };
+const ZERO: Badges = { reviews: 0, shipments: 0, emails: 0, detected: 0, listings: 0, alerts: 0 };
 
 /**
  * Contadores del menú y de «Tareas» (una sola consulta por página; el menú
@@ -20,5 +20,6 @@ export const loadBadges = cache(async (): Promise<Badges> => {
     emails: Number(d.emails ?? 0),
     detected: Number(d.detected ?? 0),
     listings: Number(d.listings ?? 0),
+    alerts: Number(d.alerts ?? 0),
   };
 });

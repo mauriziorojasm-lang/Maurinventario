@@ -9,7 +9,7 @@ export default function TermsPage() {
     <LegalPage title="Términos" updated="12 de octubre de 2026">
       <h2>El servicio</h2>
       <p>
-        MaurInventario es una aplicación web de inventario, compras, ventas y envíos, prestada por {LEGAL.name} ({LEGAL.taxId}). Contacto:{" "}
+        Resellap es una aplicación web de inventario, compras, ventas y envíos, prestada por {LEGAL.name} ({LEGAL.taxId}). Contacto:{" "}
         {LEGAL.email}.
       </p>
       <h2>Prueba y precio</h2>

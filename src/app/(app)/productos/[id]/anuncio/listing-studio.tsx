@@ -41,7 +41,7 @@ function Step({ n, title, children, aside }: { n: number; title: string; childre
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2.5">
           <span className="display flex h-7 w-7 items-center justify-center rounded-full bg-ink text-[16px] text-paper">{n}</span>
-          <span className="display text-[20px] uppercase">{title}</span>
+          <span className="display text-[20px]">{title}</span>
         </h2>
         {aside}
       </div>

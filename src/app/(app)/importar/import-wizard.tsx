@@ -164,7 +164,7 @@ export function ImportWizard({ existing, previous }: { existing: ImportExisting;
           </Panel>
           <Panel title="Cómo funciona">
             <ol className="list-decimal space-y-2 pl-5 text-sm text-ink-soft">
-              <li>MaurInventario lee todas las hojas y detecta qué contiene cada una.</li>
+              <li>Resellap lee todas las hojas y detecta qué contiene cada una.</li>
               <li>Relacionas las columnas con los campos (se proponen solas).</li>
               <li>Ves los errores, avisos y el resumen.</li>
               <li>Simulas la importación completa: se calcula todo y se deshace.</li>
@@ -272,7 +272,7 @@ export function ImportWizard({ existing, previous }: { existing: ImportExisting;
               const preview = sheet.rows.slice(c.headerRow + 1, c.headerRow + 6);
               const fields = FIELDS[c.type as Exclude<SheetType, "ignorar">];
               return (
-                <Panel key={c.sheetName} title={`Columnas de «${c.sheetName}»`} description="Cada campo de MaurInventario con la columna del Excel de la que se lee. Puedes cambiarla.">
+                <Panel key={c.sheetName} title={`Columnas de «${c.sheetName}»`} description="Cada campo de Resellap con la columna del Excel de la que se lee. Puedes cambiarla.">
                   <div className="grid gap-x-6 gap-y-3 md:grid-cols-2">
                     {fields.map((f) => (
                       <label key={f.key} className="flex flex-col gap-1">
@@ -504,7 +504,7 @@ export function ImportWizard({ existing, previous }: { existing: ImportExisting;
       {step === 4 && final && (
         <div className="flex flex-col gap-5">
           <Notice tone="good" title="Importación completada">
-            Los datos ya están en MaurInventario. Los casos pendientes están en <Link href="/revision">Pendientes de revisar</Link>.
+            Los datos ya están en Resellap. Los casos pendientes están en <Link href="/revision">Pendientes de revisar</Link>.
           </Notice>
           <ResultFigures r={final} />
           <IntegrityPanel r={final} checks={checks} />

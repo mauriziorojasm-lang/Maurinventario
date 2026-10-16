@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 1 · Esquema base
+-- Resellap · Migración 1 · Esquema base
 -- Tablas, relaciones, restricciones e índices.
 -- =====================================================================
 

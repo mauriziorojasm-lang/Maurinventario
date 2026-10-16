@@ -1,4 +1,4 @@
-# MaurInventario
+# Resellap
 
 Mini ERP de inventario, ventas, compras y rentabilidad, preparado para sustituir el Excel `INVENTARIO.xlsx`.
 
@@ -20,7 +20,7 @@ Cada paso indica **dónde** se hace:
 | 🐙 | En GitHub (github.com) |
 | 🟩 | En Supabase (supabase.com/dashboard) |
 | ▲ | En Vercel (vercel.com) |
-| 📦 | Dentro de MaurInventario (la aplicación ya abierta en el navegador) |
+| 📦 | Dentro de Resellap (la aplicación ya abierta en el navegador) |
 
 ---
 
@@ -79,7 +79,7 @@ git --version
 
 Esto es lo que hay realmente en el proyecto:
 
-| Elemento | Qué usa MaurInventario |
+| Elemento | Qué usa Resellap |
 |---|---|
 | Framework | **Next.js 16** (App Router), con **React 19** |
 | Lenguaje | **TypeScript** |
@@ -176,7 +176,7 @@ git branch -M main
 
 # 4. Guarda cualquier cambio pendiente y súbelo
 git add .
-git commit -m "Primera versión de MaurInventario"   # si dice "nothing to commit", no pasa nada
+git commit -m "Primera versión de Resellap"   # si dice "nothing to commit", no pasa nada
 git push -u origin main
 ```
 
@@ -209,7 +209,7 @@ Así nunca pruebas nada sobre los datos de verdad. El plan gratuito permite dos 
 
 🟩 Dentro del proyecto, pulsa **Connect** (arriba) o ve a **Project Settings → API Keys**:
 
-| Dato | Dónde | Formato | ¿Lo usa MaurInventario? |
+| Dato | Dónde | Formato | ¿Lo usa Resellap? |
 |---|---|---|---|
 | **Project URL** | Connect, o Project Settings → Data API | `https://xxxx.supabase.co` | Sí, `NEXT_PUBLIC_SUPABASE_URL` |
 | **Publishable key** | Project Settings → API Keys | `sb_publishable_…` | Sí, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
@@ -234,7 +234,7 @@ En Next.js, todo lo que empieza por `NEXT_PUBLIC_` se incluye en el código del 
 
 ## 5. Base de datos
 
-MaurInventario se conecta a PostgreSQL **a través de la API de Supabase**: lecturas con permisos (RLS) y funciones SQL para todo lo que mueve stock o dinero. No hay ORM ni conexión directa.
+Resellap se conecta a PostgreSQL **a través de la API de Supabase**: lecturas con permisos (RLS) y funciones SQL para todo lo que mueve stock o dinero. No hay ORM ni conexión directa.
 
 Toda la estructura está en `supabase/migrations/`. **No se crea nada a mano** en el panel de Supabase.
 
@@ -319,7 +319,7 @@ npx supabase migration list     # columnas Local y Remote: deben coincidir
 
 ## 7. Variables de entorno
 
-Estas son **todas** las variables que usa MaurInventario. No hay más.
+Estas son **todas** las variables que usa Resellap. No hay más.
 
 | Variable | Local (`.env.local`) | Vercel | Pública/Secreta | Para qué sirve |
 |---|---|---|---|---|
@@ -364,7 +364,7 @@ Las mismas tres variables, con los valores de cada proyecto, van en Vercel (paso
 
 ## 8. Supabase Storage
 
-MaurInventario usa archivos para dos cosas, y **los buckets ya los crea la migración** `…100400_storage.sql`. No hay que crearlos a mano.
+Resellap usa archivos para dos cosas, y **los buckets ya los crea la migración** `…100400_storage.sql`. No hay que crearlos a mano.
 
 | Bucket | Público | Qué guarda | Límite |
 |---|---|---|---|
@@ -392,7 +392,7 @@ MaurInventario usa archivos para dos cosas, y **los buckets ya los crea la migra
 
 ## 9. Autenticación
 
-MaurInventario usa **Supabase Auth** con **email y contraseña**:
+Resellap usa **Supabase Auth** con **email y contraseña**:
 
 - No hay registro público.
 - El primer usuario del proyecto es administrador automáticamente.
@@ -476,7 +476,7 @@ Lo que puede hacer cada rol (lo aplica la base de datos, no solo la pantalla):
 10. Pulsa **Deploy** y espera 1-3 minutos.
 11. Abre la URL que te da Vercel. Debe aparecer la pantalla «Entrar».
 
-> Si haces **Deploy** sin las variables, la web mostrará «MaurInventario no está configurado: faltan…». Añádelas (paso 11) y vuelve a desplegar.
+> Si haces **Deploy** sin las variables, la web mostrará «Resellap no está configurado: faltan…». Añádelas (paso 11) y vuelve a desplegar.
 
 ---
 
@@ -587,7 +587,7 @@ Con tu Excel actual el resultado es:
 El valor del almacén puede salir algo distinto al de tu hoja Almacen. Con tus datos: 956,38 € frente a 935,43 €.
 
 - Tu Excel valora el stock con el coste medio de **todo lo comprado alguna vez**.
-- MaurInventario lo valora con el coste medio ponderado de **las unidades que quedan**, que salen de lotes concretos.
+- Resellap lo valora con el coste medio ponderado de **las unidades que quedan**, que salen de lotes concretos.
 
 Así cuadra la cuenta completa: compras = coste de lo vendido + pérdidas + almacén.
 
@@ -781,7 +781,7 @@ TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres npm run t
 - Comprueba que `package-lock.json` está subido a GitHub.
 - Versión de Node: ▲ Settings → General → Node.js Version: 20.x o superior (recomendado 22.x).
 
-**«Missing environment variable» / «MaurInventario no está configurado: faltan…»**
+**«Missing environment variable» / «Resellap no está configurado: faltan…»**
 - ▲ Settings → Environment Variables: están las 3, con el nombre exacto (mayúsculas incluidas) y en el entorno correcto (Production o Preview).
 - Después de añadirlas: **Redeploy**.
 - En local: el archivo se llama exactamente `.env.local` y está en la raíz del proyecto. Reinicia `npm run dev` tras cambiarlo.
@@ -844,7 +844,7 @@ TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres npm run t
 
 ## 20. Checklist final
 
-MaurInventario está correctamente desplegado cuando:
+Resellap está correctamente desplegado cuando:
 
 - [ ] GitHub funciona (repositorio privado con el código, sin `.env` ni Excel)
 - [ ] Supabase funciona (proyectos de dev y producción activos)

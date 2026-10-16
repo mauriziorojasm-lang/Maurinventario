@@ -179,7 +179,7 @@ export function PhotoGallery({
     <section aria-label="Fotos" className="flex flex-col gap-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h2 className="display text-[19px] uppercase">Fotos</h2>
+          <h2 className="display text-[19px]">Fotos</h2>
           {count > 0 && <span className="num text-[13px] text-muted">{count}</span>}
         </div>
         <div className="flex items-center gap-2">

@@ -225,7 +225,7 @@ function ConnectionPanel({
             </span>
             <div className="min-w-0">
               <p className="flex flex-wrap items-center gap-2">
-                <span className="display text-[22px] uppercase leading-none">Gmail</span>
+                <span className="display text-[22px] leading-none">Gmail</span>
                 <Badge tone={tone}>{label}</Badge>
               </p>
               <p className="mt-1 truncate text-sm text-muted">{s?.email ?? CENTRAL_ACCOUNT ?? "Gmail de tu negocio"}</p>

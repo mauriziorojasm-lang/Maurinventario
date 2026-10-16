@@ -13,7 +13,7 @@ export default function AppError({ error, retry }: { error: Error & { digest?: s
       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-warn-soft text-warn">
         <TriangleAlert size={28} strokeWidth={2.25} />
       </span>
-      <h1 className="display text-[30px] uppercase">No se ha podido cargar</h1>
+      <h1 className="display text-[30px]">No se ha podido cargar</h1>
       <p className="text-sm text-muted">
         {offline ? "Parece que no tienes conexión a internet. Cuando vuelva, pulsa «Reintentar»." : (msg ?? "Ha fallado algo al cargar esta pantalla. Tus datos están a salvo: no se ha guardado ni borrado nada.")}
       </p>

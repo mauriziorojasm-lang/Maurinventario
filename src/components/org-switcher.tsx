@@ -20,7 +20,7 @@ export function OrgSwitcher({ current, orgs }: { current: string; orgs: { id: st
             if (r.ok) router.push("/");
           })
         }
-        className="h-11 w-full appearance-none truncate rounded-[10px] border border-white/10 bg-chrome-2 py-0 pl-3 pr-8 text-base font-semibold text-chrome-ink md:h-9 md:text-[13px]"
+        className="h-11 w-full appearance-none truncate rounded-[10px] border border-line bg-surface py-0 pl-3 pr-8 text-base font-medium text-ink hover:border-line-strong lg:h-9 lg:text-[13px]"
       >
         {orgs.map((o) => (
           <option key={o.id} value={o.id}>
@@ -28,7 +28,7 @@ export function OrgSwitcher({ current, orgs }: { current: string; orgs: { id: st
           </option>
         ))}
       </select>
-      <ChevronsUpDown size={15} className="pointer-events-none absolute right-2.5 text-chrome-ink/60" />
+      <ChevronsUpDown size={15} className="pointer-events-none absolute right-2.5 text-faint" />
     </label>
   );
 }

@@ -43,7 +43,7 @@ export async function GET() {
   return new NextResponse(JSON.stringify(body, null, 2), {
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "content-disposition": `attachment; filename="mis-datos-maurinventario-${stamp}.json"`,
+      "content-disposition": `attachment; filename="mis-datos-resellap-${stamp}.json"`,
       "cache-control": "no-store",
     },
   });

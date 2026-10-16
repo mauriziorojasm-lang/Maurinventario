@@ -23,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     emails: nf.emails ? badges.emails : 0,
     listings: nf.listings ? badges.listings : 0,
     reviews: nf.imports ? badges.reviews : 0,
+    alerts: badges.alerts,
   };
   const wanted = appearanceCookieValue(a);
   return (
@@ -33,7 +34,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       orgName={user.orgName}
       orgSwitcher={myOrgs.length > 1 ? <OrgSwitcher current={user.orgId} orgs={myOrgs} /> : undefined}
       banner={<SubscriptionBanner user={user} />}
-      isPlatformAdmin={user.isPlatformAdmin}
       permissions={user.permissions}
     >
       {jar.get(APPEARANCE_COOKIE)?.value !== wanted && (

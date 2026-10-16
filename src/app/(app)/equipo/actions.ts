@@ -24,8 +24,8 @@ export async function inviteMemberAction(email: string, role: Role): Promise<Act
   const link = `${await siteUrl()}/invitacion/${data as string}`;
   const emailed = await sendMail(
     email.trim().toLowerCase(),
-    `Invitación a ${me.orgName} en MaurInventario`,
-    `${me.fullName ?? me.email} te invita a unirte a ${me.orgName} en MaurInventario como ${ROLE_TEXT[role]}.\nEl enlace caduca en 7 días.`,
+    `Invitación a ${me.orgName} en Resellap`,
+    `${me.fullName ?? me.email} te invita a unirte a ${me.orgName} en Resellap como ${ROLE_TEXT[role]}.\nEl enlace caduca en 7 días.`,
     { href: link, label: "Aceptar invitación" },
   );
   revalidatePath("/equipo");

@@ -25,11 +25,11 @@ export default function PricingPage() {
     <PublicLayout>
       <section className="bg-chrome px-5 pb-16 pt-10 text-chrome-ink">
         <div className="mx-auto max-w-5xl">
-          <p className="display max-w-3xl text-[44px] uppercase leading-[0.95] sm:text-[64px]">
+          <p className="display max-w-3xl text-[44px] leading-[0.95] sm:text-[64px]">
             Controla tu stock y <span className="text-brand-bright">cuánto ganas</span> con cada venta.
           </p>
           <p className="mt-5 max-w-xl text-chrome-ink/75">
-            MaurInventario es el inventario para quien compra por lotes y vende en varias plataformas. Sin hojas de cálculo.
+            Resellap es el inventario para quien compra por lotes y vende en varias plataformas. Sin hojas de cálculo.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link href="/registro" className={buttonClass("primary", "md")}>
@@ -43,7 +43,7 @@ export default function PricingPage() {
       </section>
       <section className="mx-auto grid max-w-5xl gap-8 px-5 py-14 md:grid-cols-[1fr_360px]">
         <div>
-          <h2 className="display text-[32px] uppercase">Todo incluido</h2>
+          <h2 className="display text-[32px]">Todo incluido</h2>
           <ul className="mt-5 space-y-3">
             {FEATURES.map((f) => (
               <li key={f} className="flex gap-3">

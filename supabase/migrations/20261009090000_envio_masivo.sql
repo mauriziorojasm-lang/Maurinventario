@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 8 · Marcar varias ventas como enviadas o
+-- Resellap · Migración 8 · Marcar varias ventas como enviadas o
 -- pendientes de una vez.
 -- Todo o nada: si una venta falla (anulada, de otro vendedor…), no se
 -- cambia ninguna. Cada venta pasa por update_sale, así que se aplican

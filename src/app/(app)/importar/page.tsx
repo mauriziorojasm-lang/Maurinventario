@@ -45,7 +45,7 @@ export default async function ImportPage() {
     <>
       <PageHeader
         title="Importar Excel"
-        description="Lee tu Excel, relaciona sus columnas con MaurInventario, revisa los avisos y simula antes de guardar. No se sobrescribe nada que ya exista."
+        description="Lee tu Excel, relaciona sus columnas con Resellap, revisa los avisos y simula antes de guardar. No se sobrescribe nada que ya exista."
       />
       <ImportWizard existing={existing} previous={(batches.data ?? []) as { id: string; file_name: string; created_at: string; summary: Record<string, unknown> }[]} />
     </>

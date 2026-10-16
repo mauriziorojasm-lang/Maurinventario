@@ -30,7 +30,7 @@ export function HomeTasks({ badges, perms, notify, lowStock }: { badges: Badges;
 
   return (
     <section aria-labelledby="tareas" className="flex flex-col gap-2.5">
-      <h2 id="tareas" className="display text-[22px] uppercase">
+      <h2 id="tareas" className="display text-[22px]">
         Tareas {pending.length > 0 && <span className="num text-brand">· {pending.reduce((a, t) => a + t.n, 0)}</span>}
       </h2>
       {pending.length === 0 ? (

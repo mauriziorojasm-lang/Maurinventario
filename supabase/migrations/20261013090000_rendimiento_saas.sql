@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 18 · Rapidez de la versión SaaS
+-- Resellap · Migración 18 · Rapidez de la versión SaaS
 -- Las reglas de acceso llamaban a funciones como current_org_id() o
 -- is_admin() UNA VEZ POR FILA. Envolviéndolas en (SELECT …) PostgreSQL
 -- las calcula una sola vez por consulta. Mismas reglas, mismo resultado.

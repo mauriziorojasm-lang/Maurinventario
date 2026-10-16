@@ -27,7 +27,7 @@ export default async function DescriptionsPage() {
               Entra en <strong>aistudio.google.com</strong> con tu cuenta de Google → <strong>Get API key</strong> → <strong>Create API key</strong> y cópiala.
             </li>
             <li>
-              En <strong>Vercel</strong> → proyecto MaurInventario → <strong>Settings → Environment Variables</strong>: nombre <code>GEMINI_API_KEY</code>,
+              En <strong>Vercel</strong> → proyecto Resellap → <strong>Settings → Environment Variables</strong>: nombre <code>GEMINI_API_KEY</code>,
               valor la clave.
             </li>
             <li>

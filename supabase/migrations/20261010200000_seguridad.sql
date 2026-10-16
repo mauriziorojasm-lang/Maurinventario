@@ -1,5 +1,5 @@
 -- =====================================================================
--- MaurInventario · Migración 14 · Seguridad
+-- Resellap · Migración 14 · Seguridad
 --   · product_price_history: el vendedor ya no ve el coste de compra ni
 --     las ventas de otros (solo las suyas). El administrador, todo.
 --   · ai_usage + ai_usage_take: límite diario del generador de

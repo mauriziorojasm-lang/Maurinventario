@@ -50,7 +50,7 @@ export async function GET() {
   return new NextResponse(JSON.stringify(body), {
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "content-disposition": `attachment; filename="copia-maurinventario-${stamp}.json"`,
+      "content-disposition": `attachment; filename="copia-resellap-${stamp}.json"`,
       "cache-control": "no-store",
     },
   });
