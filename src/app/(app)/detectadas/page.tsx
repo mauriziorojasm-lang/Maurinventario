@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Empty, Notice, PageHeader } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { dateTime, money } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { loadDetected } from "./data";
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Ventas detectadas" };
 export const maxDuration = 60;
 
 export default async function DetectedPage() {
-  await requireAdmin();
+  await requirePerm("correo");
   const { rows, error } = await loadDetected();
   const supabase = await createClient();
   const { data: st } = await supabase.rpc("email_integration_status");

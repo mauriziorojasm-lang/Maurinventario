@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import { can, type Perm } from "./permissions";
 import { createClient } from "./supabase/server";
 
 /** Rol dentro de la organización activa. */
@@ -34,6 +35,8 @@ export type CurrentUser = {
   responsibleName: string | null;
   /** Espacios a los que pertenece (para cambiar de uno a otro). */
   organizations: { id: string; name: string }[];
+  /** Permisos efectivos en el espacio activo (el administrador, todos). */
+  permissions: string[];
 };
 
 type OrgInfo = {
@@ -72,6 +75,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     responsible: { id: string; name: string } | null;
     platform_admin: boolean | null;
     orgs: { id: string; name: string }[] | null;
+    permissions: string[] | null;
   };
   const profile = c.profile;
   // Sesión válida pero sin perfil (usuario borrado): se trata como desactivado
@@ -92,6 +96,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
       responsibleId: null,
       responsibleName: null,
       organizations: [],
+      permissions: [],
     };
   }
   const o = c.org ?? null;
@@ -120,6 +125,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     responsibleId: c.responsible?.id ?? null,
     responsibleName: c.responsible?.name ?? null,
     organizations: c.orgs ?? [],
+    permissions: c.permissions ?? [],
   };
 });
 
@@ -139,6 +145,13 @@ export async function requireUser(): Promise<OrgUser> {
 export async function requireAdmin(): Promise<OrgUser> {
   const user = await requireUser();
   if (user.role !== "admin") redirect("/?aviso=sin-permiso");
+  return user;
+}
+
+/** Para páginas de un área: hace falta ese permiso (el administrador los tiene todos). */
+export async function requirePerm(key: Perm): Promise<OrgUser> {
+  const user = await requireUser();
+  if (!can(user, key)) redirect("/?aviso=sin-permiso");
   return user;
 }
 

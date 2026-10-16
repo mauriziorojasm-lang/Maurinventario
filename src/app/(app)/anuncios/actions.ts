@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { friendlyError, type ActionResult } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import { generateDescriptions } from "../descripciones/actions";
@@ -17,7 +18,7 @@ const platformEnum = z.enum(["vinted", "wallapop"]);
 
 async function admin() {
   const u = await getCurrentUser();
-  if (!u || u.role !== "admin" || !u.active) throw new Error("Solo los administradores pueden gestionar anuncios.");
+  if (!u || !u.active || !can(u, "anuncios")) throw new Error("No tienes permisos para gestionar anuncios.");
   return u;
 }
 

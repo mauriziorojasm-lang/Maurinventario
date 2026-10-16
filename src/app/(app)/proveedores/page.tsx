@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Empty, PageHeader, Panel, Table, Td, Th, Tr } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { money, units } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { SupplierButton } from "./supplier-form";
@@ -9,7 +9,7 @@ import { SupplierButton } from "./supplier-form";
 export const metadata: Metadata = { title: "Proveedores" };
 
 export default async function SuppliersPage() {
-  await requireAdmin();
+  await requirePerm("compras");
   const supabase = await createClient();
   const [{ data: suppliers }, { data: pos }] = await Promise.all([
     supabase.from("suppliers").select("*").is("deleted_at", null).order("is_placeholder", { ascending: false }).order("name"),

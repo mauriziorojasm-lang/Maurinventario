@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { friendlyError, type ActionResult } from "@/lib/errors";
 import { GmailAuthError } from "@/lib/email/gmail";
 import { attachLabel, gmailForServer, markAuthError, runSync } from "@/lib/email/sync";
@@ -11,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 
 async function admin() {
   const u = await getCurrentUser();
-  if (!u || u.role !== "admin" || !u.active || !u.orgId) throw new Error("Solo los administradores pueden hacer esto.");
+  if (!u || !u.active || !u.orgId || !can(u, "correo")) throw new Error("No tienes permisos para hacer esto.");
   return u as typeof u & { orgId: string };
 }
 

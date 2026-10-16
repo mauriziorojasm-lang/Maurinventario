@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Notice, PageHeader } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { date } from "@/lib/format";
 import { groupByCarrier, loadPendingShipments } from "./data";
 
@@ -19,7 +20,7 @@ export default async function ShipmentsPage() {
         title="Pendientes de envío"
         description={
           total > 0
-            ? `${total} ${total === 1 ? "paquete" : "paquetes"} por enviar${user.role === "admin" ? "" : " de tus ventas"}. Toca una paquetería para ver el detalle.`
+            ? `${total} ${total === 1 ? "paquete" : "paquetes"} por enviar${can(user, "ventas_todas") ? "" : " de tus ventas"}. Toca una paquetería para ver el detalle.`
             : undefined
         }
       />

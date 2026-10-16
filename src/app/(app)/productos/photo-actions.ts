@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { friendlyError, type ActionResult } from "@/lib/errors";
 import { thumbPath } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
@@ -14,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 
 async function admin() {
   const u = await getCurrentUser();
-  if (!u || u.role !== "admin" || !u.active) throw new Error("Solo los administradores pueden cambiar las fotos.");
+  if (!u || !u.active || !can(u, "catalogo")) throw new Error("No tienes permisos para cambiar las fotos.");
   return u;
 }
 

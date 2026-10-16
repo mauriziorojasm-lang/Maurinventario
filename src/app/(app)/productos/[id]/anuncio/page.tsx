@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { loadProductPhotos } from "@/lib/product-photos";
 import { createClient } from "@/lib/supabase/server";
 import { isGeneratorConfigured } from "../../../descripciones/actions";
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Preparar anuncio" };
 export const maxDuration = 60;
 
 export default async function PrepareListing({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
+  await requirePerm("anuncios");
   const { id } = await params;
   const supabase = await createClient();
   const [{ data: product }, { data: inv }, photos, { data: listings }, { data: history }, aiReady] = await Promise.all([

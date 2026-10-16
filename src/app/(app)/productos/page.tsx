@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ExportLinks, FilterBar } from "@/components/filter-bar";
 import { Badge, Empty, LinkButton, Notice, PageHeader, Pagination, Panel, StockBadge, Table, Td, Th, Tr } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { filtersFrom, first, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
 import { money, units } from "@/lib/format";
 import { loadCatalogOptions } from "@/lib/options";
@@ -37,7 +38,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const user = await requireUser();
   const sp = await searchParams;
   const supabase = await createClient();
-  const isAdmin = user.role === "admin";
+  // Lista completa (valor de almacén, costes) con «costes»; crear productos con «productos»
+  const isAdmin = can(user, "costes");
+  const canCreate = can(user, "catalogo");
 
   if (!isAdmin) {
     const q = first(sp.search) ?? "";
@@ -46,7 +49,17 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     const sellerPhotos = await signPhotos(rows.map((r) => r.photo_path), { thumbs: true });
     return (
       <>
-        <PageHeader title="Productos" description="Stock disponible y precio normal de cada producto." />
+        <PageHeader
+          title="Productos"
+          description="Stock disponible y precio normal de cada producto."
+          actions={
+            canCreate ? (
+              <LinkButton href="/productos/nuevo" variant="primary">
+                Nuevo producto
+              </LinkButton>
+            ) : undefined
+          }
+        />
         <FilterBar
           basePath="/productos"
           values={{ search: q, only_in_stock: first(sp.only_in_stock) }}
@@ -145,9 +158,11 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         title="Productos"
         description="Catálogo con stock, costes y ventas. Los productos sin unidades aparecen como «Sin stock»."
         actions={
-          <LinkButton href="/productos/nuevo" variant="primary">
-            Nuevo producto
-          </LinkButton>
+          canCreate ? (
+            <LinkButton href="/productos/nuevo" variant="primary">
+              Nuevo producto
+            </LinkButton>
+          ) : undefined
         }
       />
       <FilterBar
@@ -190,7 +205,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       />
       <Panel padded={false} className={rows.length ? "max-lg:mt-3 max-lg:border-0 max-lg:bg-transparent max-lg:shadow-none" : undefined}>
         {rows.length === 0 ? (
-          <Empty title="No hay productos con estos filtros" action={<LinkButton href="/productos/nuevo">Crear producto</LinkButton>} />
+          <Empty title="No hay productos con estos filtros" action={canCreate ? <LinkButton href="/productos/nuevo">Crear producto</LinkButton> : undefined} />
         ) : (
           <Table className="max-lg:hidden">
             <thead>

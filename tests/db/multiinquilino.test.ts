@@ -135,6 +135,38 @@ run("Varias organizaciones", () => {
     await rpc(db, warehouseA, "set_sales_shipping_status", [saleA], "pendiente");
   });
 
+  it("permisos por miembro: el administrador da y quita áreas, y la base de datos lo aplica", async () => {
+    // Por defecto, el almacén no ve costes ni compras
+    expect(await selectAs(db, warehouseA, "select id from inventory_lots")).toEqual([]);
+    expect(await rpc<string[]>(db, warehouseA, "my_permissions")).toEqual(["ventas_todas", "envios"]);
+    // Solo el administrador cambia permisos; nadie puede dárselos a sí mismo
+    await expect(rpc(db, warehouseA, "set_member_permissions", warehouseA, ["costes"])).rejects.toThrow(/permisos/);
+    await expect(rpc(db, adminA, "set_member_permissions", warehouseA, ["inventado"])).rejects.toThrow(/no válido/);
+    await expect(rpc(db, adminA, "set_member_permissions", adminA, ["costes"])).rejects.toThrow(/administrador/);
+    await expect(rpc(db, adminB, "set_member_permissions", warehouseA, ["costes"])).rejects.toThrow(/no es miembro/);
+    // Se le dan costes y compras: ahora ve lotes y puede crear pedidos
+    await rpc(db, adminA, "set_member_permissions", warehouseA, ["ventas_todas", "envios", "costes", "compras"]);
+    expect((await selectAs(db, warehouseA, "select id from inventory_lots")).length).toBeGreaterThan(0);
+    const sup = (await selectAs<{ id: string }>(db, warehouseA, "select id from suppliers limit 1"))[0].id;
+    await rpc(db, warehouseA, "save_purchase_order", { supplier_id: sup, order_date: "2026-10-01", items: [{ variant_id: variantA, quantity: 1, unit_cost: 3 }] });
+    expect(await selectAs(db, warehouseA, "select * from audit_log")).toEqual([]); // el historial sigue siendo solo del administrador
+    // Sigue sin poder vender ni tocar el catálogo
+    await expect(rpc(db, warehouseA, "create_sale", { platform_id: platformA, items: [] })).rejects.toThrow(/permisos/);
+    await expect(rpc(db, warehouseA, "create_product", { name: "No", variants: [{ name: "Única" }] })).rejects.toThrow(/permisos/);
+    // Al vendedor se le quita «vender»: ya no puede registrar ventas
+    await rpc(db, adminA, "set_member_permissions", sellerA, ["envios"]);
+    await expect(rpc(db, sellerA, "create_sale", { platform_id: platformA, items: [] })).rejects.toThrow(/permisos/);
+    // Sin «ver todas las ventas» no ve las ajenas aunque tenga «envíos»
+    await rpc(db, adminA, "set_member_permissions", warehouseA, ["envios"]);
+    expect(await selectAs(db, warehouseA, "select id from sales")).toEqual([]);
+    await expect(rpc(db, warehouseA, "update_sale", { id: saleA, shipping_status: "enviado" })).rejects.toThrow(/propias/);
+    // Volver a los de su rol; cambiar de rol también los reinicia
+    await rpc(db, adminA, "set_member_permissions", warehouseA, null);
+    await rpc(db, adminA, "set_member_permissions", sellerA, null);
+    expect(await rpc<string[]>(db, warehouseA, "my_permissions")).toEqual(["ventas_todas", "envios"]);
+    expect(await rpc<string[]>(db, sellerA, "my_permissions")).toEqual(["ventas_crear", "envios", "generador"]);
+  });
+
   it("7. el administrador de un espacio no gestiona otro", async () => {
     await expect(rpc(db, adminB, "update_member_role", sellerA, "admin")).rejects.toThrow(/no es miembro/);
     await expect(rpc(db, adminB, "remove_member", sellerA)).rejects.toThrow(/no es miembro/);

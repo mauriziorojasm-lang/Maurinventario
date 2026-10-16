@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Notice, PageHeader } from "@/components/ui";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { todayIso } from "@/lib/format";
 import { loadSaleOptions } from "@/lib/options";
 import { loadPrefs } from "@/lib/user-prefs";
@@ -11,7 +12,7 @@ export const metadata: Metadata = { title: "Nueva venta" };
 
 export default async function NewSalePage() {
   const user = await requireUser();
-  if (user.role === "almacen") redirect("/?aviso=sin-permiso");
+  if (!can(user, "ventas_crear")) redirect("/?aviso=sin-permiso");
   const [opts, prefs] = await Promise.all([loadSaleOptions(), loadPrefs()]);
   // Plataforma predeterminada (Ajustes → Ventas e inventario), si sigue activa
   const defaultPlatform = opts.platforms.some((p) => p.id === prefs.sales.defaultPlatformId) ? prefs.sales.defaultPlatformId : null;

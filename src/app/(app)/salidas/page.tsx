@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Empty, Figures, LotTag, PageHeader, Panel, Table, Td, Th, Tr } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { EXIT_REASONS, date, money, todayIso, units } from "@/lib/format";
 import { loadSaleOptions } from "@/lib/options";
 import { createClient } from "@/lib/supabase/server";
@@ -11,7 +11,7 @@ import { ExitReasonEditor, NewAdjustmentButton, NewExitButton, VoidExitButton } 
 export const metadata: Metadata = { title: "Salidas y ajustes" };
 
 export default async function ExitsPage() {
-  await requireAdmin();
+  await requirePerm("stock");
   const supabase = await createClient();
   const [{ data: exits }, { data: adjustments }, opts] = await Promise.all([
     supabase.from("v_stock_exits").select("*").order("exit_date", { ascending: false }).limit(300),

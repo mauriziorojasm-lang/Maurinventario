@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Empty, Notice, PageHeader, Tabs, clsx } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { first, type SearchParams } from "@/lib/filters";
 import { must } from "@/lib/db";
 import { signPhotos } from "@/lib/storage";
@@ -31,7 +31,7 @@ const VIEWS = {
 type ViewKey = keyof typeof VIEWS;
 
 export default async function ListingsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  await requireAdmin();
+  await requirePerm("anuncios");
   const sp = await searchParams;
   const supabase = await createClient();
   // Todo se calcula en la base de datos (sin límite de filas)

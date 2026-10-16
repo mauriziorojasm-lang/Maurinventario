@@ -32,9 +32,9 @@ export function OrgActions({ org }: { org: { id: string; name: string; status: s
       <ConfirmAction
         size="sm"
         variant="secondary"
-        label={org.comped ? "Quitar gratis" : "Dar gratis"}
+        label={org.comped ? "Quitar acceso gratis" : "Dar acceso gratis"}
         title={org.comped ? "Retirar el acceso gratuito" : "Conceder acceso gratuito"}
-        description={org.comped ? "Volverá a depender de su suscripción." : "Podrá usar la app sin pagar hasta que lo retires."}
+        description={org.comped ? "Volverá a depender de su suscripción: si no paga, quedará en solo lectura." : "Este espacio podrá usar la app sin pagar los 4,99 € (por ejemplo, amigos o pruebas) hasta que lo retires. No cambia sus datos."}
         confirmLabel="Confirmar"
         action={() => setCompedAction(org.id, !org.comped)}
       />

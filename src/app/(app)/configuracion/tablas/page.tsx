@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { loadPrefs } from "@/lib/user-prefs";
 import { TablesEditor } from "./tables-editor";
 
 export const metadata: Metadata = { title: "Tablas" };
 
 export default async function TablesSettings() {
-  await requireAdmin();
+  await requirePerm("costes");
   const prefs = await loadPrefs();
   return (
     <>

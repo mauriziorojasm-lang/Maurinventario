@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ExportLinks, FilterBar, type FilterField } from "@/components/filter-bar";
 import { Empty, Figures, Notice, PageHeader, Pagination, Panel, Table, Tabs, Td, Th, Tr } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { filtersFrom, first, pageFrom, toQuery, type SearchParams } from "@/lib/filters";
 import { date, money, percent, units } from "@/lib/format";
 import { loadCatalogOptions, loadSaleOptions, loadSuppliers } from "@/lib/options";
@@ -38,7 +38,7 @@ const TABS: { key: ReportType; label: string }[] = [
 ];
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  await requireAdmin();
+  await requirePerm("costes");
   const sp = await searchParams;
   const tab = (TABS.find((t) => t.key === first(sp.tab))?.key ?? "ventas") as ReportType;
   const filters = filtersFrom(sp);

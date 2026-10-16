@@ -69,3 +69,12 @@ export async function leaveOrganizationAction(): Promise<ActionResult> {
   revalidatePath("/", "layout");
   return { ok: true, message: "Has salido del espacio." };
 }
+
+/** Cambia lo que ve y puede hacer un miembro (null = lo de su rol). */
+export async function setPermissionsAction(userId: string, permissions: string[] | null): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_member_permissions", { p_user: userId, p_permissions: permissions });
+  if (error) return { ok: false, error: friendlyError(error) };
+  return done(permissions === null ? "Permisos restablecidos a los de su rol." : "Permisos guardados.");
+}

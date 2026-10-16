@@ -10,20 +10,18 @@ import type { Prefs } from "@/lib/preferences";
 
 type Task = { href: string; label: string; done: string; n: number; icon: LucideIcon; strong?: boolean };
 
-export function HomeTasks({ badges, admin, notify, lowStock }: { badges: Badges; admin: boolean; notify: Prefs["notifications"]; lowStock: number }) {
-  // Cada aviso se puede desactivar en Ajustes → Avisos
-  const all: (Task & { on: boolean })[] = admin
-    ? [
-        { href: "/detectadas", label: "Ventas por confirmar", done: "Sin ventas por confirmar", n: badges.detected, icon: MailCheck, strong: true, on: notify.detected },
-        { href: "/envios", label: "Envíos pendientes", done: "Todo enviado", n: badges.shipments, icon: Truck, strong: true, on: notify.shipments },
-        { href: "/anuncios?ver=por-retirar", label: "Anuncios por quitar", done: "Ningún anuncio por quitar", n: badges.listings, icon: Megaphone, on: notify.listings },
-        { href: "/correos", label: "Correos a revisar", done: "Correos al día", n: badges.emails, icon: Mail, on: notify.emails },
-      ]
-    : [{ href: "/envios", label: "Envíos pendientes", done: "Todo enviado", n: badges.shipments, icon: Truck, strong: true, on: notify.shipments }];
-  if (admin && notify.lowStock) {
+export function HomeTasks({ badges, perms, notify, lowStock }: { badges: Badges; perms: string[]; notify: Prefs["notifications"]; lowStock: number }) {
+  const has = (k: string) => perms.includes(k);
+  // Cada aviso se puede desactivar en Ajustes → Avisos; solo se muestra lo que la persona puede abrir
+  const all: (Task & { on: boolean })[] = [];
+  if (has("correo")) all.push({ href: "/detectadas", label: "Ventas por confirmar", done: "Sin ventas por confirmar", n: badges.detected, icon: MailCheck, strong: true, on: notify.detected });
+  all.push({ href: "/envios", label: "Envíos pendientes", done: "Todo enviado", n: badges.shipments, icon: Truck, strong: true, on: notify.shipments });
+  if (has("anuncios")) all.push({ href: "/anuncios?ver=por-retirar", label: "Anuncios por quitar", done: "Ningún anuncio por quitar", n: badges.listings, icon: Megaphone, on: notify.listings });
+  if (has("correo")) all.push({ href: "/correos", label: "Correos a revisar", done: "Correos al día", n: badges.emails, icon: Mail, on: notify.emails });
+  if (has("catalogo") && notify.lowStock) {
     all.push({ href: `/productos?bajo=${notify.lowStockThreshold}`, label: `Stock bajo (≤ ${notify.lowStockThreshold} uds.)`, done: "Sin stock bajo", n: lowStock, icon: PackageMinus, on: true });
   }
-  if (admin && notify.imports && badges.reviews > 0) {
+  if (has("importar") && notify.imports && badges.reviews > 0) {
     all.push({ href: "/revision", label: "Pendientes de revisar (importación)", done: "", n: badges.reviews, icon: CheckCheck, on: true });
   }
   const tasks: Task[] = all.filter((t) => t.on);
@@ -73,17 +71,19 @@ export function HomeTasks({ badges, admin, notify, lowStock }: { badges: Badges;
   );
 }
 
-export function QuickActions({ admin, warehouse = false }: { admin: boolean; warehouse?: boolean }) {
+export function QuickActions({ perms }: { perms: string[] }) {
+  const has = (k: string) => perms.includes(k);
   const items = [
-    ...(warehouse
-      ? [{ href: "/envios", label: "Preparar envíos", icon: Truck, main: true }]
-      : [{ href: "/ventas/nueva", label: "Nueva venta", icon: CirclePlus, main: true }]),
-    ...(admin ? [{ href: "/anuncios", label: "Preparar anuncio", icon: Megaphone, main: false }] : []),
+    has("ventas_crear")
+      ? { href: "/ventas/nueva", label: "Nueva venta", icon: CirclePlus, main: true }
+      : { href: "/envios", label: "Preparar envíos", icon: Truck, main: true },
+    ...(has("anuncios") ? [{ href: "/anuncios", label: "Preparar anuncio", icon: Megaphone, main: false }] : []),
     { href: "/productos?only_in_stock=true", label: "Buscar stock", icon: PackageSearch, main: false },
-    ...(admin ? [{ href: "/compras/nuevo", label: "Registrar compra", icon: ShoppingCart, main: false }] : []),
+    ...(has("compras") ? [{ href: "/compras/nuevo", label: "Registrar compra", icon: ShoppingCart, main: false }] : []),
   ];
+  const wide = items.length > 2;
   return (
-    <nav aria-label="Accesos rápidos" className={clsx("grid gap-2.5", admin ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2")}>
+    <nav aria-label="Accesos rápidos" className={clsx("grid gap-2.5", wide ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2")}>
       {items.map((q) => (
         <Link
           key={q.href}

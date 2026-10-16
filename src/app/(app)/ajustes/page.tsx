@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { PageHeader, Panel } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ListEditor } from "./list-editor";
 
 export const metadata: Metadata = { title: "Listas" };
 
 export default async function SettingsPage() {
-  await requireAdmin();
+  await requirePerm("configuracion");
   const supabase = await createClient();
   const [platforms, carriers, mobiles, accounts, categories, brands, products] = await Promise.all([
     supabase.from("platforms").select("id, name, requires_shipping, active").order("sort_order").order("name"),

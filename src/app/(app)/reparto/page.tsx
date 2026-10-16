@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { FilterBar } from "@/components/filter-bar";
 import { Empty, Figures, Notice, PageHeader, Panel, Table, Td, Th, Tr } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { filtersFrom, type SearchParams } from "@/lib/filters";
 import { date, money } from "@/lib/format";
 import { todayIso } from "@/lib/format";
@@ -19,7 +19,7 @@ type Settlement = {
 };
 
 export default async function SettlementPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  await requireAdmin();
+  await requirePerm("costes");
   const filters = filtersFrom(await searchParams);
   const supabase = await createClient();
   const [{ data, error }, { data: transfers }] = await Promise.all([

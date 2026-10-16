@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FilterBar } from "@/components/filter-bar";
 import { Badge, Empty, Figures, LinkButton, PageHeader, Panel, Table, Td, Th, Tr } from "@/components/ui";
-import { requireAdmin } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { filtersFrom, type SearchParams } from "@/lib/filters";
 import { date, money, units } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +12,7 @@ import { must } from "@/lib/db";
 export const metadata: Metadata = { title: "Devoluciones" };
 
 export default async function ReturnsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  await requireAdmin();
+  await requirePerm("ventas_editar");
   const filters = filtersFrom(await searchParams);
   const supabase = await createClient();
   let q = supabase.from("v_returns").select("*");

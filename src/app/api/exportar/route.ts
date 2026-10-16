@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { REPORT_FILTER_KEYS } from "@/lib/filters";
 import { toCsv } from "@/lib/csv";
 import { REPORTS, type Column, type ReportType } from "@/lib/reports";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 /** Exporta un informe con los mismos filtros que la pantalla. Solo administradores. */
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "admin" || !user.active) return new NextResponse("No autorizado", { status: 403 });
+  if (!user || !user.active || !can(user, "costes")) return new NextResponse("No autorizado", { status: 403 });
 
   const sp = request.nextUrl.searchParams;
   const type = sp.get("tipo") as ReportType;
