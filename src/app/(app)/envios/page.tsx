@@ -6,6 +6,8 @@ import { ProductThumb } from "@/components/thumb";
 import { Empty, Notice, PageHeader, LinkButton, clsx } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { date, dateTime } from "@/lib/format";
+import { trackingConfigured } from "@/lib/tracking/seventeen";
+import { RefreshAllButton } from "../seguimiento/tracking-actions";
 import { groupByCarrier, loadPendingShipments, NO_CARRIER } from "./data";
 
 export const metadata: Metadata = { title: "Pendientes de envío" };
@@ -27,10 +29,13 @@ export default async function ShipmentsPage() {
             : undefined
         }
         actions={
-          <LinkButton href="/seguimiento">
-            <MapPinned size={17} strokeWidth={1.75} />
-            Seguimiento
-          </LinkButton>
+          <div className="flex flex-wrap items-start gap-2">
+            {trackingConfigured() && <RefreshAllButton />}
+            <LinkButton href="/seguimiento">
+              <MapPinned size={17} strokeWidth={1.75} />
+              Seguimiento
+            </LinkButton>
+          </div>
         }
       />
       {error && <Notice tone="bad">{error}</Notice>}

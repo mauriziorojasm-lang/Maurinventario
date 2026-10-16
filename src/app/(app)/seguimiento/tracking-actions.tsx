@@ -153,7 +153,7 @@ export function RefreshAllButton() {
     <span className="flex flex-col items-end">
       <Button onClick={() => run()} disabled={pending}>
         <RefreshCw size={16} strokeWidth={1.75} className={pending ? "animate-spin" : undefined} />
-        {pending ? "Consultando…" : "Actualizar ahora"}
+        {pending ? "Actualizando…" : "Actualizar envíos"}
       </Button>
       {(error || message) && <span className={error ? "mt-1 max-w-xs text-right text-xs text-danger" : "mt-1 text-xs text-good-ink"}>{error ?? message}</span>}
     </span>

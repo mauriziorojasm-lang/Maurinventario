@@ -87,11 +87,15 @@ run("Seguimiento de envíos", () => {
 
   it("código de seguimiento: se valida y se guarda sin espacios; estado manual «entregado» fija la hora de entrega y avisa", async () => {
     const id = await sale(respAdmin, correos);
+    await expect(rpc(db, admin, "update_tracking", { id, status: "entregado" })).rejects.toThrow(/Primero marca/);
     await expect(rpc(db, admin, "update_tracking", { id, tracking_number: "AB 1" })).rejects.toThrow(/de 4 a 40/);
     await rpc(db, admin, "update_tracking", { id, tracking_number: "pq 1234 5678 es" });
-    expect((await row(id)).tracking_number).toBe("PQ12345678ES");
-    await expect(rpc(db, admin, "update_tracking", { id, status: "entregado" })).rejects.toThrow(/Primero marca/);
-    await rpc(db, admin, "set_sales_shipping_status", [id], "enviado");
+    const withCode = await row(id);
+    expect(withCode.tracking_number).toBe("PQ12345678ES");
+    // Con código, la venta pasa a enviada y entra en «Seguimiento»
+    expect(withCode.shipping_status).toBe("enviado");
+    expect(withCode.shipped_at).not.toBeNull();
+    expect(withCode.tracking_status).toBe("enviado");
     await rpc(db, admin, "update_tracking", { id, status: "entregado", note: "Recogido en el punto" });
     const r = await row(id);
     expect(r.tracking_status).toBe("entregado");
@@ -103,6 +107,21 @@ run("Seguimiento de envíos", () => {
     expect(badges.alerts).toBeGreaterThanOrEqual(1);
     expect(await rpc<number>(db, admin, "mark_shipment_alerts_read", null)).toBeGreaterThanOrEqual(1);
     expect((await rpc<{ alerts: number }>(db, admin, "nav_badges")).alerts).toBe(0);
+  });
+
+  it("código añadido a una venta ya marcada como enviada sin hora de envío: entra en «Seguimiento» con su primer movimiento", async () => {
+    const id = await sale(respAdmin, inpost);
+    await rpc(db, admin, "set_sales_shipping_status", [id], "enviado");
+    // Venta antigua: enviada pero sin hora (como las de antes del seguimiento)
+    await db.client.query("update sales set shipped_at = null, tracking_status = null where id = $1", [id]);
+    await db.client.query("delete from tracking_events where sale_id = $1", [id]);
+    await rpc(db, admin, "update_tracking", { id, tracking_number: "QR1234567ES" });
+    const r = await row(id);
+    expect(r.shipping_status).toBe("enviado");
+    expect(r.shipped_at).not.toBeNull();
+    expect(r.tracking_status).toBe("enviado");
+    const ev = await svc<{ description: string }>("select description from tracking_events where sale_id = $1", [id]);
+    expect(ev.map((e) => e.description)).toEqual(["Marcado como enviado en Resellap"]);
   });
 
   it("el servicio de seguimiento aplica los movimientos en orden, detecta intentos de entrega y no duplica", async () => {

@@ -9,11 +9,17 @@ import { attachLabel, gmailForServer, markAuthError, runSync } from "@/lib/email
 import { callRpc } from "@/lib/rpc";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { runTracking } from "@/lib/tracking/service";
 
 async function admin() {
   const u = await getCurrentUser();
   if (!u || !u.active || !u.orgId || !can(u, "correo")) throw new Error("No tienes permisos para hacer esto.");
   return u as typeof u & { orgId: string };
+}
+
+/** Códigos de seguimiento que acaban de llegar (etiquetas o ventas nuevas): se consultan ya, una sola vez. */
+async function trackNewCodes(orgId: string) {
+  await runTracking({ orgId, onlyNew: true }).catch(() => undefined);
 }
 
 function done(message?: string): ActionResult {
@@ -25,6 +31,7 @@ function done(message?: string): ActionResult {
 export async function syncNow(): Promise<ActionResult> {
   const me = await admin();
   const s = await runSync("manual", me.orgId);
+  if (!s.skipped && !s.error) await trackNewCodes(me.orgId);
   revalidatePath("/", "layout");
   if (s.skipped) return { ok: false, error: s.skipped };
   if (s.error) return { ok: false, error: s.error };
@@ -78,7 +85,9 @@ export async function resolveSale(emailId: string, variantId: string, remember: 
   });
   if (error) return { ok: false, error: friendlyError(error) };
   // Puede que una etiqueta estuviera esperando a esta venta
-  await runSync("manual", (await admin()).orgId).catch(() => undefined);
+  const { orgId } = await admin();
+  await runSync("manual", orgId).catch(() => undefined);
+  await trackNewCodes(orgId);
   return done(remember ? "Venta registrada. La próxima vez ese nombre se reconocerá solo." : "Venta registrada.");
 }
 
@@ -96,6 +105,7 @@ export async function linkLabel(emailId: string, saleId: string, force: boolean)
       const { data: again } = await db.from("email_messages").select("review_reason").eq("organization_id", orgId).eq("id", emailId).single();
       return { ok: false, error: again?.review_reason ?? "No se ha podido añadir la etiqueta." };
     }
+    await trackNewCodes(orgId);
     return done("Etiqueta añadida a la venta.");
   } catch (err) {
     if (err instanceof GmailAuthError) {

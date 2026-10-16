@@ -47,7 +47,7 @@ export async function setShippingStatusBulk(saleIds: string[], status: "pendient
   const res = await callRpc<number>("set_sales_shipping_status", { p_sale_ids: saleIds, p_status: status }, ["/ventas", "/"]);
   if (res.ok && status === "enviado") {
     // El seguimiento empieza ya (la base de datos guarda la hora); si hay servicio de seguimiento, se da de alta el código
-    after(() => runTracking({ saleIds, force: true }).catch(() => undefined));
+    after(() => runTracking({ saleIds }).catch(() => undefined));
   }
   if (res.ok) {
     const n = res.data;

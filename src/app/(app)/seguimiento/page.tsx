@@ -10,7 +10,7 @@ import { requireUser } from "@/lib/auth";
 import { date, dateTime, money } from "@/lib/format";
 import { loadAlerts, loadShipments, loadShippingStats, type ShipmentView } from "@/lib/tracking/data";
 import { trackingConfigured } from "@/lib/tracking/seventeen";
-import { runTracking } from "@/lib/tracking/service";
+import { checkStaleShipments } from "@/lib/tracking/service";
 import { MarkAlertsReadButton, RefreshAllButton } from "./tracking-actions";
 
 export const metadata: Metadata = { title: "Seguimiento" };
@@ -36,8 +36,8 @@ export default async function TrackingPage({ searchParams }: PageProps<"/seguimi
     loadAlerts(),
     loadShippingStats(),
   ]);
-  // Al abrir el seguimiento se consultan, en segundo plano, los envíos que lleven horas sin mirar
-  if (automatic && user.orgId) after(() => runTracking({ orgId: user.orgId! }).catch(() => undefined));
+  // Al abrir solo se revisan las alertas por tiempo (no consulta al transportista: eso, con «Actualizar envíos»)
+  after(() => checkStaleShipments().catch(() => undefined));
 
   const inTransit = stats?.in_transit;
   const fastest = stats?.carriers.filter((c) => c.delivered >= 2 && c.avg_days !== null).sort((a, b) => (a.avg_days ?? 99) - (b.avg_days ?? 99))[0];

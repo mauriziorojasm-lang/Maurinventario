@@ -6,6 +6,7 @@ import { can } from "@/lib/permissions";
 import { friendlyError, type ActionResult } from "@/lib/errors";
 import { runSync } from "@/lib/email/sync";
 import { createClient } from "@/lib/supabase/server";
+import { runTracking } from "@/lib/tracking/service";
 
 async function admin() {
   const u = await getCurrentUser();
@@ -13,9 +14,14 @@ async function admin() {
   return u as typeof u & { orgId: string };
 }
 
-/** Tras confirmar o marcar un duplicado, puede que una etiqueta de Vinted estuviera esperando. */
+/**
+ * Tras confirmar o marcar un duplicado, puede que una etiqueta de Vinted estuviera esperando.
+ * Los códigos de seguimiento nuevos se consultan ya, para ver el estado sin sincronizar.
+ */
 async function afterChange() {
-  await runSync("manual", (await admin()).orgId).catch(() => undefined);
+  const { orgId } = await admin();
+  await runSync("manual", orgId).catch(() => undefined);
+  await runTracking({ orgId, onlyNew: true }).catch(() => undefined);
   revalidatePath("/", "layout");
 }
 

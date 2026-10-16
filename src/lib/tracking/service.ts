@@ -7,15 +7,16 @@ import { CARRIER_CODES, fetchTrackInfo, registerNumbers, trackingConfigured } fr
  * Seguimiento automático. Usa la clave del servidor, así que cada consulta
  * va filtrada por organización o por venta concreta.
  *
- * · Al marcar una venta como enviada (o al añadir el código), se da de alta
- *   en el servicio de seguimiento.
- * · Cada cierto tiempo (aviso automático del correo cada 5 minutos, o al
- *   abrir «Seguimiento») se consultan los envíos abiertos que no se han
- *   mirado en las últimas horas.
+ * Solo se consulta al transportista cuando pasa algo (nunca cada cierto tiempo):
+ * · al añadir o cambiar el código de una venta (desde Ventas o Seguimiento),
+ * · al marcar ventas como enviadas,
+ * · al confirmar una venta detectada o llegar una etiqueta con código (solo los códigos nuevos),
+ * · al pulsar «Actualizar envíos» (todos los abiertos).
+ * También entran las ventas pendientes con código: si el transportista ya las
+ * ha recogido, pasan a enviadas solas.
  * Sin TRACK17_API_KEY no se consulta nada: el seguimiento se lleva a mano.
  */
 
-const RECHECK_MS = 3 * 60 * 60 * 1000; // cada envío, como mucho cada 3 horas
 const MAX_PER_RUN = 120;
 
 type OpenSale = {
@@ -31,28 +32,41 @@ const carrierName = (s: OpenSale): string => (Array.isArray(s.carrier) ? s.carri
 const carrierCodes = (s: OpenSale): number[] => CARRIER_CODES[carrierName(s).trim().toLowerCase()] ?? [];
 
 export type TrackingRun = { configured: boolean; registered: number; checked: number; updated: number; errors: number; alerts: number };
+export type TrackingScope = {
+  /** Solo los envíos de esta organización. */
+  orgId?: string;
+  /** Solo estas ventas. */
+  saleIds?: string[];
+  /** Solo los códigos que aún no se han consultado nunca (ventas o etiquetas nuevas). */
+  onlyNew?: boolean;
+};
 
-async function openSales(db: SupabaseClient, opts: { orgId?: string; saleIds?: string[]; force?: boolean }): Promise<OpenSale[]> {
+async function openSales(db: SupabaseClient, opts: TrackingScope): Promise<OpenSale[]> {
   let q = db
     .from("sales")
     .select("id, organization_id, tracking_number, tracking_registered_at, tracking_checked_at, tracking_error, carrier:carriers(name)")
     .eq("status", "activa")
-    .not("shipped_at", "is", null)
     .is("delivered_at", null)
     .not("tracking_number", "is", null)
-    .not("tracking_status", "in", "(devuelto,cancelado,entregado)")
+    .or("tracking_status.is.null,tracking_status.not.in.(devuelto,cancelado,entregado)")
     .order("tracking_checked_at", { ascending: true, nullsFirst: true })
     .limit(MAX_PER_RUN);
   if (opts.orgId) q = q.eq("organization_id", opts.orgId);
   if (opts.saleIds?.length) q = q.in("id", opts.saleIds);
-  if (!opts.force) q = q.or(`tracking_checked_at.is.null,tracking_checked_at.lt.${new Date(Date.now() - RECHECK_MS).toISOString()}`);
+  if (opts.onlyNew) q = q.is("tracking_checked_at", null);
   const { data, error } = await q;
   if (error) throw new Error(`No se han podido leer los envíos: ${error.message}`);
   return (data ?? []) as OpenSale[];
 }
 
+/** Alertas por tiempo (retraso, sin novedades). Solo mira la base de datos: no gasta consultas. */
+export async function checkStaleShipments(): Promise<number> {
+  const { data } = await createAdminClient().rpc("tracking_check_stale");
+  return Number(data ?? 0);
+}
+
 /** Da de alta y actualiza los envíos abiertos (de una organización, de unas ventas o de todas). */
-export async function runTracking(opts: { orgId?: string; saleIds?: string[]; force?: boolean } = {}): Promise<TrackingRun> {
+export async function runTracking(opts: TrackingScope = {}): Promise<TrackingRun> {
   const run: TrackingRun = { configured: trackingConfigured(), registered: 0, checked: 0, updated: 0, errors: 0, alerts: 0 };
   const db = createAdminClient();
   if (run.configured) {
@@ -98,7 +112,6 @@ export async function runTracking(opts: { orgId?: string; saleIds?: string[]; fo
     }
   }
   // 3) Alertas por tiempo (retraso, sin novedades): también sin servicio externo
-  const { data: n } = await db.rpc("tracking_check_stale");
-  run.alerts = Number(n ?? 0);
+  run.alerts = await checkStaleShipments();
   return run;
 }
